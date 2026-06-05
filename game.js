@@ -1,3 +1,4 @@
+// Kitty's Slots Deluxe · PUBLICA (v1.0) · esta va a GitHub Pages
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.

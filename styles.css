@@ -1,3 +1,4 @@
+/* Kitty's Slots Deluxe · PUBLICA (v1.0) · esta va a GitHub Pages */
   :root{ --bg:#1a1033; --bg2:#0d0820; --panel:#2d1b54; --panel2:#241046; --violet:#a45cff; --magenta:#ff3d8b; --cyan:#39e0e6; --gold:#ffd23f; --green:#5bd75b; --red:#ff5b79; --text:#fdf6ff; --muted:#b3a7dd; --cream:#f4ead2; --dark:#0a0618; }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'VT323',monospace;color:var(--text);min-height:100vh;background:var(--bg2);display:flex;flex-direction:column;align-items:center;padding:18px 12px 40px;position:relative;overflow-x:hidden;image-rendering:pixelated}
@@ -145,15 +146,16 @@
   .iconbtn.off .slash{display:block}
   .iconbtn.acc-on{color:var(--green)}
   .auth-row{display:flex;flex-direction:column;gap:10px;margin:14px 0}
-  .auth-input{font-family:inherit;font-size:16px;padding:12px;color:var(--text);background:var(--panel2);border:none;box-shadow:0 0 0 3px var(--dark);outline:none}
+  .auth-input{font-family:inherit;font-size:18px;padding:15px;color:var(--text);background:var(--panel2);border:none;box-shadow:0 0 0 3px var(--dark);outline:none}
   .auth-input:focus{box-shadow:0 0 0 3px var(--cyan)}
   .auth-btns{display:flex;gap:10px;flex-wrap:wrap}
-  .auth-btns .minibtn{flex:1;min-width:120px;text-align:center;font-size:11px;padding:13px 13px}
-  .auth-msg{font-size:13px;line-height:1.5;min-height:16px;margin-top:8px}
+  .auth-btns .minibtn{flex:1;min-width:120px;text-align:center;font-size:13px;padding:16px 14px}
+  .auth-msg{font-size:15px;line-height:1.5;min-height:18px;margin-top:8px}
   .auth-msg.err{color:var(--red)}
   .auth-msg.ok{color:var(--green)}
-  .auth-note{font-size:14px;color:var(--muted);line-height:1.6}
-  #authEmail{font-size:15px;color:var(--text);word-break:break-all;margin-bottom:6px;line-height:1.4}
+  .auth-note{font-size:16px;color:var(--muted);line-height:1.6}
+  #authEmail{font-size:18px;color:var(--text);word-break:break-all;margin-bottom:6px;line-height:1.4}
+  #authModal h3{font-size:16px}
 
   /* ===== Responsive — celulares (Punto 3) ===== */
   @media (max-width:480px){
