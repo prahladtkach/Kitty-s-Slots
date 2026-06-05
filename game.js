@@ -19,10 +19,12 @@
   const SPRITE_ORDER=['🍋','🍒','🔔','⭐','7️⃣','💎','🐟','🐱','🦴'];
   const WEIGHTS={'🍋':20,'🍒':20,'🔔':16,'⭐':12,'7️⃣':9,'💎':6,'🐟':5,'🐱':5,'🦴':9};
   const PAY3={'🐟':80,'💎':60,'7️⃣':40,'⭐':25,'🔔':15,'🍒':10,'🍋':6};
-  const PRESETS=[10,50,100,500];
+  const PRESETS=[50,100,250,500,1000];
   const LOAN=1000, START=1000, JP_BASE=10000, JP_MULT=250, KEY='kitty-slots-deluxe', INTEREST=0.03, LOAN_FEE=0.1, SKILL_UNLOCK=5000, CAJA_COST=2000;
   const CREDIT_LIMITS=[6000,12000,22000,40000,70000,110000,170000];
   const CREDIT_COSTS=[800,2000,5000,12000,25000,45000];
+  const BANK_UNLOCK_CREDITS=3000;
+  const VERSION="1.0";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -42,7 +44,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:5,cost:curve(180,2.6)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:25,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,skillsUnlocked:false,bankUnlocked:false,introSeen:false,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,skillsUnlocked:false,bankUnlocked:false,introSeen:false,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,helpSeen:[]};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'];
   const pool=[];
@@ -79,6 +81,10 @@
     if(typeof state.superLevel!=='number') state.superLevel = 0;
     if(typeof state.bankUnlocked!=='boolean') state.bankUnlocked = (state.bank>0||state.debt>0||state.vault||state.creditLevel>0||state.interestLevel>0||state.credits<1);
     if(typeof state.introSeen!=='boolean') state.introSeen = false;
+    if(!Array.isArray(state.helpSeen)) state.helpSeen=[];
+    if(state.bankUnlocked && state.helpSeen.indexOf('bank')<0) state.helpSeen.push('bank'); if(state.introSeen && state.helpSeen.indexOf('intro')<0) state.helpSeen.push('intro');
+    if(!state.bankUnlocked && state.credits>=BANK_UNLOCK_CREDITS) state.bankUnlocked=true;
+    if(typeof state.bet!=='number'||state.bet<50) state.bet=50; if(state.bet>1000) state.bet=1000;
     if(typeof state.bank!=='number') state.bank=0;
     if(state.vault===undefined) state.vault=false;
     if(typeof state.creditLevel!=='number') state.creditLevel=0;
@@ -241,7 +247,7 @@
   function renderPalette(){ const el=document.getElementById('palrow'); el.querySelectorAll('.swatch').forEach(function(s){s.remove();}); PALNAMES.forEach(function(n){ const sw=document.createElement('div'); sw.className='swatch'+(n===state.palette?' active':''); sw.title=n; sw.style.background=PALETTES[n].violet; sw.style.boxShadow='0 0 0 2px '+PALETTES[n].dark+(n===state.palette?',0 0 0 4px '+PALETTES[n].gold:''); sw.addEventListener('click',function(){ applyPalette(n); }); el.appendChild(sw); }); }
   function renderPaytable(){ const el=document.getElementById('ptBody'); const rows=[['🐱🐱🐱','JACKPOT',0],['🐟🐟🐟','x80',0],['💎💎💎','x60',0],['7️⃣7️⃣7️⃣','x40',0],['⭐⭐⭐','x25',0],['🔔🔔🔔','x15',0],['🍒🍒🍒','x10',0],['🍋🍋🍋','x6',0],['🍒🍒·','x4',0],['🍒··','x2',0],['🦴🦴🦴','PIERDES TODO',1],['🦴 suelta','-apuesta',1]]; el.innerHTML=''; rows.forEach(function(r){ const row=document.createElement('div'); row.className='pt-row'; const s=document.createElement('span'); s.style.fontSize='20px'; s.textContent=r[0]; const p=document.createElement('span'); p.className='pay'+(r[2]?' bad':''); p.textContent=r[1]; row.appendChild(s); row.appendChild(p); el.appendChild(row); }); const note=document.createElement('div'); note.style.cssText='margin-top:10px;color:var(--muted);line-height:1.4'; note.innerHTML='COMBO: gana 2+ seguidas y se multiplica (x1.5, x2, x2.5... hasta x'+fmtMult(comboCap())+'). Perder reinicia el combo.'; el.appendChild(note); }
   function renderShop(){ const el=document.getElementById('upgList'); el.innerHTML=''; function header(t){ const h=document.createElement('div'); h.className='shop-section'; h.textContent=t; el.appendChild(h); } function row(name,desc,sub,btnTxt,disabled,onBuy,cls){ const r=document.createElement('div'); r.className='upg'+(cls?(' '+cls):''); const info=document.createElement('div'); info.className='info'; info.innerHTML='<div class="nm">'+name+'</div><div class="ds">'+desc+'</div><div class="lv">'+sub+'</div>'; const b=document.createElement('button'); b.textContent=btnTxt; b.disabled=disabled; if(onBuy) b.addEventListener('click',onBuy); r.appendChild(info); r.appendChild(b); el.appendChild(r); } header('🔧 MEJORAS'); Object.keys(UPG).forEach(function(k){ const u=UPG[k], lv=state.upg[k], maxed=lv>=u.max, cost=u.cost(lv); row(u.name,u.desc,'Nivel '+lv+'/'+u.max, maxed?'MÁX':'$'+fmt(cost), maxed||state.debt>0||state.credits<cost, function(){ buyUpg(k); }); }); header('⚡ HABILIDADES'); if(!state.skillsUnlocked){ const lock=document.createElement('div'); lock.className='shop-lock'; const falta=Math.max(0, SKILL_UNLOCK-state.credits); lock.innerHTML='🔒 Llegá a <b>$'+fmt(SKILL_UNLOCK)+'</b> para desbloquear las habilidades.'+(falta>0?'<br>Te faltan $'+fmt(falta)+'.':''); el.appendChild(lock); } else { var hl=state.holdLevel||0; var hmax=hl>=2; var hcost=hmax?0:HOLD_COSTS[hl]; var hdesc=hl===0?'Trabá 1 rodillo y volvé a girar el resto. Enfría 3 giros.':(hl===1?'MEJORA: trabá 2 rodillos a la vez':'Trabás hasta 2 rodillos a la vez'); var hsub=hl===0?'habilidad nueva — Nivel 1/2':('Nivel '+hl+'/2 — retenés '+hl); row('Retener (Hold)', hdesc, hsub, hmax?'MÁX':(hl===0?'$'+fmt(hcost):'Mejorar $'+fmt(hcost)), hmax||state.debt>0||state.credits<hcost, function(){ buyHold(); }, 'abil'); var sl=state.superLevel||0; var smax=sl>=20; var scost=smax?0:superCost(sl); var sdesc=sl===0?'Activala para una racha de suerte: suben las chances de TODOS los premios y jackpots (no garantizado).':'Activala para una racha de suerte. Mejorar suma +1s de duración.'; var ssub=sl===0?'habilidad nueva — dura 5s':('Nivel '+sl+'/20 — dura '+superDur(sl)+'s'); row('Supersuerte 🍀', sdesc, ssub, smax?'MÁX':(sl===0?'$'+fmt(scost):'Mejorar $'+fmt(scost)), smax||state.debt>0||state.credits<scost, function(){ buySuper(); }, 'abil'); Object.keys(ABIL).forEach(function(k){ const a=ABIL[k], owned=state.abilities[k]; row(a.name,a.desc, owned?'\u2713 desbloqueada':'habilidad nueva', owned?'OK':'$'+fmt(a.cost), owned||state.debt>0||state.credits<a.cost, function(){ buyAbility(k); }, 'abil'); }); } document.getElementById('shopNote').textContent = state.debt>0 ? 'Pagá tu deuda antes de comprar.' : 'Comprás con tus créditos.'; }
-  function updateUI(){ if(!state.skillsUnlocked && state.credits>=SKILL_UNLOCK) state.skillsUnlocked=true; document.getElementById('credits').textContent=fmt(state.credits); document.getElementById('debt').textContent=fmt(state.debt); const ind=state.debt>0; document.getElementById('debtBox').classList.toggle('on', ind); document.getElementById('danger').classList.toggle('on', ind); document.getElementById('debtWarn').style.display=ind?'block':'none'; if(document.getElementById('bank').classList.contains('open')) renderBank(); document.getElementById('jpAmount').textContent=fmt(Math.round(Math.max(state.jackpot, state.bet*JP_MULT)*winMult())); var _bb=document.getElementById('bankBtn'); if(_bb){ _bb.disabled=!state.bankUnlocked; _bb.textContent=state.bankUnlocked?'🏦 BANCO':'🔒 BANCO'; } }
+  function updateUI(){ if(!state.skillsUnlocked && state.credits>=SKILL_UNLOCK) state.skillsUnlocked=true; if(!state.bankUnlocked && state.credits>=BANK_UNLOCK_CREDITS) unlockBank('rich'); document.getElementById('credits').textContent=fmt(state.credits); document.getElementById('debt').textContent=fmt(state.debt); const ind=state.debt>0; document.getElementById('debtBox').classList.toggle('on', ind); document.getElementById('danger').classList.toggle('on', ind); document.getElementById('debtWarn').style.display=ind?'block':'none'; if(document.getElementById('bank').classList.contains('open')) renderBank(); document.getElementById('jpAmount').textContent=fmt(Math.round(Math.max(state.jackpot, state.bet*JP_MULT)*winMult())); var _bb=document.getElementById('bankBtn'); if(_bb){ _bb.disabled=!state.bankUnlocked; _bb.textContent=state.bankUnlocked?'🏦 BANCO':'🔒 BANCO'; } }
   function setSpinUI(on){ document.getElementById('spinBtn').disabled=on; document.body.classList.toggle('spin-lock', on); updateSuperUI(); }
   function setMsg(t,cls){ const el=document.getElementById('winMsg'); el.textContent=t; el.className='win-msg'+(cls?(' '+cls):''); }
   function setCombo(){ const el=document.getElementById('combo'); const m=comboMult(); if(combo>=2){ const ONO=['','','¡ZAS!','¡PUM!','¡PAM!','¡BOOM!','¡KABOOM!']; const o=ONO[Math.min(combo,ONO.length-1)]; el.textContent=o+' x'+fmtMult(m); el.classList.add('on'); } else { el.classList.remove('on'); } }
@@ -288,7 +294,7 @@
     combo=0; setCombo(); setMsg('SUERTE LA PROXIMA',false); saveState(); checkBroke();
   }
 
-  function setBet(v){ v=Math.floor(v); if(isNaN(v)||v<1)v=1; if(state.credits>0 && v>state.credits) v=state.credits; state.bet=v; document.getElementById('betInput').value=v; renderBetPresets(); updateUI(); saveState(); }
+  function setBet(v){ v=Math.floor(v); if(isNaN(v)||v<50)v=50; if(v>1000)v=1000; state.bet=v; var bi=document.getElementById('betInput'); if(bi) bi.value=v; renderBetPresets(); updateUI(); saveState(); }
   function loanAvailable(){ return state.debt + LOAN <= creditLimit(); }
   function canLoan(){ return loanAvailable() && state.credits < state.bet; }
   function takeLoan(){ if(spinning) return; if(!loanAvailable()){ setMsg('LÍMITE DE PRÉSTAMOS ($'+fmt(creditLimit())+')',false); return; } if(state.credits>=state.bet){ setMsg('Solo podés pedir préstamo si te quedás corto',false); return; } state.credits+=LOAN; state.debt+=Math.round(LOAN*(1+LOAN_FEE)); updateUI(); renderBank(); setMsg('PRÉSTAMO: +$'+fmt(LOAN)+' (debés $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+')',false); saveState(); }
@@ -350,14 +356,21 @@
   function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; const g=Math.floor(state.bank*interestRate()); if(g>0) state.bank+=g; } }
   function buyCredit(){ if(state.debt>0||state.creditLevel>=CREDIT_LIMITS.length-1) return; const cost=CREDIT_COSTS[state.creditLevel]; if(state.credits<cost) return; state.credits-=cost; state.creditLevel++; updateUI(); renderBank(); saveState(); }
   function buyInterest(){ if(state.debt>0||!state.vault||state.interestLevel>=INT_RATES.length-1) return; const cost=INT_COSTS[state.interestLevel]; if(state.credits<cost) return; state.credits-=cost; state.interestLevel++; updateUI(); renderBank(); saveState(); }
-  function fullReset(){ state.credits=START; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; state.introSeen=false; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
+  function fullReset(){ state.credits=START; state.jackpot=JP_BASE; state.bet=50; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; state.introSeen=false; state.helpSeen=[]; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
+  const TXT_INTRO="¡MIAU! SOY KITTY. 🐱 BIENVENIDO A KITTY'S SLOTS.||TIRÁ LA PALANCA O TOCÁ GIRAR PARA JUGAR. ANTES, AJUSTÁ TU APUESTA.||PARA GANAR, FIJATE EN LA LISTA DE COMBINACIONES Y ARMÁ LAS QUE MÁS PAGAN. ¡3 GATOS = JACKPOT! 🐱||Y OJO CON LOS HUESOS DE PESCADO 🦴 — SUS ESPINAS PINCHAN TU BOLSILLO.||EN LA TIENDA ★ MEJORÁS TUS CHANCES. ¡SUERTE! 🐾";
+  const TXT_BANK_BROKE="¡MIAU! 🙀 TE QUEDASTE SIN CRÉDITOS...||TRANQUI, TE ABRÍ EL BANCO. PEDÍ UN PRÉSTAMO Y SEGUÍ JUGANDO.||VAS A DEBER UN POCO MÁS Y LA DEUDA CRECE CADA GIRO. PAGALA CUANDO GANES.||¡LA PRÓXIMA LA SACÁS! 🐾";
+  const TXT_BANK_RICH="¡MIAU! 😺 ¡MIRÁ CÓMO CRECÉS!||TE ABRÍ EL BANCO 🏦. GUARDÁ PLATA EN LA CAJA FUERTE Y QUEDA A SALVO DE LOS HUESITOS 🦴.||Y SI ALGUNA VEZ TE QUEDÁS CORTO, PEDÍ UN PRÉSTAMO PARA SEGUIR.||¡SEGUÍ ASÍ! 🐾";
+  const TXT_BANK="EL BANCO 🏦 TIENE DOS COSAS:||💰 CAJA FUERTE: GUARDÁ PLATA A SALVO DE LOS HUESITOS 🦴.||🪙 PRÉSTAMO: SI TE QUEDÁS CORTO, PEDÍS $1.000 (DEBÉS UN POCO MÁS Y LA DEUDA CRECE CADA GIRO).||PAGALA CUANDO GANES.";
+  const HELP_TOPICS=[ {id:'intro',label:'🎮 Cómo jugar',text:TXT_INTRO}, {id:'bank',label:'🏦 Banco y préstamos',text:TXT_BANK} ];
+  function unlockHelp(id){ if(!state.helpSeen) state.helpSeen=[]; if(state.helpSeen.indexOf(id)<0){ state.helpSeen.push(id); saveState(); } }
+  function renderHelp(){ var el=document.getElementById('helpBody'); if(!el) return; var seen=state.helpSeen||[]; var h=''; if(!seen.length){ h+='<div class="bank-note">Todavía no desbloqueaste explicaciones. ¡Jugá y Kitty te irá enseñando! 🐱</div>'; } else { h+='<div class="bank-note">¿Qué querés que te explique Kitty? 🐱</div>'; HELP_TOPICS.forEach(function(t){ if(seen.indexOf(t.id)>=0) h+='<button class="help-item" data-id="'+t.id+'">'+t.label+'</button>'; }); } el.innerHTML=h; var bs=el.querySelectorAll('.help-item'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ var id=this.getAttribute('data-id'); document.getElementById('helpModal').classList.remove('open'); var t=null,j; for(j=0;j<HELP_TOPICS.length;j++){ if(HELP_TOPICS[j].id===id) t=HELP_TOPICS[j]; } if(t) showCat(t.text); }); } }
   var _catTimer=null, _catFull='', _catTyping=false, _catWaiting=false, _introText='';
   function typeCat(text){ _catFull=text; _catTyping=true; var el=document.getElementById('catSpeech'), cont=document.getElementById('catOk'); if(cont) cont.style.visibility='hidden'; if(el) el.textContent=''; var i=0; clearInterval(_catTimer); _catTimer=setInterval(function(){ if(i>=_catFull.length){ clearInterval(_catTimer); _catTyping=false; if(cont) cont.style.visibility='visible'; return; } var ch=_catFull.charAt(i); if(el){ el.textContent += (ch==='|') ? String.fromCharCode(10) : ch; } if(ch!==' ' && ch!=='|') sfx(715+Math.random()*90,0.02,0.035,'square'); i++; }, 42); }
   function catSkip(){ if(!_catTyping) return; clearInterval(_catTimer); _catTyping=false; var el=document.getElementById('catSpeech'), cont=document.getElementById('catOk'); if(el) el.textContent=_catFull.split('|').join(String.fromCharCode(10)); if(cont) cont.style.visibility='visible'; }
   function closeCat(){ var m=document.getElementById('catModal'); if(m) m.classList.remove('open'); catMode=false; }
   function showCat(text){ var m=document.getElementById('catModal'); if(!m) return; var cont=document.getElementById('catOk'); if(cont) cont.textContent='▶ TOCÁ PARA SEGUIR'; m.classList.add('open'); if(state.musicOn){ catMode=true; if(!musicPlaying) startMusic(); } typeCat(text); }
-  function showIntro(){ var m=document.getElementById('catModal'); if(!m) return; _introText="¡MIAU! SOY KITTY. 🐱 BIENVENIDO A KITTY'S SLOTS.||TIRÁ LA PALANCA O TOCÁ GIRAR PARA JUGAR. ANTES, AJUSTÁ TU APUESTA.||PARA GANAR, FIJATE EN LA LISTA DE COMBINACIONES Y ARMÁ LAS QUE MÁS PAGAN. ¡3 GATOS = JACKPOT! 🐱||Y OJO CON LOS HUESOS DE PESCADO 🦴 — SUS ESPINAS PINCHAN TU BOLSILLO.||EN LA TIENDA ★ MEJORÁS TUS CHANCES. ¡SUERTE! 🐾"; _catWaiting=true; var el=document.getElementById('catSpeech'); if(el) el.textContent=''; var cont=document.getElementById('catOk'); if(cont){ cont.textContent='▶ TOCÁ PARA EMPEZAR'; cont.style.visibility='visible'; } m.classList.add('open'); }
-  function unlockBank(){ if(state.bankUnlocked) return; state.bankUnlocked=true; var b=document.getElementById('bankBtn'); if(b){ b.disabled=false; b.textContent='🏦 BANCO'; } setMsg('🏦 ¡BANCO DESBLOQUEADO!',false); showCat('¡MIAU! 🙀 TE QUEDASTE SIN CRÉDITOS...||TRANQUI, TE ABRÍ EL BANCO. PEDÍ UN PRÉSTAMO Y SEGUÍ JUGANDO.||VAS A DEBER UN POCO MÁS Y LA DEUDA CRECE CADA GIRO. PAGALA CUANDO GANES.||¡LA PRÓXIMA LA SACÁS! 🐾'); saveState(); }
+  function showIntro(){ var m=document.getElementById('catModal'); if(!m) return; unlockHelp('intro'); _introText=TXT_INTRO; _catWaiting=true; var el=document.getElementById('catSpeech'); if(el) el.textContent=''; var cont=document.getElementById('catOk'); if(cont){ cont.textContent='▶ TOCÁ PARA EMPEZAR'; cont.style.visibility='visible'; } m.classList.add('open'); }
+  function unlockBank(reason){ if(state.bankUnlocked) return; state.bankUnlocked=true; var b=document.getElementById('bankBtn'); if(b){ b.disabled=false; b.textContent='🏦 BANCO'; } unlockHelp('bank'); setMsg('🏦 ¡BANCO DESBLOQUEADO!',false); showCat(reason==='rich'?TXT_BANK_RICH:TXT_BANK_BROKE); saveState(); }
   function gameOver(){ document.getElementById('goDebt').textContent=fmt(state.debt); document.getElementById('gameover').classList.add('open'); }
   function checkBroke(){ if(state.credits<1 && !state.bankUnlocked) unlockBank(); if(state.credits<1 && state.bank<1 && !loanAvailable()){ gameOver(); } }
   function buyUpg(k){ const u=UPG[k], lv=state.upg[k]; if(lv>=u.max||state.debt>0) return; const cost=u.cost(lv); if(state.credits<cost) return; state.credits-=cost; state.upg[k]++; rebuildPool(); updateUI(); renderShop(); renderPaytable(); saveState(); }
@@ -384,8 +397,8 @@
 
   document.getElementById('spinBtn').addEventListener('click', spin);
   document.getElementById('lever').addEventListener('click', pull);
-  document.getElementById('maxBet').addEventListener('click', function(){ setBet(state.credits); });
-  document.getElementById('betInput').addEventListener('change', function(){ setBet(parseInt(this.value,10)); });
+  var _mb=document.getElementById('maxBet'); if(_mb) _mb.addEventListener('click', function(){ setBet(state.credits); });
+  var _bi2=document.getElementById('betInput'); if(_bi2) _bi2.addEventListener('change', function(){ setBet(parseInt(this.value,10)); });
   document.getElementById('bankBtn').addEventListener('click', function(){ if(!state.bankUnlocked) return; renderBank(); document.getElementById('bank').classList.add('open'); });
   document.getElementById('bankClose').addEventListener('click', function(){ document.getElementById('bank').classList.remove('open'); });
   document.getElementById('bank').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
@@ -396,13 +409,15 @@
   document.getElementById('musicIcon').addEventListener('click', function(){ state.musicOn=!state.musicOn; if(state.musicOn){ musicStarted=true; startMusic(); } else stopMusic(); syncSoundIcons(); saveState(); });
   document.getElementById('sfxIcon').addEventListener('click', function(){ state.sfxOn=!state.sfxOn; if(state.sfxOn) ac(); syncSoundIcons(); saveState(); });
   document.getElementById('accIcon').addEventListener('click', function(){ setAuthMsg('',''); renderAccount(); document.getElementById('authModal').classList.add('open'); });
+  document.getElementById('helpIcon').addEventListener('click', function(){ renderHelp(); document.getElementById('helpModal').classList.add('open'); });
+  document.getElementById('helpClose').addEventListener('click', function(){ document.getElementById('helpModal').classList.remove('open'); });
+  document.getElementById('helpModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
   document.getElementById('authClose').addEventListener('click', function(){ document.getElementById('authModal').classList.remove('open'); });
   document.getElementById('authModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
   document.getElementById('authSignIn').addEventListener('click', function(){ signIn(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
   document.getElementById('authSignUp').addEventListener('click', function(){ signUp(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
   document.getElementById('authSignOut').addEventListener('click', function(){ signOutUser(); });
   document.getElementById('goReset').addEventListener('click', function(){ fullReset(); document.getElementById('gameover').classList.remove('open'); setMsg('NUEVA PARTIDA',false); });
-  var _rb=document.getElementById('resetBtn'); if(_rb){ _rb.addEventListener('click', function(){ if(spinning) return; if(confirm('¿Resetear TODO a cero? (botón temporal de prueba)')){ fullReset(); setMsg('PARTIDA REINICIADA',false); } }); }
   var _sb=document.getElementById('superBtn'); if(_sb){ _sb.addEventListener('click', activateSuper); }
   setInterval(updateSuperUI, 300);
   REEL.forEach(function(r,i){ r.addEventListener('click', function(){ toggleHold(i); }); });
@@ -410,7 +425,7 @@
   document.getElementById('gambleCash').addEventListener('click', hideGamble);
   window.addEventListener('pointerdown', firstGesture, {once:false});
 
-  renderLights(); renderBetPresets(); renderPalette(); renderPaytable();
+  renderLights(); renderBetPresets(); renderPalette(); renderPaytable(); var _ver=document.getElementById('ver'); if(_ver) _ver.textContent='v'+VERSION;
   rebuildPool();
   loadState().then(function(){
     refreshAfterLoad();

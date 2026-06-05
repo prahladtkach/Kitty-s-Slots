@@ -16,6 +16,7 @@
     <button class="iconbtn" id="musicIcon" title="Música" aria-label="Música"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="5" y="2" width="7" height="2"/><rect x="5" y="3" width="2" height="7"/><rect x="10" y="3" width="2" height="7"/><rect x="3" y="9" width="4" height="3"/><rect x="8" y="9" width="4" height="3"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
     <button class="iconbtn" id="sfxIcon" title="Sonido" aria-label="Sonido"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="2" y="6" width="3" height="4"/><rect x="5" y="5" width="1" height="6"/><rect x="6" y="4" width="1" height="8"/><rect x="7" y="3" width="1" height="10"/><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
     <button class="iconbtn" id="accIcon" title="Cuenta" aria-label="Cuenta"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="6" y="2" width="4" height="4"/><rect x="4" y="9" width="8" height="2"/><rect x="3" y="11" width="10" height="3"/></g></svg></button>
+    <button class="iconbtn" id="helpIcon" title="Ayuda" aria-label="Ayuda"><span class="qm">?</span></button>
   </div>
   <div class="wrap">
     <h1>KITTY'S <span>SLOTS</span></h1>
@@ -55,11 +56,6 @@
 
     <div class="controls">
       <div class="betbar" id="betbar"></div>
-      <div class="betbar">
-        <span style="font-family:'Press Start 2P';font-size:8px;color:var(--muted)">APUESTA</span>
-        <input type="number" id="betInput" min="1" value="25">
-        <button class="bet" id="maxBet">MÁX</button>
-      </div>
       <button class="pixbtn spin-btn" id="spinBtn">GIRAR</button>
       <div class="rowbtns">
         <button class="minibtn shop" id="shopBtn">★ TIENDA</button>
@@ -73,7 +69,7 @@
       <div class="pt-body" id="ptBody"></div>
     </details>
 
-    <footer>KITTY'S SLOTS DELUXE</footer>
+    <footer>KITTY'S SLOTS DELUXE · <span id="ver"></span></footer>
   </div>
 
   <div class="overlay" id="shop">
@@ -128,6 +124,13 @@
     </div>
   </div>
 
+  <div class="overlay" id="helpModal">
+    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--cyan)">
+      <button class="modal-close" id="helpClose">X</button>
+      <h3 style="color:var(--cyan)">❔ AYUDA DE KITTY</h3>
+      <div id="helpBody"></div>
+    </div>
+  </div>
   <div class="overlay cat-overlay" id="catModal">
     <div class="cat-scene">
       <div class="cat-stage"><img class="cat-img" src="cat-mascot.png" alt="Kitty"></div>
