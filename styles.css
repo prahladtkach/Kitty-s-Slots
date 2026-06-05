@@ -152,7 +152,7 @@
   .auth-btns{display:flex;gap:10px;flex-wrap:wrap}
   .auth-btns .minibtn{flex:1;min-width:120px;text-align:center;font-size:13px;padding:16px 14px}
   .cat-login{display:none;margin:12px auto 4px;font-size:13px;padding:15px 18px;text-align:center;color:#fff;background:var(--magenta);box-shadow:0 0 0 3px var(--dark)}
-  .auth-google{display:block;width:100%;font-size:13px;padding:15px 14px;text-align:center;color:#3c4043;background:#fff;box-shadow:0 0 0 3px var(--dark)}
+  #authModal .auth-google{display:block;width:100%;font-size:13px;padding:16px 14px;text-align:center;color:var(--text);background:var(--panel);box-shadow:0 0 0 3px var(--dark)}
   .auth-or{text-align:center;font-size:11px;color:var(--muted);margin:4px 0 10px;letter-spacing:1px}
   .auth-msg{font-size:15px;line-height:1.5;min-height:18px;margin-top:8px}
   .auth-msg.err{color:var(--red)}
