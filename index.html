@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Kitty's Slots Deluxe · PUBLICA (v1.0) · esta va a GitHub Pages -->
+<!-- Kitty's Slots Deluxe · DESARROLLO (v1.1-dev) · para TESTEAR, no subir -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -50,17 +50,23 @@
     </div>
 
     <div class="money">
-      <span class="cr">CRED: <b id="credits">1,000</b></span>
-      <span class="debt" id="debtBox">DEUDA: -<span id="debt">0</span></span>
+      <span class="cr">CRED: <b id="credits">$3.000</b></span>
+      <span class="debt" id="debtBox">DEUDA: -$<span id="debt">0</span></span>
     </div>
     <div id="debtWarn" style="display:none;width:min(440px,97vw);margin-top:8px;text-align:center;font-family:'VT323';font-size:17px;color:var(--red);line-height:1.4">&#9888; La deuda crece 5% por giro. El préstamo solo aparece si te quedás corto, hasta tu línea de crédito (ampliable en el Banco). Si no podés pagar &rarr; GAME OVER.</div>
 
     <div class="controls">
       <div class="betbar" id="betbar"></div>
+      <div class="betbar">
+        <span style="font-family:'Press Start 2P';font-size:8px;color:var(--muted)">APUESTA</span>
+        <input type="number" id="betInput" min="1" value="25">
+        <button class="bet" id="maxBet">MÁX</button>
+      </div>
       <button class="pixbtn spin-btn" id="spinBtn">GIRAR</button>
       <div class="rowbtns">
         <button class="minibtn shop" id="shopBtn">★ TIENDA</button>
         <button class="minibtn loan" id="bankBtn">🏦 BANCO</button>
+        <button class="minibtn reset" id="resetBtn">↺ RESET</button>
       </div>
       <div class="palrow" id="palrow"><span class="pl">PALETA:</span></div>
     </div>
@@ -97,6 +103,8 @@
       <h3 style="color:var(--violet)">👤 CUENTA</h3>
       <div id="authLoggedOut">
         <div class="auth-note">Creá una cuenta o entrá para guardar tu progreso en la nube ☁️ y que te siga en cualquier dispositivo.</div>
+        <button class="minibtn auth-google" id="authGoogle">🔵 ENTRAR CON GOOGLE</button>
+        <div class="auth-or">— o con email —</div>
         <div class="auth-row">
           <input class="auth-input" id="authEmailInput" type="email" placeholder="email" autocomplete="email">
           <input class="auth-input" id="authPassInput" type="password" placeholder="contraseña (mín. 6)" autocomplete="current-password">
@@ -132,10 +140,17 @@
       <div id="helpBody"></div>
     </div>
   </div>
+  <div class="overlay" id="limbo">
+    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--violet);text-align:center">
+      <h3 style="color:var(--violet)">👻 EL LIMBO</h3>
+      <div id="limboBody"></div>
+    </div>
+  </div>
   <div class="overlay cat-overlay" id="catModal">
     <div class="cat-scene">
       <div class="cat-stage"><img class="cat-img" src="cat-mascot.png" alt="Kitty"></div>
       <div class="cat-text" id="catSpeech"></div>
+      <button class="minibtn cat-login" id="catLogin">🔐 INICIAR SESIÓN</button>
       <div class="cat-continue" id="catOk">▶ TOCÁ PARA SEGUIR</div>
     </div>
   </div>
