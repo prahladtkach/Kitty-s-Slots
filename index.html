@@ -16,6 +16,7 @@
   <div class="sound-icons">
     <button class="iconbtn" id="musicIcon" title="Música" aria-label="Música"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="5" y="2" width="7" height="2"/><rect x="5" y="3" width="2" height="7"/><rect x="10" y="3" width="2" height="7"/><rect x="3" y="9" width="4" height="3"/><rect x="8" y="9" width="4" height="3"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
     <button class="iconbtn" id="sfxIcon" title="Sonido" aria-label="Sonido"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="2" y="6" width="3" height="4"/><rect x="5" y="5" width="1" height="6"/><rect x="6" y="4" width="1" height="8"/><rect x="7" y="3" width="1" height="10"/><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
+    <button class="iconbtn" id="profIcon" title="Perfil" aria-label="Perfil"><span id="profIconImg" class="cat"></span></button>
     <button class="iconbtn" id="accIcon" title="Cuenta" aria-label="Cuenta"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="6" y="2" width="4" height="4"/><rect x="4" y="9" width="8" height="2"/><rect x="3" y="11" width="10" height="3"/></g></svg></button>
     <button class="iconbtn" id="helpIcon" title="Ayuda" aria-label="Ayuda"><span class="qm">?</span></button>
   </div>
@@ -25,7 +26,7 @@
 
     <div class="jackpot">
       <div class="jp-label">JACKPOT</div>
-      <div class="jp-amount" id="jpAmount">2,500</div>
+      <div class="jp-amount" id="jpAmount">$2,500</div>
     </div>
 
     <div class="cabinet" id="cabinet">
@@ -67,6 +68,7 @@
         <button class="minibtn shop" id="shopBtn">★ TIENDA</button>
         <button class="minibtn loan" id="bankBtn">🏦 BANCO</button>
         <button class="minibtn reset" id="resetBtn">↺ RESET</button>
+        <button class="minibtn" id="limboBtn">👻 LIMBO</button>
       </div>
       <div class="palrow" id="palrow"><span class="pl">PALETA:</span></div>
     </div>
@@ -142,7 +144,7 @@
   </div>
   <div class="overlay" id="limbo">
     <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--violet);text-align:center">
-      <h3 style="color:var(--violet)">👻 EL LIMBO</h3>
+      <div class="limbo-head"><h3 style="color:var(--violet)">EL LIMBO</h3><img class="corner-cat" id="cornerCat" src="cat-mascot.png" alt="Kitty"><div class="corner-cat-bubble" id="cornerCatBubble"></div></div>
       <div id="limboBody"></div>
     </div>
   </div>
@@ -152,6 +154,52 @@
       <div class="cat-text" id="catSpeech"></div>
       <button class="minibtn cat-login" id="catLogin">🔐 INICIAR SESIÓN</button>
       <div class="cat-continue" id="catOk">▶ TOCÁ PARA SEGUIR</div>
+    </div>
+  </div>
+
+  <div class="toast" id="loginToast">
+    <span class="toast-cat">🐱</span>
+    <div class="toast-body">
+      <div class="toast-txt">¿Todavía sin cuenta?<br>Guardá tu progreso ☁️</div>
+      <button class="toast-btn" id="toastLogin">INICIAR SESIÓN</button>
+    </div>
+    <button class="toast-x" id="toastClose">✕</button>
+  </div>
+
+  <div class="overlay" id="profile">
+    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--violet)">
+      <button class="modal-close" id="profileClose">X</button>
+      <div id="profileView">
+        <div class="pf-avatar" id="pfAvatar"><span id="pfAvatarImg" class="cat"></span></div>
+        <div class="pf-name"><span id="pfName">Jugador</span><span class="edit" id="pfEdit">✏️</span></div>
+        <div class="pf-title" id="pfTitle"></div>
+        <button class="pf-rank" id="pfGoRank"><span class="pos">🏆</span><span class="sub">Ver rankings<br>globales →</span></button>
+        <div class="pf-stats">
+          <div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val" id="pfEcto">0</span></div>
+          <div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val" id="pfAsc">0</div></div>
+          <div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val" id="pfRuns">0</div></div>
+          <div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val" id="pfWorth">$0</div></div>
+          <div class="pf-stat"><div class="lbl">🎰 Mejor bote</div><div class="val" id="pfJP">$0</div></div>
+        </div>
+        <button class="pf-btn" id="pfGoCos">🎨 CAMBIAR LOOK</button>
+        <div class="pf-soon">🤝 Pronto: agregá amigos y desafialos (¡al truco! 🃏)</div>
+      </div>
+      <div id="cosmeticsView" style="display:none">
+        <div class="pf-cos-tabs">
+          <button class="pf-cos-tab on" data-ct="avatar">🐱 AVATAR</button>
+          <button class="pf-cos-tab" data-ct="frame">🖼️ MARCO</button>
+          <button class="pf-cos-tab" data-ct="title">🏷️ TÍTULO</button>
+          <button class="pf-cos-tab" data-ct="tema">🎨 TEMA</button>
+        </div>
+        <div class="pf-cos-grid" id="pfCosGrid"></div>
+        <button class="pf-btn ghost" id="pfGoProfile">← VOLVER AL PERFIL</button>
+      </div>
+      <div id="rankingsView" style="display:none">
+        <div class="pf-rk-head">🏆 Ranking general</div>
+        <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mejor bote + plata</div>
+        <div class="pf-rk-list" id="pfRkList"></div>
+        <button class="pf-btn ghost" id="pfRankBack">← VOLVER AL PERFIL</button>
+      </div>
     </div>
   </div>
 
