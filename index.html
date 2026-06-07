@@ -22,7 +22,7 @@
   </div>
   <div class="wrap">
     <h1>KITTY'S <span>SLOTS</span></h1>
-    <div class="tagline">&gt; 9 vidas, una palanca... let's go gambling!🐱</div>
+    <div class="tagline">&gt; 9 vidas, una palanca... ¡Let's Go Gambling! 🐱</div>
 
     <div class="jackpot">
       <div class="jp-label">JACKPOT</div>
@@ -58,6 +58,7 @@
 
     <div class="controls">
       <div class="betbar" id="betbar"></div>
+      <div class="bet-lock-hint" id="betLockHint" style="display:none">🔒 Apuesta libre (escribí el monto) a partir de $10.000</div>
       <div class="betbar">
         <span style="font-family:'Press Start 2P';font-size:8px;color:var(--muted)">APUESTA</span>
         <input type="number" id="betInput" min="1" value="25">
@@ -67,7 +68,7 @@
       <div class="rowbtns">
         <button class="minibtn shop" id="shopBtn">★ TIENDA</button>
         <button class="minibtn loan" id="bankBtn">🏦 BANCO</button>
-        <button class="minibtn" id="limboBtn">👻 LIMBO</button>
+        <button class="minibtn" id="limboBtn" style="display:none">👻 LIMBO</button>
       </div>
       <div class="palrow" id="palrow"><span class="pl">PALETA:</span></div>
     </div>
@@ -142,9 +143,13 @@
     </div>
   </div>
   <div class="overlay" id="limbo">
-    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--violet);text-align:center">
-      <div class="limbo-head"><h3 style="color:var(--violet)">EL LIMBO</h3><img class="corner-cat" id="cornerCat" src="cat-mascot.png" alt="Kitty"><div class="corner-cat-bubble" id="cornerCatBubble"></div></div>
-      <div id="limboBody"></div>
+    <div class="limbo-scene">
+      <div id="limboTabs"></div>
+      <div class="limbo-window">
+        <img class="limbo-cat" id="cornerCat" src="cat-mascot.png" alt="Kitty">
+        <div class="limbo-bubble" id="cornerCatBubble"></div>
+        <div id="limboBody"></div>
+      </div>
     </div>
   </div>
   <div class="overlay cat-overlay" id="catModal">
@@ -198,6 +203,22 @@
         <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mejor bote + plata</div>
         <div class="pf-rk-list" id="pfRkList"></div>
         <button class="pf-btn ghost" id="pfRankBack">← VOLVER AL PERFIL</button>
+      </div>
+      <div id="otherProfileView" style="display:none">
+        <button class="pf-btn ghost" id="pfOtherBack">← VOLVER AL RANKING</button>
+        <div class="pf-other-card" id="pfOtherCard">
+          <div class="pf-avatar" id="pfOtherAvatar"><span id="pfOtherAvatarImg" class="cat"></span></div>
+          <div class="pf-name"><span id="pfOtherName">Jugador</span></div>
+          <div class="pf-title" id="pfOtherTitle"></div>
+          <div class="pf-other-rank" id="pfOtherRank"></div>
+          <div class="pf-stats">
+            <div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val" id="pfOtherEcto">0</span></div>
+            <div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val" id="pfOtherAsc">0</div></div>
+            <div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val" id="pfOtherRuns">0</div></div>
+            <div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val" id="pfOtherWorth">$0</div></div>
+            <div class="pf-stat"><div class="lbl">🎰 Mejor bote</div><div class="val" id="pfOtherJP">$0</div></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
