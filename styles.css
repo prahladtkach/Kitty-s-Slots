@@ -501,3 +501,6 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .pf-rku-stat{ display:flex; justify-content:space-between; align-items:center; background:var(--panel2); box-shadow:inset 0 0 0 2px var(--dark); border-radius:6px; padding:9px 13px; }
 .pf-rku-stat span{ font-family:'VT323',monospace; font-size:16px; color:var(--muted); }
 .pf-rku-stat b{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--cyan); }
+
+/* Línea de puesto + nombre del avatar en el mini-perfil del ranking */
+.pf-rku-meta{ font-family:'VT323',monospace; font-size:17px; color:var(--gold); text-align:center; margin:8px 0 12px; line-height:1.5; }

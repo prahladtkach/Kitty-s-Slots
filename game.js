@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.39) · FIXes: (1) reset deja el Limbo bloqueado (+ Limbo arranca bloqueado para nuevos, se desbloquea al 1er game over); (2) medallas muestran nombre/desc al tocarlas (mobile-friendly); (3) click en usuario del ranking abre mini-perfil con avatar/marco/título/medallas/stats. Cache busting → 2.39.
+// Kitty's Slots Deluxe · versión pública (v2.41) · Mini-perfil del ranking rediseñado al estilo anterior: muestra Puesto #N + nombre del avatar + stats con el mismo layout del perfil (Ectofichas wide + grid 2x2). Medallas ahora clickeables también acá (muestran nombre/desc). Cache busting → 2.41.
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -30,7 +30,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=1;
-  const VERSION="2.39";
+  const VERSION="2.41";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -387,22 +387,25 @@
   function _rkEsc(x){ return String(x==null?'':x).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   function renderRankings(){ var box=document.getElementById('pfRkList'); if(!box) return; var _u=document.getElementById('pfRkUser'); if(_u){ _u.style.display='none'; } box.style.display='block'; if(!fbReady||!fbUser){ box.innerHTML='<div class="pf-rk-msg">🔒 Iniciá sesión (arriba, en el ícono de cuenta) para ver y competir en el ranking global.</div>'; return; } box.innerHTML='<div class="pf-rk-msg">Cargando ranking…</div>'; fetchTop('score',30).then(function(rows){ if(rows===null){ box.innerHTML='<div class="pf-rk-msg">No se pudo cargar el ranking.<br>(¿Pegaste las reglas de Firebase para «leaderboard»?)</div>'; return; } if(!rows.length){ box.innerHTML='<div class="pf-rk-msg">Nadie en el ranking todavía.<br>¡Sé el primero! 🐱</div>'; return; } _rkRows=rows; var h='', inTop=false, i; for(i=0;i<rows.length;i++){ var r=rows[i], me=(r._uid===fbUser.uid); if(me) inTop=true; h+='<div class="pf-rk-row'+(me?' me':'')+'" data-rkuid="'+r._uid+'"><span class="pf-rk-pos">#'+(i+1)+'</span><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(r.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(r.score||0)+' pts</span></div>'; } if(!inTop){ var e=state.eq||{}; h+='<div class="pf-rk-foot"><div class="pf-rk-row me"><span class="pf-rk-pos">Vos</span><span class="cat" style="background-position:'+pfCatPos(e.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(e.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(lbScore(state.life))+' pts</span></div></div>'; } box.innerHTML=h; var rws=box.querySelectorAll('.pf-rk-row[data-rkuid]'); for(var j=0;j<rws.length;j++){ rws[j].addEventListener('click', function(){ showRkUser(this.getAttribute('data-rkuid')); }); } }); }
   function medalsForUID(uid){ var out=[]; if(STAFF_UIDS.indexOf(uid)>=0) out.push('staff'); if(BETA_UIDS.indexOf(uid)>=0) out.push('betatester'); return out; }
-  function showRkUser(uid){ var r=null; for(var i=0;i<_rkRows.length;i++){ if(_rkRows[i]._uid===uid){ r=_rkRows[i]; break; } } if(!r) return; var box=document.getElementById('pfRkList'), pane=document.getElementById('pfRkUser'); if(!pane) return; var tn=pfTitleName(r.title||'none'); var meds=medalsForUID(uid); var medHTML=''; if(meds.length){ meds.forEach(function(k){ medHTML+='<span class="pf-medal">'+MEDALS[k].svg+'</span>'; }); } var h='<button class="pf-rku-back" id="pfRkuBack">← Volver al ranking</button>';
+  function avatarName(id){ for(var i=0;i<PF_AVATARS.length;i++){ if(PF_AVATARS[i].id===id) return PF_AVATARS[i].name; } return (id||'').toUpperCase(); }
+  function showRkUser(uid){ var r=null, pos=0; for(var i=0;i<_rkRows.length;i++){ if(_rkRows[i]._uid===uid){ r=_rkRows[i]; pos=i+1; break; } } if(!r) return; var box=document.getElementById('pfRkList'), pane=document.getElementById('pfRkUser'); if(!pane) return; var tn=pfTitleName(r.title||'none'); var meds=medalsForUID(uid); var medHTML=''; if(meds.length){ meds.forEach(function(k){ medHTML+='<span class="pf-medal" data-medal="'+k+'" title="'+MEDALS[k].name+' — '+MEDALS[k].desc+'">'+MEDALS[k].svg+'</span>'; }); } var h='<button class="pf-rku-back" id="pfRkuBack">← Volver al ranking</button>';
     h+='<div class="pf-rku-card">';
     h+='<div class="pf-avatar '+pfFrameCls(r.frame||'none')+'" style="margin:0 auto 10px"><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span></div>';
     h+='<div class="pf-rku-nick">'+_rkEsc(r.nick||'Jugador')+'</div>';
     h+= tn? '<div class="pf-title"><span class="title-pill">'+tn+'</span></div>' : '';
     h+= medHTML? '<div class="pf-medals" style="display:flex">'+medHTML+'</div>' : '';
-    h+='<div class="pf-rku-stats">';
-    h+='<div class="pf-rku-stat"><span>✨ Ascensiones</span><b>'+fmt(r.asc||0)+'</b></div>';
-    h+='<div class="pf-rku-stat"><span>👻 Ectofichas</span><b>'+fmt(r.ecto||0)+'</b></div>';
-    h+='<div class="pf-rku-stat"><span>🎰 Mayor ganancia</span><b>$'+fmt(r.bestJP||0)+'</b></div>';
-    h+='<div class="pf-rku-stat"><span>💰 Récord plata</span><b>$'+fmt(r.bestWorth||0)+'</b></div>';
-    h+='<div class="pf-rku-stat"><span>🎲 Partidas</span><b>'+fmt(r.runs||0)+'</b></div>';
-    h+='<div class="pf-rku-stat"><span>🏆 Puntaje</span><b>'+fmt(r.score||0)+' pts</b></div>';
+    h+= medHTML? '<div class="pf-medal-detail" id="rkuMedalDetail"></div>' : '';
+    h+='<div class="pf-rku-meta">🏆 Puesto #'+pos+'<br>🐾 '+avatarName(r.avatar||'calico')+'</div>';
+    h+='<div class="pf-stats">';
+    h+='<div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val">'+fmt(r.ecto||0)+'</span></div>';
+    h+='<div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val">'+fmt(r.asc||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val">'+fmt(r.runs||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val">$'+fmt(r.bestWorth||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">🎰 Mayor ganancia</div><div class="val">$'+fmt(r.bestJP||0)+'</div></div>';
     h+='</div></div>';
     pane.innerHTML=h; box.style.display='none'; pane.style.display='block';
-    var bk=document.getElementById('pfRkuBack'); if(bk) bk.addEventListener('click', function(){ pane.style.display='none'; box.style.display='block'; }); }
+    var bk=document.getElementById('pfRkuBack'); if(bk) bk.addEventListener('click', function(){ pane.style.display='none'; box.style.display='block'; });
+    var mels=pane.querySelectorAll('.pf-medal[data-medal]'); for(var mi=0;mi<mels.length;mi++){ mels[mi].addEventListener('click', function(){ var k=this.getAttribute('data-medal'); var dt=document.getElementById('rkuMedalDetail'); if(dt&&MEDALS[k]){ dt.innerHTML='<b>'+MEDALS[k].name+'</b><br>'+MEDALS[k].desc; dt.style.display='block'; } }); } }
 
 
   function confetti(n){ const real=['#ffd23f','#ff3d8b','#39e0e6','#a45cff','#5bd75b']; for(let i=0;i<n;i++){ const c=document.createElement('div'); c.className='confetti'; c.style.left=(50+(Math.random()*44-22))+'vw'; c.style.top='30vh'; c.style.background=real[i%real.length]; c.style.transform='translateX('+((Math.random()*2-1)*250)+'px)'; c.style.animation='fall '+(0.9+Math.random())+'s steps(12) forwards'; c.style.animationDelay=(Math.random()*0.2)+'s'; document.body.appendChild(c); setTimeout(function(){c.remove();},2300); } }
