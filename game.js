@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.47) · Precios de la tienda divididos por 1.5 (punto intermedio entre los originales y el rebalanceo ×2.5). Afecta: win, combo, cat, bone, hold, super y la habilidad doble-o-nada. Los ingresos no se tocaron. Cache busting → 2.47.
+// Kitty's Slots Deluxe · versión pública (v2.49) · Aviso de actualización: al abrir, el juego consulta version.json y si hay una versión más nueva, Kitty aparece (estilo bienvenida) con un botón ACTUALIZAR que fuerza la recarga. Requiere subir version.json junto con los demás archivos. Cache busting → 2.49.
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -22,7 +22,7 @@
   const PAY3={'🐟':30,'💎':12,'7️⃣':20,'⭐':7,'🔔':4,'🍒':6,'🍋':2.5};
   const PAIR2={'🍒':3,'🍋':0.5,'🔔':1,'⭐':1.5,'💎':3,'🐟':4};
   const CH1=1.5;
-  const PRESETS=[10,50,100,500];
+  const PRESETS=[50,100,500];
   const LOAN=1000, START=3000, JP_BASE=10000, JP_BASE_MULT=90, KEY='kitty-slots-deluxe', INTEREST=0.03, LOAN_FEE=0.1, SKILL_UNLOCK=5000, CAJA_COST=2000, DISCOUNT_BASE=10800000;
   const CREDIT_LIMITS=[6000,12000,22000,40000,70000,110000,170000];
   const CREDIT_COSTS=[800,2000,5000,12000,25000,45000];
@@ -31,8 +31,8 @@
   const ECON_VERSION=3;
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
-  const MIN_BET=1;
-  const VERSION="2.47";
+  const MIN_BET=50;
+  const VERSION="2.49";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -55,7 +55,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:25,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,econVersion:ECON_VERSION};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,econVersion:ECON_VERSION};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'], _broke=false, _lifeUsed=false, _tripleStreak=0, _econReset=false, _rkRows=[];
   const pool=[];
@@ -95,7 +95,7 @@
     if(!state.meta||typeof state.meta!=='object') state.meta={spirits:0,chest:0,credit:0,luck:0};
     if(typeof state.meta.spirits!=='number') state.meta.spirits=0; if(typeof state.meta.chest!=='number') state.meta.chest=0; if(typeof state.meta.credit!=='number') state.meta.credit=0; if(typeof state.meta.luck!=='number') state.meta.luck=0; if(typeof state.meta.cap!=='number') state.meta.cap=0; if(typeof state.meta.armor!=='number') state.meta.armor=0; if(typeof state.meta.jpboost!=='number') state.meta.jpboost=0; if(typeof state.limboIntroV2!=='boolean') state.limboIntroV2=false; if(typeof state.meta.respin!=='number') state.meta.respin=0; if(typeof state.meta.banktope!=='number') state.meta.banktope=0; if(!state.eq||typeof state.eq!=='object') state.eq={avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'}; if(typeof state.eq.nick!=='string') state.eq.nick='Jugador'; if(!state.life||typeof state.life!=='object') state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; if(typeof state.life.deaths!=='number') state.life.deaths=0; if(typeof state.life.bestGamble!=='number') state.life.bestGamble=0; if(typeof state.life.bestCombo!=='number') state.life.bestCombo=0; if(typeof state.life.got777!=='boolean') state.life.got777=false; if(typeof state.life.holyJackpot!=='boolean') state.life.holyJackpot=false; if(state.eq && state.eq.frame==='arcoiris') state.eq.frame='neon'; if(typeof state.musicTheme!=='string'||['suave','remix','densa'].indexOf(state.musicTheme)<0) state.musicTheme='suave'; if(!state.badges||typeof state.badges!=='object') state.badges={}; var _avok=['calico','tuxedo','blanco','negro','naranja','luckycat','mitimiti','alien','retro','sinfoto','highroller','raddkatt','diablitty','grisoscuro','crtty','blacknoir','dicekatt']; if(_avok.indexOf(state.eq.avatar)<0) state.eq.avatar='calico';
     if(typeof state.peak!=='number') state.peak=state.credits||START;
-    if(typeof state.runJackpots!=='number') state.runJackpots=0;
+    if(typeof state.runJackpots!=='number') state.runJackpots=0; if(typeof state.bet!=='number'||state.bet<MIN_BET) state.bet=MIN_BET;
     if(!Array.isArray(state.helpSeen)) state.helpSeen=[];
     if(typeof state.limboUnlocked!=='boolean') state.limboUnlocked=true;
     if(!state.runStart) state.runStart=Date.now();
@@ -111,7 +111,7 @@
     // ===== Reset automático por versión de economía =====
     // Si el save viene de una economía anterior, resetea el PROGRESO una sola vez (preserva look, medallas, nick y preferencias).
     if((d.econVersion||0) < ECON_VERSION){
-      state.credits=START; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false;
+      state.credits=START; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false;
       state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0};
       state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false;
       state.discount=null; state.skillsUnlocked=false;
@@ -424,9 +424,9 @@
     if(_broke){ if(!explainLimboOnce(function(){ openLimboPanel(true); })){ openLimboPanel(true); } return; }
     if(spinning) return;
     hideGamble();
-    if(state.credits<1){ if(!state.bankUnlocked) unlockBank(); if(loanAvailable()){ setMsg('SIN CRÉDITOS — PEDÍ PRÉSTAMO',false); } else { if(!tryNineLives()) gameOver(); } return; }
+    if(state.credits<MIN_BET){ if(!state.bankUnlocked) unlockBank(); if(loanAvailable()){ setMsg('TE FALTA PARA APOSTAR — PEDÍ PRÉSTAMO',false); } else { if(!tryNineLives()) gameOver(); } return; }
     if(state.bet>state.credits){ setMsg('TE FALTA — BAJÁ LA APUESTA O PEDÍ PRÉSTAMO',false); return; }
-    if(state.bet<1){ setMsg('SUBÍ LA APUESTA',false); return; }
+    if(state.bet<MIN_BET){ setMsg('SUBÍ LA APUESTA',false); return; }
     if(state.debt>0){ state.debt+=Math.ceil(state.debt*INTEREST); }
     spinning=true; setSpinUI(true); setMsg('',false); renderHold();
     state.credits-=state.bet; state.jackpot+=Math.max(2,Math.round(state.bet*0.2)); accrueInterest(); updateUI(); tickLoginToast();
@@ -455,10 +455,10 @@
     combo=0; _tripleStreak=0; setCombo(); setMsg('SUERTE LA PROXIMA',false); saveState(); checkBroke();
   }
 
-  function setBet(v){ v=Math.floor(v); if(isNaN(v)||v<MIN_BET)v=MIN_BET; if(state.credits>0 && v>state.credits) v=state.credits; state.bet=v; document.getElementById('betInput').value=v; renderBetPresets(); updateUI(); saveState(); }
+  function setBet(v){ v=Math.floor(v); if(isNaN(v)||v<MIN_BET)v=MIN_BET; if(state.credits>=MIN_BET && v>state.credits) v=state.credits; state.bet=v; document.getElementById('betInput').value=v; renderBetPresets(); updateUI(); saveState(); }
   function loanAvailable(){ return state.debt + LOAN <= creditLimit(); }
-  function canLoan(){ return loanAvailable() && state.credits < state.bet; }
-  function takeLoan(){ if(spinning) return; if(!loanAvailable()){ setMsg('LÍMITE DE PRÉSTAMOS ($'+fmt(creditLimit())+')',false); return; } if(state.credits>=state.bet){ setMsg('Solo podés pedir préstamo si te quedás corto',false); return; } state.credits+=LOAN; state.debt+=Math.round(LOAN*(1+LOAN_FEE)); updateUI(); renderBank(); setMsg('PRÉSTAMO: +$'+fmt(LOAN)+' (debés $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+')',false); saveState(); }
+  function canLoan(){ return loanAvailable() && state.credits < MIN_BET; }
+  function takeLoan(){ if(spinning) return; if(!loanAvailable()){ setMsg('LÍMITE DE PRÉSTAMOS ($'+fmt(creditLimit())+')',false); return; } if(state.credits>=MIN_BET){ setMsg('Solo podés pedir préstamo si no te alcanza para la apuesta mínima ($'+MIN_BET+')',false); return; } state.credits+=LOAN; state.debt+=Math.round(LOAN*(1+LOAN_FEE)); updateUI(); renderBank(); setMsg('PRÉSTAMO: +$'+fmt(LOAN)+' (debés $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+')',false); saveState(); }
   function buyVault(){ if(state.vault||state.debt>0||state.credits<CAJA_COST) return; state.credits-=CAJA_COST; state.vault=true; updateUI(); renderBank(); saveState(); }
   function deposit(a){ if(!state.vault) return; a=Math.floor(a); if(!a||a<1) return; a=Math.min(a, state.credits, Math.max(0, bankCap()-state.bank)); if(a<=0) return; state.credits-=a; state.bank+=a; updateUI(); renderBank(); saveState(); }
   function withdraw(a){ if(!state.vault) return; a=Math.floor(a); if(!a||a<1) return; a=Math.min(a,state.bank); if(a<=0) return; state.bank-=a; state.credits+=a; updateUI(); renderBank(); saveState(); }
@@ -486,7 +486,7 @@
     h+='<div class="bank-row"><span>Pedir préstamo</span><button id="bkLoan" class="bank-btn"'+(canLoan?'':' disabled')+'>+$'+fmt(LOAN)+'</button></div>';
     h+='<div class="bank-note">Recibís $'+fmt(LOAN)+' pero sumás $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+' de deuda (interés inicial 10%, después crece 3%/giro).</div>';
     if(!loanAvailable()) h+='<div class="bank-note">Llegaste al tope de tu línea de crédito ($'+fmt(creditLimit())+').</div>';
-    else if(state.credits>=state.bet) h+='<div class="bank-note">El préstamo solo aparece si te quedás corto de créditos.</div>';
+    else if(state.credits>=MIN_BET) h+='<div class="bank-note">El préstamo solo aparece si no te alcanza para la apuesta mínima ($'+MIN_BET+').</div>';
     if(state.debt>0){ h+='<div class="bank-io"><button id="bkPayC" class="bank-btn"'+((state.credits<=0)?' disabled':'')+'>Pagar con créditos</button><button id="bkPayB" class="bank-btn"'+((!v||state.bank<=0)?' disabled':'')+'>Pagar con ahorros</button></div>'; }
     h+='<div class="shop-section">⬆️ MEJORAS DEL BANCO</div>';
     const cmax=state.creditLevel>=CREDIT_LIMITS.length-1;
@@ -522,7 +522,7 @@
   function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; const g=Math.floor(state.bank*interestRate()); if(g>0) state.bank+=g; } }
   function buyCredit(){ if(state.debt>0||state.creditLevel>=CREDIT_LIMITS.length-1) return; const cost=CREDIT_COSTS[state.creditLevel]; if(state.credits<cost) return; state.credits-=cost; state.creditLevel++; updateUI(); renderBank(); saveState(); }
   function buyInterest(){ if(state.debt>0||!state.vault||state.interestLevel>=INT_RATES.length-1) return; const cost=INT_COSTS[state.interestLevel]; if(state.credits<cost) return; state.credits-=cost; state.interestLevel++; updateUI(); renderBank(); saveState(); }
-  function fullReset(){ exitBankruptcy(); state.credits=START; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; _lifeUsed=false; state.introSeen=false; state.kattoSeen=false; state.discount=null; state.meta={spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0}; state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; state.peak=START; state.runStartWorth=START; state.runJackpots=0; state.helpSeen=[]; state.runStart=Date.now(); _capMsgShown=false; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
+  function fullReset(){ exitBankruptcy(); state.credits=START; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; _lifeUsed=false; state.introSeen=false; state.kattoSeen=false; state.discount=null; state.meta={spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0}; state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; state.peak=START; state.runStartWorth=START; state.runJackpots=0; state.helpSeen=[]; state.runStart=Date.now(); _capMsgShown=false; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
   const TXT_INTRO="¡MIAU! SOY KITTY. 🐱 BIENVENIDO A KITTY'S SLOTS.||TIRÁ LA PALANCA O TOCÁ GIRAR PARA JUGAR. ANTES, AJUSTÁ TU APUESTA.||PARA GANAR, FIJATE EN LA LISTA DE COMBINACIONES Y ARMÁ LAS QUE MÁS PAGAN. ¡3 GATOS = JACKPOT! 🐱||Y OJO CON LOS HUESOS DE PESCADO 🦴 — SUS ESPINAS PINCHAN TU BOLSILLO.||EN LA TIENDA ★ MEJORÁS TUS CHANCES. ¡SUERTE! 🐾";
   const TXT_KATTO_INTRO="¡EH, HOLA! SOY KATTO, EL HERMANO DE KITTY. 😺||ESTE ES MI PUESTITO: TODOS LOS DÍAS PONGO ALGO EN OFERTA.||EL DESCUENTO VARÍA — A VECES CHIQUITO, A VECES ENORME (HASTA -45%).||DATE UNA VUELTA SEGUIDO Y APROVECHÁ LAS REBAJAS. 🏷️||¡QUE TE VAYA BIEN! 🐾";
   var KATTO_MSGS=["¡Volviste! Pasá, mirá las ofertas de hoy. 😺","Vos tirás la palanca, yo me encargo de la tienda. 💰","Mi bigote es marca registrada, ¿eh? 🥸","Hoy la rebaja está buenísima, no te la pierdas.","Rebajas nuevas todos los días, fresquitas. 🐟","Tomate tu tiempo, igual la oferta dura un rato nomás.","Si encontrás algo más barato, te lo regalo. (Mentira, pero está barato.)","Un gusto tenerte por el puesto.","¿Buscás algo en especial? Capaz hoy está en oferta.","Llevátelo, te lo dejo a buen precio. 🏷️","Solía trabajar de bartender antes de ser dueño de este puestito..."];
@@ -765,7 +765,7 @@
   function metaUnlocked(k){ var r=META[k].req; return !r || (state.meta[r.k]||0) >= r.n; }
   function clienteRegularLvl(){ return state.meta.regular||0; }
   function buyMeta(k){ if(!metaUnlocked(k)) return; var u=META[k], lv=state.meta[k]||0; if(lv>=u.max) return; var cost=u.cost(lv); if(state.meta.spirits<cost) return; state.meta.spirits-=cost; state.meta[k]=lv+1; renderLimbo(); saveState(); }
-  function startRun(){ exitBankruptcy(); state.life.runs=(state.life.runs||0)+1; state.credits=START+(state.meta.chest||0)*500; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=Math.min((state.meta.credit||0), CREDIT_LIMITS.length-1); state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.skillsUnlocked=false; state.bankUnlocked=false; if(state.meta.bankopen) state.bankUnlocked=true; if(state.meta.vaultopen){ state.vault=true; state.bankUnlocked=true; } _lifeUsed=false; state.runStartWorth=state.credits; state.peak=state.credits; state.runJackpots=0; combo=0; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); document.getElementById('limbo').classList.remove('open'); catMode=false; clearInterval(_cornerTypeT); clearTimeout(_cornerTimer); var _cb2=document.getElementById('cornerCatBubble'); if(_cb2) _cb2.classList.remove('show'); state.runStart=Date.now(); _capMsgShown=false; _tripleStreak=0; setMsg('NUEVA PARTIDA',false); saveState(); }
+  function startRun(){ exitBankruptcy(); state.life.runs=(state.life.runs||0)+1; state.credits=START+(state.meta.chest||0)*500; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=Math.min((state.meta.credit||0), CREDIT_LIMITS.length-1); state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.skillsUnlocked=false; state.bankUnlocked=false; if(state.meta.bankopen) state.bankUnlocked=true; if(state.meta.vaultopen){ state.vault=true; state.bankUnlocked=true; } _lifeUsed=false; state.runStartWorth=state.credits; state.peak=state.credits; state.runJackpots=0; combo=0; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); document.getElementById('limbo').classList.remove('open'); catMode=false; clearInterval(_cornerTypeT); clearTimeout(_cornerTimer); var _cb2=document.getElementById('cornerCatBubble'); if(_cb2) _cb2.classList.remove('show'); state.runStart=Date.now(); _capMsgShown=false; _tripleStreak=0; setMsg('NUEVA PARTIDA',false); saveState(); }
   function checkBroke(){ if(state.credits<MIN_BET && !state.bankUnlocked) unlockBank(); if(state.credits<MIN_BET && state.bank<1 && !loanAvailable()){ if(!tryNineLives()) gameOver(); } }
   function buyUpg(k){ const u=UPG[k], lv=state.upg[k]; if(lv>=u.max||state.debt>0) return; const cost=discountedCost(k, u.cost(lv)); if(state.credits<cost) return; state.credits-=cost; state.upg[k]++; rebuildPool(); updateUI(); renderShop(); renderPaytable(); saveState(); }
   const HOLD_COSTS=[6650,20000];
@@ -844,7 +844,12 @@
 
   renderLights(); renderBetPresets(); renderPalette(); renderPaytable(); updateLimboBtn(); var _cc=document.getElementById('cornerCat'); if(_cc){ _cc.addEventListener('click', cornerCatSpeak); } var _ver=document.getElementById('ver'); if(_ver) _ver.textContent='v'+VERSION;
   rebuildPool();
+  function verNum(v){ var p=String(v||'0').split('.'); return (parseInt(p[0],10)||0)*1000 + (parseInt(p[1],10)||0); }
+  function forceUpdate(){ try{ sessionStorage.setItem('ks-upd','1'); }catch(_e){} location.href=location.pathname+'?u='+Date.now()+location.hash; }
+  function showUpdatePrompt(newVer){ var m=document.getElementById('catModal'); if(!m||m.classList.contains('open')) return; try{ if(sessionStorage.getItem('ks-upd')) return; }catch(_e){} _catWho='kitty'; _introStep=-1; _catWaiting=false; _afterCat=function(){ forceUpdate(); }; setCatLogin(false); var ci=m.querySelector('.cat-img'); if(ci){ ci.onerror=function(){ this.onerror=null; this.src='cat-mascot.png'; }; ci.src='cat-mascot.png'; } m.classList.remove('katto'); m.classList.add('open'); if(state.musicOn){ catMode=true; if(!musicPlaying) startMusic(); } var cont=document.getElementById('catOk'); if(cont) cont.textContent='🔄 ACTUALIZAR'; typeCat('¡Actualicé el juego a la v'+newVer+'! 🎮✨|Tocá ACTUALIZAR acá abajo para refrescar y ver las novedades.|(Si en la compu no se actualiza, probá Ctrl+Shift+R)'); }
+  function checkVersion(){ fetch('version.json?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d && d.version && verNum(d.version) > verNum(VERSION)) showUpdatePrompt(d.version); }).catch(function(){}); }
   loadState().then(function(){
     refreshAfterLoad();
     initFirebase();
+    setTimeout(checkVersion, 1500);
   });
