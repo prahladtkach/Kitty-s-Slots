@@ -14,15 +14,14 @@
   <div class="scanlines"></div>
   <div id="danger"></div>
   <div class="sound-icons">
-    <button class="iconbtn" id="musicIcon" title="Música" aria-label="Música"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="5" y="2" width="7" height="2"/><rect x="5" y="3" width="2" height="7"/><rect x="10" y="3" width="2" height="7"/><rect x="3" y="9" width="4" height="3"/><rect x="8" y="9" width="4" height="3"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
-    <button class="iconbtn" id="sfxIcon" title="Sonido" aria-label="Sonido"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="2" y="6" width="3" height="4"/><rect x="5" y="5" width="1" height="6"/><rect x="6" y="4" width="1" height="8"/><rect x="7" y="3" width="1" height="10"/><rect x="10" y="6" width="1" height="4"/><rect x="12" y="4" width="1" height="8"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
     <button class="iconbtn" id="profIcon" title="Perfil" aria-label="Perfil"><span id="profIconImg" class="cat"></span></button>
     <button class="iconbtn" id="accIcon" title="Cuenta" aria-label="Cuenta"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="6" y="2" width="4" height="4"/><rect x="4" y="9" width="8" height="2"/><rect x="3" y="11" width="10" height="3"/></g></svg></button>
+    <button class="iconbtn" id="musicIcon" title="Música" aria-label="Música"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="5" y="2" width="7" height="2"/><rect x="5" y="3" width="2" height="7"/><rect x="10" y="3" width="2" height="7"/><rect x="3" y="9" width="4" height="3"/><rect x="8" y="9" width="4" height="3"/></g><line class="slash" x1="2" y1="2" x2="14" y2="14"/></svg></button>
     <button class="iconbtn" id="helpIcon" title="Ayuda" aria-label="Ayuda"><span class="qm">?</span></button>
   </div>
   <div class="wrap">
     <h1>KITTY'S <span>SLOTS</span></h1>
-    <div class="tagline">&gt; 9 vidas, una palanca... ¡Let's Go Gambling! 🐱</div>
+    <div class="tagline">&gt; 9 vidas, una palanca... let's go gambling!🐱</div>
 
     <div class="jackpot">
       <div class="jp-label">JACKPOT</div>
@@ -58,7 +57,6 @@
 
     <div class="controls">
       <div class="betbar" id="betbar"></div>
-      <div class="bet-lock-hint" id="betLockHint" style="display:none">🔒 Apuesta libre (escribí el monto) a partir de $10.000</div>
       <div class="betbar">
         <span style="font-family:'Press Start 2P';font-size:8px;color:var(--muted)">APUESTA</span>
         <input type="number" id="betInput" min="1" value="25">
@@ -68,7 +66,7 @@
       <div class="rowbtns">
         <button class="minibtn shop" id="shopBtn">★ TIENDA</button>
         <button class="minibtn loan" id="bankBtn">🏦 BANCO</button>
-        <button class="minibtn" id="limboBtn" style="display:none">👻 LIMBO</button>
+        <button class="minibtn" id="limboBtn">👻 LIMBO</button>
       </div>
       <div class="palrow" id="palrow"><span class="pl">PALETA:</span></div>
     </div>
@@ -142,6 +140,41 @@
       <div id="helpBody"></div>
     </div>
   </div>
+  <div class="overlay" id="musicModal">
+    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--magenta);text-align:center">
+      <button class="modal-close" id="musicClose">X</button>
+      <h3 style="color:var(--magenta)">🎵 TOCADISCOS</h3>
+      <div class="turntable" id="turntable">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="184" height="184" rx="10" fill="var(--panel2)" stroke="var(--dark)" stroke-width="4"/>
+          <circle cx="92" cy="100" r="74" fill="var(--dark)"/>
+          <g class="tt-disc" id="ttDisc">
+            <circle cx="92" cy="100" r="74" fill="#13101f"/>
+            <circle cx="92" cy="100" r="70" fill="none" stroke="#241a3a" stroke-width="1"/>
+            <circle cx="92" cy="100" r="60" fill="none" stroke="#241a3a" stroke-width="1"/>
+            <circle cx="92" cy="100" r="50" fill="none" stroke="#241a3a" stroke-width="1"/>
+            <circle cx="92" cy="100" r="40" fill="none" stroke="#241a3a" stroke-width="1"/>
+            <circle cx="92" cy="100" r="26" fill="var(--magenta)"/>
+            <circle cx="92" cy="100" r="25" fill="none" stroke="var(--dark)" stroke-width="1"/>
+            <rect x="90" y="34" width="4" height="10" fill="var(--cyan)"/>
+            <circle cx="92" cy="100" r="4" fill="var(--dark)"/>
+          </g>
+          <g class="tt-arm" id="ttArm">
+            <circle cx="166" cy="48" r="12" fill="var(--panel)" stroke="var(--dark)" stroke-width="3"/>
+            <circle cx="166" cy="48" r="4" fill="var(--muted)"/>
+            <line x1="166" y1="48" x2="120" y2="112" stroke="var(--muted)" stroke-width="7" stroke-linecap="round"/>
+            <rect x="111" y="105" width="18" height="13" rx="2" fill="var(--violet)" stroke="var(--dark)" stroke-width="2" transform="rotate(36 120 112)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="tt-now" id="ttNow">Suave</div>
+      <div class="tt-themes" id="ttThemes"></div>
+      <div class="tt-toggles">
+        <button class="tt-toggle" id="ttMusic"><span class="tt-tg-ic">🎵</span><span class="tt-tg-lbl">Música</span><span class="tt-tg-st" id="ttMusicSt">ON</span></button>
+        <button class="tt-toggle" id="ttSfx"><span class="tt-tg-ic">🔊</span><span class="tt-tg-lbl">Efectos</span><span class="tt-tg-st" id="ttSfxSt">ON</span></button>
+      </div>
+    </div>
+  </div>
   <div class="overlay" id="limbo">
     <div class="limbo-scene">
       <div id="limboTabs"></div>
@@ -177,15 +210,21 @@
         <div class="pf-avatar" id="pfAvatar"><span id="pfAvatarImg" class="cat"></span></div>
         <div class="pf-name"><span id="pfName">Jugador</span><span class="edit" id="pfEdit">✏️</span></div>
         <div class="pf-title" id="pfTitle"></div>
+        <div class="pf-medals" id="pfMedals"></div>
         <button class="pf-rank" id="pfGoRank"><span class="pos">🏆</span><span class="sub">Ver rankings<br>globales →</span></button>
         <div class="pf-stats">
           <div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val" id="pfEcto">0</span></div>
           <div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val" id="pfAsc">0</div></div>
           <div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val" id="pfRuns">0</div></div>
           <div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val" id="pfWorth">$0</div></div>
-          <div class="pf-stat"><div class="lbl">🎰 Mejor bote</div><div class="val" id="pfJP">$0</div></div>
+          <div class="pf-stat"><div class="lbl">🎰 Mayor ganancia</div><div class="val" id="pfJP">$0</div></div>
         </div>
         <button class="pf-btn" id="pfGoCos">🎨 CAMBIAR LOOK</button>
+        <div class="pf-code" id="pfCode">
+          <div class="pf-code-lbl">🎟️ ¿Tenés un código?</div>
+          <div class="pf-code-row"><input id="pfCodeInput" class="pf-code-input" type="text" placeholder="Código secreto" maxlength="24"><button class="pf-code-btn" id="pfCodeBtn">Canjear</button></div>
+          <div class="pf-code-msg" id="pfCodeMsg"></div>
+        </div>
         <div class="pf-soon">🤝 Pronto: agregá amigos y desafialos (¡al truco! 🃏)</div>
       </div>
       <div id="cosmeticsView" style="display:none">
@@ -200,25 +239,9 @@
       </div>
       <div id="rankingsView" style="display:none">
         <div class="pf-rk-head">🏆 Ranking general</div>
-        <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mejor bote + plata</div>
+        <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mayor ganancia + plata</div>
         <div class="pf-rk-list" id="pfRkList"></div>
         <button class="pf-btn ghost" id="pfRankBack">← VOLVER AL PERFIL</button>
-      </div>
-      <div id="otherProfileView" style="display:none">
-        <button class="pf-btn ghost" id="pfOtherBack">← VOLVER AL RANKING</button>
-        <div class="pf-other-card" id="pfOtherCard">
-          <div class="pf-avatar" id="pfOtherAvatar"><span id="pfOtherAvatarImg" class="cat"></span></div>
-          <div class="pf-name"><span id="pfOtherName">Jugador</span></div>
-          <div class="pf-title" id="pfOtherTitle"></div>
-          <div class="pf-other-rank" id="pfOtherRank"></div>
-          <div class="pf-stats">
-            <div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val" id="pfOtherEcto">0</span></div>
-            <div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val" id="pfOtherAsc">0</div></div>
-            <div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val" id="pfOtherRuns">0</div></div>
-            <div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val" id="pfOtherWorth">$0</div></div>
-            <div class="pf-stat"><div class="lbl">🎰 Mejor bote</div><div class="val" id="pfOtherJP">$0</div></div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
