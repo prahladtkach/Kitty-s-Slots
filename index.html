@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.38">
+<link rel="stylesheet" href="styles.css?v=2.39">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -211,6 +211,7 @@
         <div class="pf-name"><span id="pfName">Jugador</span><span class="edit" id="pfEdit">✏️</span></div>
         <div class="pf-title" id="pfTitle"></div>
         <div class="pf-medals" id="pfMedals"></div>
+        <div class="pf-medal-detail" id="pfMedalDetail"></div>
         <button class="pf-rank" id="pfGoRank"><span class="pos">🏆</span><span class="sub">Ver rankings<br>globales →</span></button>
         <div class="pf-stats">
           <div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val" id="pfEcto">0</span></div>
@@ -241,11 +242,12 @@
         <div class="pf-rk-head">🏆 Ranking general</div>
         <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mayor ganancia + plata</div>
         <div class="pf-rk-list" id="pfRkList"></div>
+        <div class="pf-rk-user" id="pfRkUser" style="display:none"></div>
         <button class="pf-btn ghost" id="pfRankBack">← VOLVER AL PERFIL</button>
       </div>
     </div>
   </div>
 
-<script src="game.js?v=2.38"></script>
+<script src="game.js?v=2.39"></script>
 </body>
 </html>

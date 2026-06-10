@@ -485,3 +485,19 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .pf-code-msg{ font-family:'VT323',monospace; font-size:16px; text-align:center; margin-top:8px; min-height:18px; color:var(--muted); }
 .pf-code-msg.ok{ color:var(--green); }
 .pf-code-msg.err{ color:var(--red); }
+
+/* Detalle de medalla (tap en mobile) */
+.pf-medal-detail{ display:none; margin:8px auto 0; max-width:280px; background:var(--panel2); box-shadow:inset 0 0 0 2px var(--dark); border-radius:6px; padding:9px 12px; font-family:'VT323',monospace; font-size:16px; color:var(--text); text-align:center; line-height:1.35; }
+.pf-medal-detail b{ color:var(--gold); }
+
+/* Mini-perfil de usuario del ranking (click en un row) */
+#profile .pf-rk-row[data-rkuid]{ cursor:pointer; transition:transform .1s; }
+#profile .pf-rk-row[data-rkuid]:active{ transform:scale(0.98); }
+.pf-rku-back{ font-family:'Press Start 2P',monospace; font-size:9px; padding:10px 12px; cursor:pointer; color:var(--cyan); background:transparent; box-shadow:inset 0 0 0 2px var(--cyan); border:none; border-radius:6px; margin-bottom:14px; }
+.pf-rku-back:active{ transform:translateY(2px); }
+.pf-rku-card{ text-align:center; }
+.pf-rku-nick{ font-family:'Press Start 2P',monospace; font-size:13px; color:var(--text); margin-bottom:8px; word-break:break-word; }
+.pf-rku-stats{ margin-top:14px; display:flex; flex-direction:column; gap:7px; }
+.pf-rku-stat{ display:flex; justify-content:space-between; align-items:center; background:var(--panel2); box-shadow:inset 0 0 0 2px var(--dark); border-radius:6px; padding:9px 13px; }
+.pf-rku-stat span{ font-family:'VT323',monospace; font-size:16px; color:var(--muted); }
+.pf-rku-stat b{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--cyan); }
