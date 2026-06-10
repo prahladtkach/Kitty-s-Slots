@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.36) · FIX reset de economía: el chequeo usaba el state ya mezclado (que heredaba econVersion del estado inicial por Object.assign) en vez del save → el reset nunca se disparaba. Ahora usa d.econVersion. ECON_VERSION subido a 3 para forzar reset en saves contaminados por el bug.
+// Kitty's Slots Deluxe · versión pública (v2.38) · Cache busting: styles.css y game.js se cargan con ?v=2.38 para que el navegador descargue siempre la versión nueva (evita que el caché sirva CSS/JS viejos, que causaba que el layout de PC y el reset de economía no se aplicaran).
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -30,7 +30,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=1;
-  const VERSION="2.36";
+  const VERSION="2.38";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];

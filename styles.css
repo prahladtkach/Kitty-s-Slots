@@ -336,7 +336,7 @@
 .bank-vault-col{ order:1; }
 .bank-ops-col{ order:2; }
 .bank-ops-col .shop-section:first-child{ margin-top:16px; } /* separación en modo apilado */
-@media(min-width:768px){
+@media (min-width:768px){
   #bank .modal{ max-width:880px; }
   .bank-layout{ flex-direction:row; gap:30px; align-items:flex-start; }
   .bank-ops-col{ order:1; flex:1 1 0; min-width:0; }
@@ -437,7 +437,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .deal-badge{ font-family:'Press Start 2P',monospace; font-size:7px; color:#fff; background:var(--magenta); padding:2px 4px; box-shadow:0 0 0 1px var(--dark); margin-left:3px; white-space:nowrap; }
 .upg.deal{ box-shadow:0 0 0 2px var(--dark),0 0 0 3px var(--gold); }
 .upg button s{ color:var(--magenta); font-size:7px; margin-right:2px; }
-@media(min-width:768px){
+@media (min-width:768px){
   #shop .modal{ max-width:640px; }
   .shop-tabs{ display:none; }
   .shop-grid{ display:grid; grid-template-columns:1fr 236px; gap:0; align-items:stretch; }
