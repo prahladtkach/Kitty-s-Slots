@@ -516,3 +516,6 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .pt-r.jackpot{background:linear-gradient(90deg,#ffd23f1a,transparent)}
 .pt-r.bones{background:linear-gradient(90deg,#ff5b791a,transparent)}
 .pt-note{grid-column:1/-1;font-family:'VT323',monospace;font-size:14px;color:var(--cyan);padding:2px 0 0 2px;text-align:left}
+.modal-money{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--cyan); text-align:center; margin:0 0 14px; line-height:1.5; }
+.modal-money b{ color:var(--gold); }
+.modal-money .mm-debt{ color:var(--red); font-size:10px; }

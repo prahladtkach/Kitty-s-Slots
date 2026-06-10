@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.49">
+<link rel="stylesheet" href="styles.css?v=2.50">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -84,6 +84,7 @@
     <div class="modal">
       <button class="modal-close" id="shopClose">X</button>
       <h3>★ TIENDA DE MEJORAS</h3>
+      <div class="modal-money" id="shopMoney"></div>
       <div id="upgList"></div>
       <div class="shop-note" id="shopNote"></div>
     </div>
@@ -130,6 +131,7 @@
     <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--gold)">
       <button class="modal-close" id="bankClose">X</button>
       <h3 style="color:var(--gold)">🏦 BANCO</h3>
+      <div class="modal-money" id="bankMoney"></div>
       <div id="bankBody"></div>
     </div>
   </div>
@@ -241,7 +243,7 @@
       </div>
       <div id="rankingsView" style="display:none">
         <div class="pf-rk-head">🏆 Ranking general</div>
-        <div class="pf-rk-sub">Puntaje = ascensiones + ectofichas + mayor ganancia + plata</div>
+        <div class="pf-rk-sub">Puntaje = ectofichas (tu progreso) + un toque por récords</div>
         <div class="pf-rk-list" id="pfRkList"></div>
         <div class="pf-rk-user" id="pfRkUser" style="display:none"></div>
         <button class="pf-btn ghost" id="pfRankBack">← VOLVER AL PERFIL</button>
@@ -249,6 +251,6 @@
     </div>
   </div>
 
-<script src="game.js?v=2.49"></script>
+<script src="game.js?v=2.50"></script>
 </body>
 </html>
