@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.35) · Sumados 2 betatesters más (Roli uwu, Dan). Total: 6 betatesters + 2 staff con medalla por UID.
+// Kitty's Slots Deluxe · versión pública (v2.36) · FIX reset de economía: el chequeo usaba el state ya mezclado (que heredaba econVersion del estado inicial por Object.assign) en vez del save → el reset nunca se disparaba. Ahora usa d.econVersion. ECON_VERSION subido a 3 para forzar reset en saves contaminados por el bug.
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -26,11 +26,11 @@
   const CREDIT_COSTS=[800,2000,5000,12000,25000,45000];
   const BANK_UNLOCK_CREDITS=10000;
   // Versión de la economía. Si subís este número, TODOS los jugadores resetean su progreso una vez (para testear cambios de balance).
-  const ECON_VERSION=2;
+  const ECON_VERSION=3;
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=1;
-  const VERSION="2.35";
+  const VERSION="2.36";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -108,7 +108,7 @@
     if(typeof state.intSpins!=='number') state.intSpins=0;
     // ===== Reset automático por versión de economía =====
     // Si el save viene de una economía anterior, resetea el PROGRESO una sola vez (preserva look, medallas, nick y preferencias).
-    if((state.econVersion||0) < ECON_VERSION){
+    if((d.econVersion||0) < ECON_VERSION){
       state.credits=START; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false;
       state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0};
       state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false;
