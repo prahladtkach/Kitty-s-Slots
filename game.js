@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.46) · El mini-perfil del ranking vuelve a mostrar la paleta del jugador: pinta toda la tarjeta con sus colores (applyPaletteTo) + muestra el nombre del tema (🎨) junto al puesto. Se volvió a guardar 'palette' en el leaderboard (se había quitado sin querer). Cache busting → 2.46.
+// Kitty's Slots Deluxe · versión pública (v2.47) · Precios de la tienda divididos por 1.5 (punto intermedio entre los originales y el rebalanceo ×2.5). Afecta: win, combo, cat, bone, hold, super y la habilidad doble-o-nada. Los ingresos no se tocaron. Cache busting → 2.47.
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -32,7 +32,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=1;
-  const VERSION="2.46";
+  const VERSION="2.47";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -49,10 +49,10 @@
   const PALNAMES=['synthwave','gameboy','nes','vapor','lava','mono','galaxy','casino'];
   function curve(base,g){ return function(l){ return Math.round(base*Math.pow(g,l)/10)*10; }; }
   const UPG={
-    win:{name:'Multiplicador',desc:'+5% a todo lo que ganás',max:50,cost:curve(2000,1.18)},
-    combo:{name:'Tope de combo',desc:'+0.1 al tope del multiplicador',max:50,cost:curve(2500,1.18)},
-    cat:{name:'Suerte del gato',desc:'los premios salen más seguido',max:50,cost:curve(2250,1.18)},
-    bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1500,1.16)}
+    win:{name:'Multiplicador',desc:'+5% a todo lo que ganás',max:50,cost:curve(1350,1.18)},
+    combo:{name:'Tope de combo',desc:'+0.1 al tope del multiplicador',max:50,cost:curve(1650,1.18)},
+    cat:{name:'Suerte del gato',desc:'los premios salen más seguido',max:50,cost:curve(1500,1.18)},
+    bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
   let state={credits:START,jackpot:JP_BASE,bet:25,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,econVersion:ECON_VERSION};
@@ -768,14 +768,14 @@
   function startRun(){ exitBankruptcy(); state.life.runs=(state.life.runs||0)+1; state.credits=START+(state.meta.chest||0)*500; state.jackpot=JP_BASE; state.bet=25; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=Math.min((state.meta.credit||0), CREDIT_LIMITS.length-1); state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.skillsUnlocked=false; state.bankUnlocked=false; if(state.meta.bankopen) state.bankUnlocked=true; if(state.meta.vaultopen){ state.vault=true; state.bankUnlocked=true; } _lifeUsed=false; state.runStartWorth=state.credits; state.peak=state.credits; state.runJackpots=0; combo=0; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); document.getElementById('limbo').classList.remove('open'); catMode=false; clearInterval(_cornerTypeT); clearTimeout(_cornerTimer); var _cb2=document.getElementById('cornerCatBubble'); if(_cb2) _cb2.classList.remove('show'); state.runStart=Date.now(); _capMsgShown=false; _tripleStreak=0; setMsg('NUEVA PARTIDA',false); saveState(); }
   function checkBroke(){ if(state.credits<MIN_BET && !state.bankUnlocked) unlockBank(); if(state.credits<MIN_BET && state.bank<1 && !loanAvailable()){ if(!tryNineLives()) gameOver(); } }
   function buyUpg(k){ const u=UPG[k], lv=state.upg[k]; if(lv>=u.max||state.debt>0) return; const cost=discountedCost(k, u.cost(lv)); if(state.credits<cost) return; state.credits-=cost; state.upg[k]++; rebuildPool(); updateUI(); renderShop(); renderPaytable(); saveState(); }
-  const HOLD_COSTS=[10000,30000];
-  const ABIL={ gamble:{name:'Doble o nada',desc:'Tras ganar, girás de nuevo: si sale premio, multiplica tus ganancias.',cost:15000} };
+  const HOLD_COSTS=[6650,20000];
+  const ABIL={ gamble:{name:'Doble o nada',desc:'Tras ganar, girás de nuevo: si sale premio, multiplica tus ganancias.',cost:10000} };
   function buyAbility(k){ const a=ABIL[k], cost=discountedCost(k,a.cost); if(!state.skillsUnlocked||state.abilities[k]||state.debt>0||state.credits<cost) return; state.credits-=cost; state.abilities[k]=true; updateUI(); renderShop(); renderHold(); saveState(); }
   function buyHold(){ if(!state.skillsUnlocked||state.debt>0||state.holdLevel>=2) return; const cost=discountedCost('hold', HOLD_COSTS[state.holdLevel]); if(state.credits<cost) return; state.credits-=cost; state.holdLevel++; state.abilities.hold=true; updateUI(); renderShop(); renderHold(); saveState(); }
   const SUPER_CD=120;
   const SUPER_MAX=150;
   function superDur(lv){ return Math.min(85, 10+Math.round(lv*0.5)); }
-  function superCost(lv){ return Math.round((5000 + lv*lv*150)/100)*100; }
+  function superCost(lv){ return Math.round((3350 + lv*lv*100)/100)*100; }
   function buySuper(){ if(!state.skillsUnlocked||state.debt>0||state.superLevel>=SUPER_MAX) return; var cost=discountedCost('super', superCost(state.superLevel)); if(state.credits<cost) return; state.credits-=cost; state.superLevel++; rebuildPool(); updateUI(); renderShop(); updateSuperUI(); saveState(); }
   function activateSuper(){ if(state.superLevel<1) return; var now=Date.now(); if(now<luckyUntil||now<superReadyAt) return; var dur=superDur(state.superLevel); luckyUntil=now+dur*1000; superReadyAt=luckyUntil+SUPER_CD*1000; document.body.classList.add('supersuerte'); setMsg('🍀 ¡SUPERSUERTE! '+dur+'s',false); sSuper(); updateSuperUI(); }
   function updateSuperUI(){ var row=document.getElementById('superRow'), btn=document.getElementById('superBtn'); if(row) row.style.display=state.superLevel>0?'flex':'none'; if(!btn) return; if(state.superLevel<1){ document.body.classList.remove('supersuerte'); return; } var now=Date.now(); if(now<luckyUntil){ document.body.classList.add('supersuerte'); btn.disabled=true; btn.textContent='🍀 ACTIVA '+Math.ceil((luckyUntil-now)/1000)+'s'; } else if(spinning){ document.body.classList.remove('supersuerte'); btn.disabled=true; btn.textContent='🍀 SUPERSUERTE'; } else { document.body.classList.remove('supersuerte'); if(now<superReadyAt){ btn.disabled=true; btn.textContent='⏳ '+Math.ceil((superReadyAt-now)/1000)+'s'; } else { btn.disabled=false; btn.textContent='🍀 SUPERSUERTE'; } } }
