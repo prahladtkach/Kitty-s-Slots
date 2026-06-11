@@ -9,13 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.75">
+<link rel="stylesheet" href="styles.css?v=2.86">
 </head>
 <body>
   <div class="scanlines"></div>
   <div id="danger"></div>
   <div class="corner-left">
     <button class="iconbtn sugg-ic" id="suggestIcon" title="Sugerencias y reportes" aria-label="Sugerencias y reportes">💡</button>
+    <button class="iconbtn logros-ic" id="logrosIcon" title="Logros" aria-label="Logros" style="display:none">🏆</button>
   </div>
   <div class="sound-icons">
     <button class="iconbtn" id="profIcon" title="Perfil" aria-label="Perfil"><span id="profIconImg" class="cat"></span></button>
@@ -291,6 +292,15 @@
     </div>
   </div>
 
-<script src="game.js?v=2.75"></script>
+  <div class="overlay" id="logrosModal">
+    <div class="modal" style="max-width:520px;box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--gold)">
+      <button class="modal-close" id="logrosClose">X</button>
+      <h3 style="color:var(--gold)">🏆 LOGROS</h3>
+      <div class="feed-tabs" id="logTabs"></div>
+      <div id="logrosBody"></div>
+    </div>
+  </div>
+
+<script src="game.js?v=2.86"></script>
 </body>
 </html>

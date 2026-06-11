@@ -688,3 +688,45 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 #profile .rk-pbase.bronze{ background:linear-gradient(180deg, #e69a5c, #8a5320); color:var(--dark); }
 #profile .rk-list{ margin-top:12px; }
 @keyframes rkbob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+
+/* Logros: ícono + panel */
+.iconbtn.logros-ic{ color:var(--gold); font-size:18px; display:flex; align-items:center; justify-content:center; line-height:1; box-shadow:0 0 0 3px var(--dark), 0 0 12px rgba(255,210,63,.5); }
+.lg-summary{ margin-bottom:6px; }
+.lg-sum-top{ display:flex; align-items:baseline; gap:8px; justify-content:center; margin-bottom:9px; }
+.lg-sum-n{ font-family:'Press Start 2P',monospace; font-size:18px; color:var(--gold); }
+.lg-sum-lbl{ font-family:'VT323',monospace; font-size:17px; color:var(--muted); }
+.lg-bar{ height:13px; background:var(--dark); border-radius:7px; overflow:hidden; box-shadow:0 0 0 2px var(--dark); }
+.lg-bar-fill{ height:100%; background:linear-gradient(90deg, var(--violet), var(--gold)); transition:width .5s ease; }
+.lg-cat{ display:flex; justify-content:space-between; align-items:center; font-family:'Press Start 2P',monospace; font-size:9px; color:var(--cyan); margin:20px 0 11px; }
+.lg-cat-n{ color:var(--muted); font-family:'VT323',monospace; font-size:16px; }
+.lg-grid{ display:flex; flex-direction:column; gap:8px; }
+.lg-card{ display:flex; align-items:center; gap:11px; background:var(--panel2); border:2px solid rgba(164,92,255,0.25); border-radius:10px; padding:10px 12px; opacity:.72; }
+.lg-card.on{ opacity:1; border-color:var(--gold); box-shadow:0 0 13px rgba(255,210,63,0.18); background:linear-gradient(90deg, rgba(255,210,63,0.09), var(--panel2) 72%); }
+.lg-card.secret{ opacity:.58; }
+.lg-ico{ font-size:26px; line-height:1; flex:0 0 auto; width:34px; height:34px; display:flex; align-items:center; justify-content:center; text-align:center; filter:grayscale(.65); overflow:hidden; }
+.lg-card.on .lg-ico{ filter:none; }
+.lg-info{ flex:1; min-width:0; }
+.lg-name{ font-family:'VT323',monospace; font-size:19px; color:var(--text); line-height:1.1; }
+.lg-card.on .lg-name{ color:var(--gold); }
+.lg-desc{ font-family:'VT323',monospace; font-size:15px; color:var(--muted); line-height:1.2; margin-top:1px; }
+.lg-pbar{ height:7px; background:var(--dark); border-radius:4px; overflow:hidden; margin-top:7px; }
+.lg-pbar-fill{ height:100%; background:var(--cyan); }
+.lg-pnum{ font-family:'VT323',monospace; font-size:13px; color:var(--cyan); margin-top:3px; }
+.lg-check{ font-family:'Press Start 2P',monospace; font-size:14px; color:var(--gold); flex:0 0 auto; }
+
+/* Logros: pestaña global (% jugadores) */
+.lg-gl-head{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--cyan); text-align:center; line-height:1.7; margin:4px 0 14px; }
+.lg-gl-head span{ font-family:'VT323',monospace; font-size:15px; color:var(--muted); }
+.lg-gl-row{ display:flex; align-items:center; gap:11px; background:var(--panel2); border:2px solid rgba(164,92,255,0.2); border-radius:9px; padding:9px 12px; margin-bottom:7px; opacity:.9; }
+.lg-gl-row.on{ opacity:1; border-color:var(--gold); }
+.lg-gl-row .lg-ico{ filter:none; }
+.lg-gl-info{ flex:1; min-width:0; }
+.lg-gl-bar{ height:8px; background:var(--dark); border-radius:4px; overflow:hidden; margin-top:6px; }
+.lg-gl-fill{ height:100%; background:linear-gradient(90deg, var(--cyan), var(--violet)); }
+.lg-gl-pct{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--cyan); flex:0 0 auto; min-width:44px; text-align:right; }
+.lg-gl-row.rare .lg-gl-pct{ color:var(--gold); }
+.lg-gl-row.rare .lg-gl-fill{ background:linear-gradient(90deg, var(--gold), var(--magenta)); }
+
+/* Logros: imágenes personalizadas opcionales (caen al emoji si falta el PNG) */
+.lg-ico-img{ width:30px; height:30px; max-width:100%; max-height:100%; image-rendering:pixelated; object-fit:contain; }
+.lt-ico .lg-ico-img{ width:27px; height:27px; image-rendering:pixelated; }

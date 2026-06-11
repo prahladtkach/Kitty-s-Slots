@@ -32,8 +32,9 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.75";
-  const LOGROS_ON=false; // Fase 2: poner en true cuando el panel de logros esté listo para producción
+  const VERSION="2.86";
+  const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
+  const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -134,36 +135,43 @@
     // Giros y suerte
     {id:'first_spin',cat:'Giros y suerte',icon:'🎉',name:'¡Que empiece la ludopatía!',desc:'Realizá tu primer giro.',tier:'facil',secret:false,chk:function(L){return (L.spins||0)>=1;}},
     {id:'first_jp',cat:'Giros y suerte',icon:'🐱',name:'Miau-pot',desc:'Conseguí tu primer jackpot.',tier:'facil',secret:false,chk:function(L){return !!L.gotJackpot;}},
-    {id:'big_win',cat:'Giros y suerte',icon:'💎',name:'¿Eso estaba balanceado?',desc:'Conseguí un premio de más de $1.000.000 en un giro.',tier:'dificil',secret:false,chk:function(L){return (L.bestJP||0)>=1000000;}},
-    {id:'good_win',cat:'Giros y suerte',icon:'🍀',name:'Hoy es mi día',desc:'Conseguí un gran premio.',tier:'medio',secret:false,chk:function(L){return (L.bestJP||0)>=50000;}},
+    {id:'big_win',cat:'Giros y suerte',icon:'💎',name:'¿Eso estaba balanceado?',desc:'Conseguí un premio de más de $1.000.000 en un giro.',tier:'dificil',secret:false,chk:function(L){return (L.bestJP||0)>=1000000;},prog:function(L){return [L.bestJP||0,1000000];}},
+    {id:'good_win',cat:'Giros y suerte',icon:'🍀',name:'Hoy es mi día',desc:'Conseguí un gran premio.',tier:'medio',secret:false,chk:function(L){return (L.bestJP||0)>=50000;},prog:function(L){return [L.bestJP||0,50000];}},
     {id:'impossible',cat:'Giros y suerte',icon:'🎲',name:'Imposible',desc:'Conseguí una combinación con menos de 1% de probabilidad.',tier:'secreto',secret:true,chk:function(L){return !!L.got777;}},
-    {id:'combo10',cat:'Giros y suerte',icon:'😻',name:'Favorito de Kitty',desc:'Ganá 10 veces seguidas.',tier:'medio',secret:false,chk:function(L){return (L.bestCombo||0)>=10;}},
-    {id:'combo25',cat:'Giros y suerte',icon:'🤨',name:'Sospechoso',desc:'Ganá 25 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=25;}},
-    {id:'combo30',cat:'Giros y suerte',icon:'🎰',name:'Revisen sus dados',desc:'Ganá 30 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=30;}},
+    {id:'combo10',cat:'Giros y suerte',icon:'😻',name:'Favorito de Kitty',desc:'Ganá 10 veces seguidas.',tier:'medio',secret:false,chk:function(L){return (L.bestCombo||0)>=10;},prog:function(L){return [L.bestCombo||0,10];}},
+    {id:'combo25',cat:'Giros y suerte',icon:'🤨',name:'Sospechoso',desc:'Ganá 25 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=25;},prog:function(L){return [L.bestCombo||0,25];}},
+    {id:'combo30',cat:'Giros y suerte',icon:'🎰',name:'Revisen sus dados',desc:'Ganá 30 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=30;},prog:function(L){return [L.bestCombo||0,30];}},
+    {id:'spin1k',cat:'Constancia',icon:'🚪',name:'Una más y me voy',desc:'Realiza 1.000 giros.',tier:'facil',secret:false,count:true,chk:function(L){return (L.spins||0)>=1000;},prog:function(L){return [L.spins||0,1000];}},
+    {id:'spin10k',cat:'Constancia',icon:'🤞',name:'Ahora sí, la última',desc:'Realiza 10.000 giros.',tier:'medio',secret:false,count:true,chk:function(L){return (L.spins||0)>=10000;},prog:function(L){return [L.spins||0,10000];}},
+    {id:'spin50k',cat:'Constancia',icon:'🤥',name:'Mentiroso',desc:'Realiza 50.000 giros.',tier:'medio',secret:false,count:true,chk:function(L){return (L.spins||0)>=50000;},prog:function(L){return [L.spins||0,50000];}},
+    {id:'spin100k',cat:'Constancia',icon:'🔁',name:'Esta vez es diferente',desc:'Realiza 100.000 giros.',tier:'dificil',secret:false,count:true,chk:function(L){return (L.spins||0)>=100000;},prog:function(L){return [L.spins||0,100000];}},
+    {id:'spin250k',cat:'Constancia',icon:'😎',name:'Lo tengo controlado',desc:'Realiza 250.000 giros.',tier:'dificil',secret:false,count:true,chk:function(L){return (L.spins||0)>=250000;},prog:function(L){return [L.spins||0,250000];}},
+    {id:'spin500k',cat:'Constancia',icon:'🚬',name:'Puedo dejarlo cuando quiera',desc:'Realiza 500.000 giros.',tier:'dificil',secret:false,count:true,chk:function(L){return (L.spins||0)>=500000;},prog:function(L){return [L.spins||0,500000];}},
+    {id:'spin1m',cat:'Constancia',icon:'💀',name:'¿Todavía seguís acá?',desc:'Realiza 1.000.000 de giros.',tier:'dificil',secret:false,count:true,chk:function(L){return (L.spins||0)>=1000000;},prog:function(L){return [L.spins||0,1000000];}},
     // Espinas
     {id:'bone1',cat:'Espinas',icon:'😖',name:'Eso dolió',desc:'Recibí daño de una espina.',tier:'facil',secret:false,chk:function(L){return (L.boneHits||0)>=1;}},
-    {id:'bone_big',cat:'Espinas',icon:'🐟',name:'Pescado traicionero',desc:'Perdé más de $100.000 por una espina.',tier:'medio',secret:false,chk:function(L){return (L.maxBoneLoss||0)>100000;}},
-    {id:'bone100',cat:'Espinas',icon:'🙄',name:'¿En serio otra vez?',desc:'Recibí daño de espinas 100 veces.',tier:'medio',secret:false,chk:function(L){return (L.boneHits||0)>=100;}},
-    {id:'bone500',cat:'Espinas',icon:'🦔',name:'Erizo honorario',desc:'Recibí daño de espinas 500 veces.',tier:'dificil',secret:false,chk:function(L){return (L.boneHits||0)>=500;}},
+    {id:'bone_big',cat:'Espinas',icon:'🐟',name:'Pescado traicionero',desc:'Perdé más de $100.000 por una espina.',tier:'medio',secret:false,chk:function(L){return (L.maxBoneLoss||0)>100000;},prog:function(L){return [L.maxBoneLoss||0,100000];}},
+    {id:'bone100',cat:'Espinas',icon:'🙄',name:'¿En serio otra vez?',desc:'Recibí daño de espinas 100 veces.',tier:'medio',secret:false,chk:function(L){return (L.boneHits||0)>=100;},prog:function(L){return [L.boneHits||0,100];}},
+    {id:'bone500',cat:'Espinas',icon:'🦔',name:'Erizo honorario',desc:'Recibí daño de espinas 500 veces.',tier:'dificil',secret:false,chk:function(L){return (L.boneHits||0)>=500;},prog:function(L){return [L.boneHits||0,500];}},
     {id:'bone_survive',cat:'Espinas',icon:'💪',name:'Las espinas me fortalecen',desc:'Sobreviví a una espina enorme.',tier:'secreto',secret:true,chk:function(L){return !!L.survivedBigBone;}},
     // Limbo
     {id:'limbo_enter',cat:'Limbo',icon:'❓',name:'¿Qué es este lugar?',desc:'Entrá al Limbo.',tier:'facil',secret:false,chk:function(L,s){return !!s.limboUnlocked;}},
     {id:'asc1',cat:'Limbo',icon:'👋',name:'Nos volveremos a ver',desc:'Ascendé por primera vez.',tier:'facil',secret:false,chk:function(L){return (L.asc||0)>=1;}},
-    {id:'asc10',cat:'Limbo',icon:'🗺️',name:'Ya conozco el camino',desc:'Ascendé 10 veces.',tier:'medio',secret:false,chk:function(L){return (L.asc||0)>=10;}},
-    {id:'asc50',cat:'Limbo',icon:'🏠',name:'Dirección permanente',desc:'Ascendé 50 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=50;}},
-    {id:'asc100',cat:'Limbo',icon:'🏚️',name:'Propiedad del Limbo',desc:'Ascendé 100 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=100;}},
+    {id:'asc10',cat:'Limbo',icon:'🗺️',name:'Ya conozco el camino',desc:'Ascendé 10 veces.',tier:'medio',secret:false,chk:function(L){return (L.asc||0)>=10;},prog:function(L){return [L.asc||0,10];}},
+    {id:'asc50',cat:'Limbo',icon:'🏠',name:'Dirección permanente',desc:'Ascendé 50 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=50;},prog:function(L){return [L.asc||0,50];}},
+    {id:'asc100',cat:'Limbo',icon:'🏚️',name:'Propiedad del Limbo',desc:'Ascendé 100 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=100;},prog:function(L){return [L.asc||0,100];}},
     // Banco
     {id:'first_dep',cat:'Banco',icon:'🛏️',name:'Debajo del colchón',desc:'Hacé tu primer depósito.',tier:'facil',secret:false,chk:function(L){return !!L.firstDeposit;}},
-    {id:'bank1m',cat:'Banco',icon:'💼',name:'Ahorrador profesional',desc:'Guardá $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.maxBank||0)>=1000000;}},
-    {id:'bank10m',cat:'Banco',icon:'🏦',name:'Ya casi soy un banco',desc:'Guardá $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.maxBank||0)>=10000000;}},
+    {id:'bank1m',cat:'Banco',icon:'💼',name:'Ahorrador profesional',desc:'Guardá $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.maxBank||0)>=1000000;},prog:function(L){return [L.maxBank||0,1000000];}},
+    {id:'bank10m',cat:'Banco',icon:'🏦',name:'Ya casi soy un banco',desc:'Guardá $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.maxBank||0)>=10000000;},prog:function(L){return [L.maxBank||0,10000000];}},
     {id:'bank_full',cat:'Banco',icon:'🏛️',name:'Kitty National Bank',desc:'Llená la caja fuerte.',tier:'dificil',secret:false,chk:function(L){return !!L.bankFilled;}},
     {id:'interest',cat:'Banco',icon:'📈',name:'Dinero que genera dinero',desc:'Obtené intereses por primera vez.',tier:'medio',secret:false,chk:function(L){return !!L.gotInterest;}},
     // Dinero
-    {id:'money10k',cat:'Dinero',icon:'🍭',name:'Ya alcanza para un chupetín',desc:'Conseguí $10.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000;}},
-    {id:'money100k',cat:'Dinero',icon:'👀',name:'Ahí va...',desc:'Conseguí $100.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000;}},
-    {id:'money1m',cat:'Dinero',icon:'😮',name:'Esto se está poniendo serio',desc:'Conseguí $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.bestWorth||0)>=1000000;}},
-    {id:'money10m',cat:'Dinero',icon:'🤑',name:'Ahora hablamos de plata',desc:'Conseguí $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000000;}},
-    {id:'money100m',cat:'Dinero',icon:'💼',name:'El gato emprendedor',desc:'Conseguí $100.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000000;}},
+    {id:'money10k',cat:'Dinero',icon:'🍭',name:'Ya alcanza para un chupetín',desc:'Conseguí $10.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000;},prog:function(L){return [L.bestWorth||0,10000];}},
+    {id:'money100k',cat:'Dinero',icon:'👀',name:'Ahí va...',desc:'Conseguí $100.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000;},prog:function(L){return [L.bestWorth||0,100000];}},
+    {id:'money1m',cat:'Dinero',icon:'😮',name:'Esto se está poniendo serio',desc:'Conseguí $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.bestWorth||0)>=1000000;},prog:function(L){return [L.bestWorth||0,1000000];}},
+    {id:'money10m',cat:'Dinero',icon:'🤑',name:'Ahora hablamos de plata',desc:'Conseguí $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000000;},prog:function(L){return [L.bestWorth||0,10000000];}},
+    {id:'money100m',cat:'Dinero',icon:'💼',name:'El gato emprendedor',desc:'Conseguí $100.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000000;},prog:function(L){return [L.bestWorth||0,100000000];}},
     {id:'house_loses',cat:'Dinero',icon:'🎰',name:'La casa pierde',desc:'Alcanzá el tope de plata.',tier:'dificil',secret:false,chk:function(L,s){return (s.credits+s.bank-s.debt)>=capValue();}},
     // Secretos
     {id:'diff',cat:'Secretos',icon:'🤔',name:'¿Cuál es la diferencia?',desc:'Girá con el botón y con la palanca.',tier:'secreto',secret:true,chk:function(L){return !!L.usedSpinBtn && !!L.usedLever;}}
@@ -172,13 +180,18 @@
     if(!LOGROS_ON) return;
     var L=state.life; if(!L) return;
     if(!L.logros||typeof L.logros!=='object') L.logros={};
-    var changed=false;
+    var changed=false, newIds=[];
     for(var i=0;i<LOGROS.length;i++){ var lo=LOGROS[i];
       if(L.logros[lo.id]) continue;
       var ok=false; try{ ok=!!lo.chk(L,state); }catch(e){ ok=false; }
-      if(ok){ L.logros[lo.id]=Date.now(); changed=true; if(!silent) queueLogroToast(lo); }
+      if(ok){ L.logros[lo.id]=Date.now(); changed=true; newIds.push(lo.id); if(!silent) queueLogroToast(lo); }
     }
     if(changed) saveState();
+    if(newIds.length) bumpLogroStats(newIds);
+  }
+  function bumpLogroStats(ids){
+    if(!(LOGROS_ON && fbReady && fbUser && _fbFsMod && _fbFsMod.increment)) return;
+    try{ var upd={}; for(var i=0;i<ids.length;i++){ upd[ids[i]]=_fbFsMod.increment(1); } _fbFsMod.setDoc(_fbFsMod.doc(fbDB,'counters','logroStats'), upd, {merge:true}).catch(function(){}); }catch(_e){}
   }
   function logrosCount(){ var L=(state.life&&state.life.logros)||{}; var n=0; for(var k in L){ if(L.hasOwnProperty(k)) n++; } return n; }
   function queueLogroToast(lo){ _logroQ.push(lo); if(!_logroShowing) nextLogroToast(); }
@@ -187,10 +200,66 @@
     var wrap=document.getElementById('logroToast');
     if(!wrap){ wrap=document.createElement('div'); wrap.id='logroToast'; document.body.appendChild(wrap); }
     var el=document.createElement('div'); el.className='logro-toast';
-    el.innerHTML='<div class="lt-ico">'+lo.icon+'</div><div class="lt-txt"><div class="lt-top">🏆 ¡LOGRO DESBLOQUEADO!</div><div class="lt-name">'+_rkEsc(lo.name)+'</div></div>';
+    el.innerHTML='<div class="lt-ico">'+logroIcoHTML(lo,true,false)+'</div><div class="lt-txt"><div class="lt-top">🏆 ¡LOGRO DESBLOQUEADO!</div><div class="lt-name">'+_rkEsc(lo.name)+'</div></div>';
     wrap.appendChild(el);
     requestAnimationFrame(function(){ el.classList.add('show'); });
     setTimeout(function(){ el.classList.remove('show'); el.classList.add('hide'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 480); }, 3000);
+  }
+  function fmtLogroNum(cur, goal, isCount){ var c=Math.min(cur||0, goal); if(!isCount && goal>=10000){ return '$'+fmt(c)+' / $'+fmt(goal); } return fmt(c)+' / '+fmt(goal); }
+  function logroIcoHTML(g, on, hidden){ if(!LOGRO_IMG_ON) return hidden?'❓':g.icon; var em=hidden?'❓':g.icon; if(!on){ return '<img class="lg-ico-img lg-ico-lock" src="assets/logros/locked.png" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'"><span class="lg-ico-em" style="display:none">'+em+'</span>'; } return '<img class="lg-ico-img" src="assets/logros/'+g.id+'.png" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'"><span class="lg-ico-em" style="display:none">'+g.icon+'</span>'; }
+  var _logTab='mine';
+  var _isLocalhost=(function(){ try{ var h=location.hostname; return h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h===''; }catch(e){ return false; } })();
+  var _logroPreview=_isLocalhost && /[?&#]preview/i.test((location.search||'')+(location.hash||''));
+  if(_isLocalhost){ try{ window.logrosPreview=function(v){ _logroPreview=(v===undefined)?!_logroPreview:!!v; var m=document.getElementById('logrosModal'); if(m&&m.classList.contains('open')) renderLogrosModal(); console.log('[logros] preview =', _logroPreview); return _logroPreview; }; }catch(e){} }
+  function openLogros(){ if(spinning) return; var m=document.getElementById('logrosModal'); if(!m) return; _logTab='mine'; m.classList.add('open'); renderLogrosModal(); }
+  function renderLogrosModal(){
+    var tabs=document.getElementById('logTabs');
+    if(tabs){ tabs.innerHTML='<button class="feed-tab'+(_logTab==='mine'?' on':'')+'" data-lt="mine">🏆 Mis logros</button><button class="feed-tab'+(_logTab==='global'?' on':'')+'" data-lt="global">🌎 Globales</button>'; var tb=tabs.querySelectorAll('.feed-tab'); for(var i=0;i<tb.length;i++){ tb[i].addEventListener('click', function(){ _logTab=this.getAttribute('data-lt'); renderLogrosModal(); }); } }
+    if(_logTab==='global') renderLogrosGlobal(); else renderLogros();
+  }
+  function closeLogros(){ var m=document.getElementById('logrosModal'); if(m) m.classList.remove('open'); }
+  function renderLogros(){
+    var body=document.getElementById('logrosBody'); if(!body) return;
+    var L=state.life||{}, unlocked=(L.logros&&typeof L.logros==='object')?L.logros:{};
+    var total=LOGROS.length, got=0, k; for(k in unlocked){ if(unlocked.hasOwnProperty(k)) got++; } if(_logroPreview) got=total;
+    var pct=total?Math.round(got/total*100):0;
+    var h='<div class="lg-summary"><div class="lg-sum-top"><span class="lg-sum-n">'+got+' / '+total+'</span><span class="lg-sum-lbl">desbloqueados</span></div><div class="lg-bar"><div class="lg-bar-fill" style="width:'+pct+'%"></div></div></div>';
+    var cats=[], byCat={}, i;
+    for(i=0;i<LOGROS.length;i++){ var lo=LOGROS[i]; if(!byCat[lo.cat]){ byCat[lo.cat]=[]; cats.push(lo.cat); } byCat[lo.cat].push(lo); }
+    var CATICON={ 'Giros y suerte':'🎰','Constancia':'🔄','Espinas':'🦴','Limbo':'👻','Banco':'🏦','Dinero':'💰','Secretos':'🤫' };
+    for(var c=0;c<cats.length;c++){ var cat=cats[c], arr=byCat[cat], cgot=0, a;
+      for(a=0;a<arr.length;a++){ if(unlocked[arr[a].id]||_logroPreview) cgot++; }
+      h+='<div class="lg-cat"><span>'+(CATICON[cat]||'🏆')+' '+cat+'</span><span class="lg-cat-n">'+cgot+'/'+arr.length+'</span></div><div class="lg-grid">';
+      for(var j=0;j<arr.length;j++){ var g=arr[j], on=(!!unlocked[g.id])||_logroPreview, hide=(g.secret&&!on);
+        h+='<div class="lg-card'+(on?' on':'')+(hide?' secret':'')+'">';
+        h+='<div class="lg-ico">'+logroIcoHTML(g,on,hide)+'</div>';
+        h+='<div class="lg-info"><div class="lg-name">'+(hide?'???':_rkEsc(g.name))+'</div><div class="lg-desc">'+(hide?'Logro secreto':_rkEsc(g.desc))+'</div>';
+        if(!on && !g.secret && typeof g.prog==='function'){ var pv=g.prog(L,state)||[0,1], cur=pv[0]||0, goal=pv[1]||1, p2=Math.max(0,Math.min(100,Math.round(cur/goal*100))); h+='<div class="lg-pbar"><div class="lg-pbar-fill" style="width:'+p2+'%"></div></div><div class="lg-pnum">'+fmtLogroNum(cur,goal,g.count)+'</div>'; }
+        h+='</div>';
+        if(on) h+='<div class="lg-check">✓</div>';
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+    body.innerHTML=h;
+  }
+  function renderLogrosGlobal(){
+    var body=document.getElementById('logrosBody'); if(!body) return;
+    if(!(fbReady&&_fbFsMod&&fbDB)){ body.innerHTML='<div class="pf-rk-msg">🔒 Iniciá sesión para ver las estadísticas globales.</div>'; return; }
+    body.innerHTML='<div class="pf-rk-msg">Cargando estadísticas…</div>';
+    var pStats=_fbFsMod.getDoc(_fbFsMod.doc(fbDB,'counters','logroStats')).then(function(s){ return (s&&s.exists())?(s.data()||{}):{}; }).catch(function(){ return {}; });
+    var pTotal=(_fbFsMod.getCountFromServer&&_fbFsMod.query)? _fbFsMod.getCountFromServer(_fbFsMod.query(_fbFsMod.collection(fbDB,'leaderboard'))).then(function(s){ return (s.data().count||0); }).catch(function(){ return 0; }) : Promise.resolve(0);
+    Promise.all([pStats,pTotal]).then(function(res){
+      var stats=res[0]||{}, totalP=res[1]||0, L=state.life||{}, unlocked=(L.logros&&typeof L.logros==='object')?L.logros:{};
+      var rows=[], i; for(i=0;i<LOGROS.length;i++){ var g=LOGROS[i], cnt=(typeof stats[g.id]==='number')?stats[g.id]:0, pc=(totalP>0)?Math.max(0,Math.min(100,Math.round(cnt/totalP*100))):0; rows.push({g:g,cnt:cnt,pc:pc}); }
+      rows.sort(function(a,b){ return b.pc-a.pc || b.cnt-a.cnt; });
+      var h='<div class="lg-gl-head">🌎 Cuántos jugadores tienen cada logro<br><span>sobre '+fmt(totalP)+' jugador'+(totalP===1?'':'es')+'</span></div>';
+      for(i=0;i<rows.length;i++){ var R=rows[i], gg=R.g, on=(!!unlocked[gg.id])||_logroPreview, hide=(gg.secret&&!on), rare=(R.pc>0&&R.pc<=10);
+        h+='<div class="lg-gl-row'+(on?' on':'')+(rare?' rare':'')+'"><div class="lg-ico">'+logroIcoHTML(gg,on,hide)+'</div><div class="lg-gl-info"><div class="lg-name">'+(hide?'???':_rkEsc(gg.name))+'</div><div class="lg-gl-bar"><div class="lg-gl-fill" style="width:'+R.pc+'%"></div></div></div><div class="lg-gl-pct">'+R.pc+'%</div></div>';
+      }
+      if(!totalP){ h+='<div class="bank-note" style="margin-top:12px">Todavía no hay datos. Las estadísticas se llenan a medida que los jugadores desbloquean logros. 🐱</div>'; }
+      body.innerHTML=h;
+    });
   }
 
 
@@ -552,7 +621,7 @@
     } else {
       var _vpct=bankCap()>0?Math.min(100,Math.round(state.bank/bankCap()*100)):0; h+='<div class="vault-tier">'+VAULT_NAMES[_ti]+'</div><div class="vault">'+buildVaultSVG(_sk,true,_vpct)+'<div class="vault-label">💰 <b>$'+fmt(state.bank)+'</b> / $'+fmt(bankCap())+' · '+_vpct+'%</div></div>'; h+='<div class="bank-io"><input id="bkAmt" class="bank-input" type="number" min="1" placeholder="monto"><button id="bkDep" class="bank-btn">Depositar</button><button id="bkWit" class="bank-btn">Retirar</button></div>';
       h+='<div class="bank-quick"><button id="bkDepAll" class="bank-mini">Depositar todo</button><button id="bkWitAll" class="bank-mini">Retirar todo</button></div>';
-      h+='<div class="bank-note">'+(state.bank>=bankCap()?'¡Caja fuerte llena! ':'')+'Subí el tope con 🔒 Tope del banco (en el Limbo).</div>';
+      h+='<div class="bank-note">'+(state.bank>=bankCap()?'¡Caja fuerte llena! No genera interés. ':'')+'Subí el tope con 🔒 Tope del banco (en el Limbo).</div>';
     }
     h+='</div><div class="bank-ops-col">';
     h+='<div class="shop-section">PRÉSTAMO</div>';
@@ -594,7 +663,7 @@
   function creditLimit(){ return CREDIT_LIMITS[Math.min(state.creditLevel||0, CREDIT_LIMITS.length-1)]; }
   function interestRate(){ return INT_RATES[Math.min(state.interestLevel||0, INT_RATES.length-1)] * (1 + 0.20*(state.meta.banker||0)); }
   function interestInterval(){ var base=INT_INTERVALS[Math.min(state.interestLevel||0, INT_INTERVALS.length-1)]; if(base<=0) return base; return Math.max(5, base - 3*(state.meta.premiumvault||0)); }
-  function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; const g=Math.floor(state.bank*interestRate()); if(g>0){ state.bank+=g; state.life.gotInterest=true; } } }
+  function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; var _cap=bankCap(); if(_cap>0 && state.bank>=_cap) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; var g=Math.floor(state.bank*interestRate()); if(_cap>0) g=Math.min(g, _cap-state.bank); if(g>0){ state.bank+=g; state.life.gotInterest=true; } } }
   function buyCredit(){ if(state.debt>0||state.creditLevel>=CREDIT_LIMITS.length-1) return; const cost=CREDIT_COSTS[state.creditLevel]; if(state.credits<cost) return; state.credits-=cost; state.creditLevel++; updateUI(); renderBank(); saveState(); }
   function buyInterest(){ if(state.debt>0||!state.vault||state.interestLevel>=INT_RATES.length-1) return; const cost=INT_COSTS[state.interestLevel]; if(state.credits<cost) return; state.credits-=cost; state.interestLevel++; updateUI(); renderBank(); saveState(); }
   function fullReset(){ exitBankruptcy(); state.credits=START; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; _lifeUsed=false; state.introSeen=false; state.kattoSeen=false; state.discount=null; state.meta={spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0}; state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; state.peak=START; state.runStartWorth=START; state.runJackpots=0; state.helpSeen=[]; state.runStart=Date.now(); _capMsgShown=false; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
@@ -778,7 +847,7 @@
   function respinProcs(){ return (state.meta.respin||0)>0 && Math.random()<respinChance(); }
   function respin(keep){ keep=keep||[false,false,false]; spinning=true; setSpinUI(true); setMsg('🔄 ¡RE-GIRO!',false); held=keep.slice(); renderHold(); var t=[0,1,2].map(function(i){ return keep[i]?cur[i]:randSym(); }); var spinIdx=[0,1,2].filter(function(i){ return !keep[i]; }); if(spinIdx.length===0){ held=[false,false,false]; renderHold(); finish(t,true,keep); return; } var done=0; spinIdx.forEach(function(i,k){ spinReel(REEL[i],CV[i],t[i],600+k*350,function(){ done++; if(done===spinIdx.length){ held=[false,false,false]; renderHold(); finish(t,true,keep); } }); }); }
   function fmtDur(ms){ var s=Math.max(0,Math.floor(ms/1000)); var m=Math.floor(s/60); s=s%60; return (m>0?(m+'m '):'')+(s<10&&m>0?'0':'')+s+'s'; }
-  function limboEarn(){ var _div=3000*Math.sqrt(capValue()/1e6); var base=Math.max(0, Math.floor(((state.peak||0)-(state.runStartWorth||START))/_div))+(state.runJackpots||0)*5; return Math.round(base*(1+0.03*(state.meta.ectoboost||0))); }
+  function limboEarn(_basis){ var _b=(typeof _basis==='number')?_basis:(state.credits+state.bank-state.debt); var _div=3000*Math.sqrt(capValue()/1e6); var base=Math.max(0, Math.floor((_b-(state.runStartWorth||START))/_div))+(state.runJackpots||0)*5; return Math.round(base*(1+0.03*(state.meta.ectoboost||0))); }
   function limboMusic(){ if(state.musicOn){ catMode=true; if(!musicPlaying) startMusic(); } }
   function bankMusic(){ bankMode=true; catMode=false; if(state.musicOn && !musicPlaying) startMusic(); }
   function updateLimboBtn(){ var b=document.getElementById('limboBtn'); if(!b) return; if(state.limboUnlocked){ b.disabled=false; b.textContent='👻 LIMBO'; } else { b.disabled=true; b.textContent='🔒 LIMBO'; } }
@@ -798,7 +867,7 @@
   function exitBankruptcy(){ if(!_broke) return; _broke=false; document.body.classList.remove('broke'); document.body.classList.remove('spin-lock'); var sb=document.getElementById('spinBtn'); if(sb){ sb.textContent='GIRAR'; sb.classList.remove('to-limbo'); sb.disabled=false; } if(sheetReady){ [0,1,2].forEach(function(i){ drawSym(CV[i], SYMS[[0,1,5][i]]); }); } }
   var NINE_CHANCE=[0,0.30,0.55,0.80];
   function tryNineLives(){ var lv=state.meta.ninevidas||0; if(lv<1 || _lifeUsed) return false; _lifeUsed=true; if(Math.random() < NINE_CHANCE[Math.min(lv,3)]){ state.credits=Math.max(state.credits,500); updateUI(); saveState(); setMsg('🐱 ¡NUEVE VIDAS! Zafaste de la bancarrota 💚 +$500','big'); if(typeof celebrate==='function') celebrate(false); return true; } return false; }
-  function gameOver(){ if(_broke) return; if(document.getElementById('limbo').classList.contains('open')) return; state.limboUnlocked=true; var earned=limboEarn(); state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; state.life.deaths=(state.life.deaths||0)+1; updateLimboBtn(); if(_logrosReady) checkLogros(); saveState(); enterBankruptcy(); }
+  function gameOver(){ if(_broke) return; if(document.getElementById('limbo').classList.contains('open')) return; state.limboUnlocked=true; var earned=limboEarn(state.peak||0); state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; state.life.deaths=(state.life.deaths||0)+1; updateLimboBtn(); if(_logrosReady) checkLogros(); saveState(); enterBankruptcy(); }
   // ===== Árbol del Limbo (4 ramas, paneable + zoom) =====
   var META_TREE={ armor:[90,40], respin:[20,200], ninevidas:[160,200], luck:[370,40], jpboost:[310,200], cap:[440,200], ectoboost:[375,360], chest:[670,40], credit:[610,200], banktope:[740,200], regular:[675,360], bankopen:[920,40], vaultopen:[920,200], banker:[920,360], premiumvault:[920,520] };
   var TREE_BRANCH={ armor:'#ff5b79', respin:'#ff5b79', ninevidas:'#ff5b79', luck:'#39e0e6', jpboost:'#39e0e6', cap:'#39e0e6', ectoboost:'#39e0e6', chest:'#ffd23f', credit:'#ffd23f', banktope:'#ffd23f', regular:'#ffd23f', bankopen:'#ff3d8b', vaultopen:'#ff3d8b', banker:'#ff3d8b', premiumvault:'#ff3d8b' };
@@ -836,7 +905,7 @@
     function showNodeDetail(k){ if(!det) return; var u=META[k]; if(!u) return; var lv=state.meta[k]||0, maxed=lv>=u.max, cost=u.cost(lv); var costLine = maxed ? '<span class="lt-detail-cost maxed">✓ Nivel máximo</span>' : '<span class="lt-detail-cost">Próximo nivel: '+cost+' 👻</span>'; var reqLine=''; if(u.req && !metaUnlocked(k)){ var ru=META[u.req.k]; reqLine='<div class="lt-detail-req">🔒 Requiere '+(ru?ru.name.split(" ").slice(1).join(" ")||ru.name:u.req.k)+' nivel '+u.req.n+'</div>'; } det.innerHTML='<div class="lt-detail-name">'+u.name+'</div><div class="lt-detail-desc">'+u.desc+'</div><div class="lt-detail-foot"><span class="lt-detail-lv">Lv '+lv+'/'+u.max+'</span>'+costLine+'</div>'+reqLine; det.classList.add('on'); }
     var nn=cv.querySelectorAll('.lt-tap'); for(var ni=0;ni<nn.length;ni++){ (function(node){ var downX=0, downY=0, moved=false; node.addEventListener('pointerdown', function(e){ downX=e.clientX; downY=e.clientY; moved=false; }); node.addEventListener('pointermove', function(e){ if(Math.abs(e.clientX-downX)>6||Math.abs(e.clientY-downY)>6) moved=true; }); node.addEventListener('pointerup', function(e){ if(moved) return; if(e.target.closest('.lt-buy')) return; showNodeDetail(node.getAttribute('data-desc')); }); })(nn[ni]); }
   }
-  function renderLimbo(){ var tabsEl=document.getElementById('limboTabs'), el=document.getElementById('limboBody'); if(!el) return; var dur=fmtDur(Date.now()-(state.runStart||Date.now())), _pe=limboEarn(); if(tabsEl){ tabsEl.innerHTML='<button class="limbo-tab'+(_limboTab==="mejoras"?"":" on")+'" data-tab="resumen">RESUMEN</button><button class="limbo-tab'+(_limboTab==="mejoras"?" on":"")+'" data-tab="mejoras">MEJORAS</button>'; var tb=tabsEl.querySelectorAll('.limbo-tab'); for(var j=0;j<tb.length;j++){ tb[j].addEventListener('click', function(){ _limboTab=this.getAttribute('data-tab'); renderLimbo(); }); } } var h='<div class="limbo-ect">👻 Ectofichas: <b>'+state.meta.spirits+'</b></div>'; if(_limboTab!=='mejoras'){ if(_limboMode==='death'){ h+='<div class="limbo-earn">¡Partida terminada! Te llevás <b>+'+_lastEarned+' 👻</b></div>'; } h+='<div class="limbo-stat-row"><div class="limbo-chip">⏱️ <b>'+dur+'</b></div><div class="limbo-chip">💰 <b>$'+fmt(state.peak||0)+'</b></div><div class="limbo-chip">🎰 <b>'+(state.runJackpots||0)+'</b></div><div class="limbo-chip">🏔️ <b>'+fmtCap(capValue())+'</b></div></div>'; } else { h+=metaTreeHTML(); } if(_limboMode==='hub'){ h+='<div class="limbo-foot"><button class="limbo-asc" id="limboAscend"'+(_pe<=0?' disabled':'')+'>'+(_pe<=0?'✨ ASCENDER<br>sin fichas aún':('✨ ASCENDER<br>+'+_pe+' 👻'))+'</button><button class="limbo-seg" id="limboSeguir">▶ SEGUIR<br>JUGANDO</button></div>'; } else { h+='<div class="limbo-foot"><button class="limbo-asc" id="limboGo">🔄 NUEVA PARTIDA</button></div>'; } el.innerHTML=h; var bs=el.querySelectorAll('.lm-buy'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ buyMeta(this.getAttribute('data-k')); }); } if(_limboTab==='mejoras') setupTree(); if(_limboMode==='hub'){ var a=document.getElementById('limboAscend'); if(a) a.addEventListener('click', ascend); var sg=document.getElementById('limboSeguir'); if(sg) sg.addEventListener('click', closeLimbo); } else { var g=document.getElementById('limboGo'); if(g) g.addEventListener('click', startRun); } }
+  function renderLimbo(){ var tabsEl=document.getElementById('limboTabs'), el=document.getElementById('limboBody'); if(!el) return; var dur=fmtDur(Date.now()-(state.runStart||Date.now())), _pe=limboEarn(); if(tabsEl){ tabsEl.innerHTML='<button class="limbo-tab'+(_limboTab==="mejoras"?"":" on")+'" data-tab="resumen">RESUMEN</button><button class="limbo-tab'+(_limboTab==="mejoras"?" on":"")+'" data-tab="mejoras">MEJORAS</button>'; var tb=tabsEl.querySelectorAll('.limbo-tab'); for(var j=0;j<tb.length;j++){ tb[j].addEventListener('click', function(){ _limboTab=this.getAttribute('data-tab'); renderLimbo(); }); } } var h='<div class="limbo-ect">👻 Ectofichas: <b>'+state.meta.spirits+'</b></div>'; if(_limboTab!=='mejoras'){ if(_limboMode==='death'){ h+='<div class="limbo-earn">¡Partida terminada! Te llevás <b>+'+_lastEarned+' 👻</b></div>'; } h+='<div class="limbo-stat-row"><div class="limbo-chip">⏱️ <b>'+dur+'</b></div><div class="limbo-chip">💰 <b>$'+fmt((_limboMode==='death')?(state.peak||0):Math.max(0,state.credits+state.bank-state.debt))+'</b></div><div class="limbo-chip">🎰 <b>'+(state.runJackpots||0)+'</b></div><div class="limbo-chip">🏔️ <b>'+fmtCap(capValue())+'</b></div></div>'; } else { h+=metaTreeHTML(); } if(_limboMode==='hub'){ h+='<div class="limbo-foot"><button class="limbo-asc" id="limboAscend"'+(_pe<=0?' disabled':'')+'>'+(_pe<=0?'✨ ASCENDER<br>sin fichas aún':('✨ ASCENDER<br>+'+_pe+' 👻'))+'</button><button class="limbo-seg" id="limboSeguir">▶ SEGUIR<br>JUGANDO</button></div>'; } else { h+='<div class="limbo-foot"><button class="limbo-asc" id="limboGo">🔄 NUEVA PARTIDA</button></div>'; } el.innerHTML=h; var bs=el.querySelectorAll('.lm-buy'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ buyMeta(this.getAttribute('data-k')); }); } if(_limboTab==='mejoras') setupTree(); if(_limboMode==='hub'){ var a=document.getElementById('limboAscend'); if(a) a.addEventListener('click', ascend); var sg=document.getElementById('limboSeguir'); if(sg) sg.addEventListener('click', closeLimbo); } else { var g=document.getElementById('limboGo'); if(g) g.addEventListener('click', startRun); } }
   function metaUnlocked(k){ var r=META[k].req; return !r || (state.meta[r.k]||0) >= r.n; }
   function clienteRegularLvl(){ return state.meta.regular||0; }
   function buyMeta(k){ if(!metaUnlocked(k)) return; var u=META[k], lv=state.meta[k]||0; if(lv>=u.max) return; var cost=u.cost(lv); if(state.meta.spirits<cost) return; state.meta.spirits-=cost; state.meta[k]=lv+1; renderLimbo(); saveState(); }
@@ -1121,6 +1190,9 @@
   document.getElementById('authClose').addEventListener('click', function(){ document.getElementById('authModal').classList.remove('open'); });
   document.getElementById('authModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
   document.getElementById('suggestIcon').addEventListener('click', openFeedback);
+  document.getElementById('logrosClose').addEventListener('click', closeLogros);
+  document.getElementById('logrosModal').addEventListener('click', function(e){ if(e.target===this) closeLogros(); });
+  if(LOGROS_ON){ var _lgi=document.getElementById('logrosIcon'); if(_lgi){ _lgi.style.display=''; _lgi.addEventListener('click', openLogros); } }
   document.getElementById('feedClose').addEventListener('click', closeFeedback);
   document.getElementById('feedback').addEventListener('click', function(e){ if(e.target===this) closeFeedback(); });
   document.getElementById('votersClose').addEventListener('click', closeVoters);
