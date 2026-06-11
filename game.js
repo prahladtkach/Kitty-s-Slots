@@ -32,7 +32,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.72";
+  const VERSION="2.75";
   const LOGROS_ON=false; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
@@ -461,7 +461,7 @@
   function _rkEsc(x){ return String(x==null?'':x).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   async function fetchHidden(){ var out=[]; try{ var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'leaderboard'), _fbFsMod.where('hidden','==',true)); var snap=await _fbFsMod.getDocs(q); snap.forEach(function(d){ var x=d.data()||{}; x._uid=d.id; out.push(x); }); }catch(_e){ return null; } return out; }
   function renderHiddenList(){ var box=document.getElementById('pfRkList'); if(!box) return; var _u=document.getElementById('pfRkUser'); if(_u) _u.style.display='none'; box.style.display='block'; box.innerHTML='<div class="pf-rk-msg">Cargando ocultos…</div>'; fetchHidden().then(function(rows){ if(rows===null){ box.innerHTML='<button class="pf-rku-back" id="pfRkBackTop">← Volver al ranking</button><div class="pf-rk-msg">No se pudo cargar (revisá permisos).</div>'; var _b0=document.getElementById('pfRkBackTop'); if(_b0) _b0.addEventListener('click', renderRankings); return; } _hiddenRows=rows; var h='<button class="pf-rku-back" id="pfRkBackTop">← Volver al ranking</button>'; if(!rows.length){ h+='<div class="pf-rk-msg">No hay perfiles ocultos. 🐱</div>'; } else { h+='<div class="pf-rk-msg" style="margin-bottom:8px">Perfiles ocultos ('+rows.length+'). Tocá uno para verlo y restaurarlo.</div>'; for(var i=0;i<rows.length;i++){ var r=rows[i]; h+='<div class="pf-rk-row hidden-row" data-rkuid="'+r._uid+'"><span class="pf-rk-pos">🚫</span><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(r.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(r.score||0)+' pts</span></div>'; } } box.innerHTML=h; var _bk=document.getElementById('pfRkBackTop'); if(_bk) _bk.addEventListener('click', renderRankings); var rws=box.querySelectorAll('.pf-rk-row[data-rkuid]'); for(var j=0;j<rws.length;j++){ rws[j].addEventListener('click', function(){ showRkUser(this.getAttribute('data-rkuid')); }); } }); }
-  function renderRankings(){ var box=document.getElementById('pfRkList'); if(!box) return; var _u=document.getElementById('pfRkUser'); if(_u){ _u.style.display='none'; } box.style.display='block'; if(!fbReady||!fbUser){ box.innerHTML='<div class="pf-rk-msg">🔒 Iniciá sesión (arriba, en el ícono de cuenta) para ver y competir en el ranking global.</div>'; return; } box.innerHTML='<div class="pf-rk-msg">Cargando ranking…</div>'; fetchTop('score',30).then(function(rows){ if(rows===null){ box.innerHTML='<div class="pf-rk-msg">No se pudo cargar el ranking.<br>(¿Pegaste las reglas de Firebase para «leaderboard»?)</div>'; return; } if(!rows.length){ box.innerHTML='<div class="pf-rk-msg">Nadie en el ranking todavía.<br>¡Sé el primero! 🐱</div>'; return; } _rkRows=rows; var h='', inTop=false, i, pos=0; for(i=0;i<rows.length;i++){ var r=rows[i]; if(r.hidden) continue; pos++; var me=(r._uid===fbUser.uid); if(me) inTop=true; h+='<div class="pf-rk-row'+(me?' me':'')+(pos<=3?' rk'+pos:'')+'" data-rkuid="'+r._uid+'"><span class="pf-rk-pos">'+(pos<=3?['🥇','🥈','🥉'][pos-1]:'#'+pos)+'</span><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(r.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(r.score||0)+' pts</span></div>'; } if(!inTop){ var e=state.eq||{}; h+='<div class="pf-rk-foot"><div class="pf-rk-row me"><span class="pf-rk-pos">Vos</span><span class="cat" style="background-position:'+pfCatPos(e.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(e.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(lbScore(state.life))+' pts</span></div></div>'; } if(hasMedal('staff')){ h+='<button class="pf-rk-hidden-btn" id="pfRkHiddenBtn">👁️ Ver perfiles ocultos</button>'; } box.innerHTML=h; var rws=box.querySelectorAll('.pf-rk-row[data-rkuid]'); for(var j=0;j<rws.length;j++){ rws[j].addEventListener('click', function(){ showRkUser(this.getAttribute('data-rkuid')); }); } var _hb=document.getElementById('pfRkHiddenBtn'); if(_hb) _hb.addEventListener('click', renderHiddenList); }); }
+  function renderRankings(){ var box=document.getElementById('pfRkList'); if(!box) return; var _u=document.getElementById('pfRkUser'); if(_u){ _u.style.display='none'; } box.style.display='block'; if(!fbReady||!fbUser){ box.innerHTML='<div class="pf-rk-msg">🔒 Iniciá sesión (arriba, en el ícono de cuenta) para ver y competir en el ranking global.</div>'; return; } box.innerHTML='<div class="pf-rk-msg">Cargando ranking…</div>'; fetchTop('score',30).then(function(rows){ if(rows===null){ box.innerHTML='<div class="pf-rk-msg">No se pudo cargar el ranking.<br>(¿Pegaste las reglas de Firebase para «leaderboard»?)</div>'; return; } if(!rows.length){ box.innerHTML='<div class="pf-rk-msg">Nadie en el ranking todavía.<br>¡Sé el primero! 🐱</div>'; return; } _rkRows=rows; var vis=[], i; for(i=0;i<rows.length;i++){ if(!rows[i].hidden) vis.push(rows[i]); } var h='', inTop=false; if(vis.length){ h+='<div class="rk-podium">'; var _ord=[1,0,2], _cls=['gold','silver','bronze'], _med=['🥇','🥈','🥉'], _hgt=[92,62,42]; for(var oi=0;oi<_ord.length;oi++){ var _ix=_ord[oi]; if(_ix>=vis.length) continue; var pr=vis[_ix], rn=_ix+1, pme=(pr._uid===fbUser.uid); if(pme) inTop=true; h+='<div class="rk-pcol'+(pme?' me':'')+'" data-rkuid="'+pr._uid+'">'; if(rn===1) h+='<div class="rk-pcrown">👑</div>'; h+='<div class="rk-pava '+_cls[rn-1]+(rn===1?' big':'')+'"><span class="cat" style="background-position:'+pfCatPos(pr.avatar||'calico')+'"></span></div>'; h+='<div class="rk-pname'+(rn===1?' gt':'')+'">'+_rkEsc(pr.nick||'Jugador')+'</div>'; h+='<div class="rk-pscore">'+fmt(pr.score||0)+' pts</div>'; h+='<div class="rk-pbase '+_cls[rn-1]+'" style="height:'+_hgt[rn-1]+'px"><span class="rk-pr">'+rn+'</span><span class="rk-pm">'+_med[rn-1]+'</span></div>'; h+='</div>'; } h+='</div>'; } if(vis.length>3){ h+='<div class="rk-list">'; for(i=3;i<vis.length;i++){ var lr=vis[i], lp=i+1, lme=(lr._uid===fbUser.uid); if(lme) inTop=true; h+='<div class="pf-rk-row'+(lme?' me':'')+'" data-rkuid="'+lr._uid+'"><span class="pf-rk-pos">#'+lp+'</span><span class="cat" style="background-position:'+pfCatPos(lr.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(lr.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(lr.score||0)+' pts</span></div>'; } h+='</div>'; } if(!inTop){ var e=state.eq||{}; h+='<div class="pf-rk-foot"><div class="pf-rk-row me"><span class="pf-rk-pos">Vos</span><span class="cat" style="background-position:'+pfCatPos(e.avatar||'calico')+'"></span><span class="pf-rk-nick">'+_rkEsc(e.nick||'Jugador')+'</span><span class="pf-rk-val">'+fmt(lbScore(state.life))+' pts</span></div></div>'; } if(hasMedal('staff')){ h+='<button class="pf-rk-hidden-btn" id="pfRkHiddenBtn">👁️ Ver perfiles ocultos</button>'; } box.innerHTML=h; var pcs=box.querySelectorAll('.rk-pcol[data-rkuid]'); for(var pj=0;pj<pcs.length;pj++){ pcs[pj].addEventListener('click', function(){ showRkUser(this.getAttribute('data-rkuid')); }); } var rws=box.querySelectorAll('.pf-rk-row[data-rkuid]'); for(var j=0;j<rws.length;j++){ rws[j].addEventListener('click', function(){ showRkUser(this.getAttribute('data-rkuid')); }); } var _hb=document.getElementById('pfRkHiddenBtn'); if(_hb) _hb.addEventListener('click', renderHiddenList); }); }
   function medalsForUID(uid){ var out=[]; if(STAFF_UIDS.indexOf(uid)>=0) out.push('staff'); if(BETA_UIDS.indexOf(uid)>=0) out.push('betatester'); return out; }
   function avatarName(id){ for(var i=0;i<PF_AVATARS.length;i++){ if(PF_AVATARS[i].id===id) return PF_AVATARS[i].name; } return (id||'').toUpperCase(); }
   function showRkUser(uid){ var r=null, pos=0, _vis=0; for(var i=0;i<(_rkRows||[]).length;i++){ if(!_rkRows[i].hidden) _vis++; if(_rkRows[i]._uid===uid){ r=_rkRows[i]; pos=_rkRows[i].hidden?0:_vis; break; } } if(!r){ for(var k=0;k<(_hiddenRows||[]).length;k++){ if(_hiddenRows[k]._uid===uid){ r=_hiddenRows[k]; pos=0; break; } } } if(!r) return; var box=document.getElementById('pfRkList'), pane=document.getElementById('pfRkUser'); if(!pane) return; var tn=pfTitleName(r.title||'none'); var meds=medalsForUID(uid); var medHTML=''; if(meds.length){ meds.forEach(function(k){ medHTML+='<span class="pf-medal" data-medal="'+k+'" title="'+MEDALS[k].name+' — '+MEDALS[k].desc+'">'+MEDALS[k].svg+'</span>'; }); } var h='<button class="pf-rku-back" id="pfRkuBack">← Volver al ranking</button>';
@@ -871,7 +871,7 @@
   document.getElementById('betInput').addEventListener('change', function(){ setBet(parseInt(this.value,10)); });
   // ===== SUGERENCIAS + REPORTES (v2.64 · Tanda 1) =====
   var SUGG_MAX=280, BUG_MAX=600, FEED_GATE=500000;
-  var _feedTab='board'; var _sgRows=[]; var _threadId=null;
+  var _feedTab='board'; var _sgRows=[]; var _bugRows=[]; var _threadId=null;
   var SG_STATUS={ pending:{t:'⏳ Pendiente',c:'pend'}, approved:{t:'✅ Aprobada',c:'ok'}, rejected:{t:'❌ Rechazada',c:'no'}, done:{t:'🚀 Implementada',c:'done'} };
   var SG_CLOSED={ approved:1, rejected:1, done:1 }; // estados que cierran voto + debate
   var SG_ORDER=['pending','approved','rejected','done'];
@@ -890,8 +890,10 @@
       if(!(fbReady&&fbUser)){ hb+='<div class="feed-gate">🔒 Iniciá sesión (ícono de cuenta, arriba a la derecha) para reportar.</div>'; }
       else { hb+='<textarea id="bugInput" class="feed-ta" maxlength="'+BUG_MAX+'" placeholder="Describí el bug…"></textarea><button class="feed-send bug" id="bugSend">🐞 Enviar reporte</button>'; }
       hb+='<div class="feed-msg" id="bugMsg"></div>';
+      if(hasMedal('staff')) hb+='<div id="bugList" style="margin-top:16px"></div>';
       body.innerHTML=hb;
       var bbtn=document.getElementById('bugSend'); if(bbtn) bbtn.addEventListener('click', submitBug);
+      if(hasMedal('staff')) renderBugList();
     } else {
       var hs='';
       if(feedCanPost()){ hs+='<div class="feed-compose"><textarea id="suggInput" class="feed-ta" maxlength="'+SUGG_MAX+'" placeholder="Tu idea para Kitty\u2019s Slots…"></textarea><button class="feed-send" id="suggSend">✦ Enviar sugerencia</button></div>'; }
@@ -977,18 +979,24 @@
     document.getElementById('votersModal').classList.add('open');
   }
   function closeVoters(){ document.getElementById('votersModal').classList.remove('open'); }
+  function rankForScore(sc){
+    if(!(fbReady&&_fbFsMod&&_fbFsMod.getCountFromServer&&_fbFsMod.where)) return Promise.resolve(0);
+    try{ var qy=_fbFsMod.query(_fbFsMod.collection(fbDB,'leaderboard'), _fbFsMod.where('score','>',sc)); return _fbFsMod.getCountFromServer(qy).then(function(snap){ return (snap.data().count||0)+1; }).catch(function(){ return 0; }); }catch(_e){ return Promise.resolve(0); }
+  }
   function openUserCard(uid, fbNick, fbAvatar){
     if(!uid) return;
     var modal=document.getElementById('userCardModal'), body=document.getElementById('userCardBody');
     if(!modal||!body) return;
     body.innerHTML='<div class="pf-rk-msg">Cargando perfil…</div>';
     modal.classList.add('open');
-    if(!(fbReady&&_fbFsMod&&fbDB)){ renderUserCard(uid, null, fbNick, fbAvatar); return; }
+    if(!(fbReady&&_fbFsMod&&fbDB)){ renderUserCard(uid, null, 0, fbNick, fbAvatar); return; }
     _fbFsMod.getDoc(_fbFsMod.doc(fbDB,'leaderboard',uid)).then(function(snap){
-      var r=(snap&&snap.exists())?(snap.data()||{}):null; renderUserCard(uid, r, fbNick, fbAvatar);
-    }).catch(function(){ renderUserCard(uid, null, fbNick, fbAvatar); });
+      var r=(snap&&snap.exists())?(snap.data()||{}):null;
+      if(r && !r.hidden){ rankForScore(r.score||0).then(function(pos){ renderUserCard(uid, r, pos||0, fbNick, fbAvatar); }); }
+      else { renderUserCard(uid, r, 0, fbNick, fbAvatar); }
+    }).catch(function(){ renderUserCard(uid, null, 0, fbNick, fbAvatar); });
   }
-  function renderUserCard(uid, r, fbNick, fbAvatar){
+  function renderUserCard(uid, r, pos, fbNick, fbAvatar){
     var body=document.getElementById('userCardBody'); if(!body) return;
     if(!r){
       var ba=fbAvatar||'calico';
@@ -1003,7 +1011,7 @@
     h+= tn? '<div class="pf-title"><span class="title-pill">'+tn+'</span></div>' : '';
     h+= medHTML? '<div class="pf-medals" style="display:flex">'+medHTML+'</div>' : '';
     h+= medHTML? '<div class="pf-medal-detail" id="ucMedalDetail"></div>' : '';
-    h+='<div class="pf-rku-meta">🐾 '+avatarName(r.avatar||'calico')+(r.palette?'<br>🎨 '+(PF_TEMANOM[r.palette]||r.palette):'')+(r.hidden?'<br>🚫 Oculto del ranking':'')+'</div>';
+    var posTxt=r.hidden?'🚫 Oculto del ranking':(pos>0?'🏆 Puesto #'+pos:''); h+='<div class="pf-rku-meta">'+(posTxt?posTxt+'<br>':'')+'🐾 '+avatarName(r.avatar||'calico')+(r.palette?'<br>🎨 '+(PF_TEMANOM[r.palette]||r.palette):'')+'</div>';
     h+='<div class="pf-stats">';
     h+='<div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val">'+fmt(r.ecto||0)+'</span></div>';
     h+='<div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val">'+fmt(r.asc||0)+'</div></div>';
@@ -1076,6 +1084,10 @@
     var e=state.eq||{}, L=state.life||{};
     _fbFsMod.addDoc(_fbFsMod.collection(fbDB,'bugs'), { text:txt, uid:fbUser.uid, nick:(e.nick||'Jugador'), email:(fbUser.email||''), ver:VERSION, ua:String(navigator.userAgent||'').slice(0,300), snap:{ credits:state.credits, worth:(state.credits+state.bank-state.debt), asc:(L.asc||0), runs:(L.runs||0) }, created:Date.now() }).then(function(){ ta.value=''; bugMsg('¡Gracias! Reporte enviado al dev 🐞✓','ok'); restore(); }).catch(function(){ bugMsg('No se pudo enviar (revisá las reglas de «bugs»).','err'); restore(); });
   }
+  function fetchBugs(){ var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'bugs'), _fbFsMod.orderBy('created','desc'), _fbFsMod.limit(40)); return _fbFsMod.getDocs(q).then(function(snap){ var rows=[]; snap.forEach(function(d){ var x=d.data()||{}; x._id=d.id; rows.push(x); }); return rows; }); }
+  function renderBugList(){ var box=document.getElementById('bugList'); if(!box) return; if(!hasMedal('staff')){ box.innerHTML=''; return; } box.innerHTML='<div class="bank-note">Cargando reportes…</div>'; fetchBugs().then(function(rows){ _bugRows=rows; paintBugList(); }).catch(function(){ box.innerHTML='<div class="bank-note">No se pudo cargar los reportes.<br>(¿La regla de «bugs» permite leer al staff?)</div>'; }); }
+  function paintBugList(){ var box=document.getElementById('bugList'); if(!box) return; var rows=_bugRows||[]; if(!rows.length){ box.innerHTML='<div class="bug-list-h">🐞 Reportes recibidos</div><div class="bank-note">No hay reportes todavía. 🎉</div>'; return; } var h='<div class="bug-list-h">🐞 Reportes recibidos ('+rows.length+')</div>'; for(var i=0;i<rows.length;i++){ var b=rows[i], s=b.snap||{}; var _bu=_rkEsc(b.uid||''), _bn=_rkEsc(b.nick||'Jugador'), _ba=_rkEsc(b.avatar||'calico'); h+='<div class="bug-card">'; h+='<div class="bug-top"><span class="sg-who'+(b.uid?' sg-who-btn':'')+'" data-uid="'+_bu+'" data-nick="'+_bn+'" data-av="'+_ba+'"><span class="cat" style="background-position:'+pfCatPos(b.avatar||'calico')+'"></span><b>'+_rkEsc(b.nick||'Jugador')+'</b></span><span class="bug-ver">'+_rkEsc(b.ver||'?')+'</span><span class="bug-time">'+thTime(b.created)+'</span></div>'; h+='<div class="bug-text">'+_rkEsc(b.text||'')+'</div>'; h+='<div class="bug-meta">💰 $'+fmt(s.worth||0)+' · ✨ '+fmt(s.asc||0)+' asc · 🎲 '+fmt(s.runs||0)+' part.'+(b.email?' · ✉️ '+_rkEsc(b.email):'')+'</div>'; h+='<button class="bug-del-btn" data-id="'+b._id+'">🗑️ Borrar reporte</button>'; h+='</div>'; } box.innerHTML=h; var whos=box.querySelectorAll('.sg-who-btn'); for(var w=0;w<whos.length;w++){ whos[w].addEventListener('click', function(){ openUserCard(this.getAttribute('data-uid'), this.getAttribute('data-nick'), this.getAttribute('data-av')); }); } var dls=box.querySelectorAll('.bug-del-btn'); for(var d=0;d<dls.length;d++){ dls[d].addEventListener('click', function(){ deleteBug(this.getAttribute('data-id')); }); } }
+  function deleteBug(id){ if(!hasMedal('staff')||!id) return; if(!confirm('¿Borrar este reporte de bug?')) return; _fbFsMod.deleteDoc(_fbFsMod.doc(fbDB,'bugs',id)).then(function(){ renderBugList(); }).catch(function(){ bugMsg('No se pudo borrar (permisos).','err'); }); }
 
   document.getElementById('bankBtn').addEventListener('click', function(){ if(!state.bankUnlocked) return; renderBank(); document.getElementById('bank').classList.add('open'); bankMusic(); });
   document.getElementById('bankClose').addEventListener('click', function(){ document.getElementById('bank').classList.remove('open'); bankMode=false; });
