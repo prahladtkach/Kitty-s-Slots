@@ -32,7 +32,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.86";
+  const VERSION="2.87";
   const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
@@ -172,7 +172,7 @@
     {id:'money1m',cat:'Dinero',icon:'😮',name:'Esto se está poniendo serio',desc:'Conseguí $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.bestWorth||0)>=1000000;},prog:function(L){return [L.bestWorth||0,1000000];}},
     {id:'money10m',cat:'Dinero',icon:'🤑',name:'Ahora hablamos de plata',desc:'Conseguí $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000000;},prog:function(L){return [L.bestWorth||0,10000000];}},
     {id:'money100m',cat:'Dinero',icon:'💼',name:'El gato emprendedor',desc:'Conseguí $100.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000000;},prog:function(L){return [L.bestWorth||0,100000000];}},
-    {id:'house_loses',cat:'Dinero',icon:'🎰',name:'La casa pierde',desc:'Alcanzá el tope de plata.',tier:'dificil',secret:false,chk:function(L,s){return (s.credits+s.bank-s.debt)>=capValue();}},
+    {id:'house_loses',cat:'Dinero',icon:'🎰',name:'La casa pierde',desc:'Llegá al tope máximo: $1.000.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=1e9;},prog:function(L){return [L.bestWorth||0,1e9];}},
     // Secretos
     {id:'diff',cat:'Secretos',icon:'🤔',name:'¿Cuál es la diferencia?',desc:'Girá con el botón y con la palanca.',tier:'secreto',secret:true,chk:function(L){return !!L.usedSpinBtn && !!L.usedLever;}}
   ];
