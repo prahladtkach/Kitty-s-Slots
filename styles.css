@@ -353,7 +353,7 @@
 #profile .pf-rk-list{ min-height:130px; }
 #profile .pf-rk-row{ display:flex; align-items:center; gap:9px; padding:7px 9px; background:var(--panel2); box-shadow:0 0 0 2px var(--dark); margin-bottom:6px; }
 #profile .pf-rk-row.me{ box-shadow:0 0 0 2px var(--dark), 0 0 0 5px var(--cyan); }
-#profile .pf-rk-pos{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--gold); min-width:36px; }
+#profile .pf-rk-pos{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--muted); min-width:36px; }
 #profile .pf-rk-row .cat{ width:30px; height:30px; flex:0 0 auto; }
 #profile .pf-rk-nick{ flex:1; font-size:16px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #profile .pf-rk-val{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--cyan); white-space:nowrap; }
@@ -533,3 +533,20 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 /* nombre en el cartel de diálogo (Mr.PIBBLE) */
 .cat-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--cream); text-align:center; padding:8px 4px 2px; letter-spacing:1px; text-shadow:2px 2px 0 var(--dark); }
 .cat-name:empty{ display:none; }
+
+/* === Podio: top 3 del ranking en oro / plata / cobre === */
+.pf-rk-row.rk1 .pf-rk-pos{ color:#ffd23f; text-shadow:0 0 5px rgba(255,210,63,.55); }
+.pf-rk-row.rk2 .pf-rk-pos{ color:#dfe4ea; text-shadow:0 0 5px rgba(223,228,234,.45); }
+.pf-rk-row.rk3 .pf-rk-pos{ color:#d98a45; text-shadow:0 0 5px rgba(217,138,69,.5); }
+
+/* === Botones STAFF de moderación (recalcular / ocultar / restaurar) === */
+.pf-rku-act{ display:block; width:100%; max-width:280px; margin:8px auto 0; padding:9px 10px; font-family:'Press Start 2P',monospace; font-size:8px; line-height:1.6; color:#fff; border:2px solid; border-radius:6px; cursor:pointer; transition:filter .12s; }
+.pf-rku-act:hover{ filter:brightness(1.15); }
+.pf-rku-act:disabled{ opacity:.7; cursor:default; }
+.pf-rku-act.recalc{ background:#1f5673; border-color:#39a0c9; }
+.pf-rku-act.hide{ background:#7a2230; border-color:#c0392b; }
+.pf-rku-act.restore{ background:#1e5b34; border-color:#3fae5e; }
+.pf-rku-act[data-armed="1"]{ background:#c0392b; border-color:#ff7a6b; }
+.pf-rk-hidden-btn{ display:block; width:100%; max-width:320px; margin:14px auto 2px; padding:8px 10px; font-family:'Press Start 2P',monospace; font-size:8px; line-height:1.6; color:var(--muted); background:var(--panel2); border:2px dashed var(--muted); border-radius:6px; cursor:pointer; }
+.pf-rk-hidden-btn:hover{ color:var(--text); border-color:var(--text); }
+.pf-rk-row.hidden-row{ opacity:.6; filter:grayscale(.5); }
