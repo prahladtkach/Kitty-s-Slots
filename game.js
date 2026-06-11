@@ -32,7 +32,8 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.67";
+  const VERSION="2.72";
+  const LOGROS_ON=false; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -55,7 +56,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'], _broke=false, _lifeUsed=false, _tripleStreak=0, _econReset=false, _rkRows=[], _hiddenRows=[];
   const pool=[];
@@ -93,7 +94,7 @@
     if(typeof state.bankUnlocked!=='boolean') state.bankUnlocked = (state.bank>0||state.debt>0||state.vault||state.creditLevel>0||state.interestLevel>0||state.credits<1);
     if(typeof state.introSeen!=='boolean') state.introSeen = false; if(typeof state.kattoSeen!=='boolean') state.kattoSeen=false; if(typeof state.discount==='undefined') state.discount=null;
     if(!state.meta||typeof state.meta!=='object') state.meta={spirits:0,chest:0,credit:0,luck:0};
-    if(typeof state.meta.spirits!=='number') state.meta.spirits=0; if(typeof state.meta.chest!=='number') state.meta.chest=0; if(typeof state.meta.credit!=='number') state.meta.credit=0; if(typeof state.meta.luck!=='number') state.meta.luck=0; if(typeof state.meta.cap!=='number') state.meta.cap=0; if(typeof state.meta.armor!=='number') state.meta.armor=0; if(typeof state.meta.jpboost!=='number') state.meta.jpboost=0; if(typeof state.limboIntroV2!=='boolean') state.limboIntroV2=false; if(typeof state.meta.respin!=='number') state.meta.respin=0; if(typeof state.meta.banktope!=='number') state.meta.banktope=0; if(!state.eq||typeof state.eq!=='object') state.eq={avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'}; if(typeof state.eq.nick!=='string') state.eq.nick='Jugador'; if(!state.life||typeof state.life!=='object') state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; if(typeof state.life.deaths!=='number') state.life.deaths=0; if(typeof state.life.bestGamble!=='number') state.life.bestGamble=0; if(typeof state.life.bestCombo!=='number') state.life.bestCombo=0; if(typeof state.life.got777!=='boolean') state.life.got777=false; if(typeof state.life.holyJackpot!=='boolean') state.life.holyJackpot=false; if(state.eq && state.eq.frame==='arcoiris') state.eq.frame='neon'; if(typeof state.musicTheme!=='string'||['suave','remix','densa','pibble'].indexOf(state.musicTheme)<0) state.musicTheme='suave'; if(!state.badges||typeof state.badges!=='object') state.badges={}; var _avok=['calico','tuxedo','blanco','negro','naranja','luckycat','mitimiti','alien','retro','sinfoto','highroller','raddkatt','diablitty','grisoscuro','crtty','blacknoir','dicekatt','cubo']; if(_avok.indexOf(state.eq.avatar)<0) state.eq.avatar='calico';
+    if(typeof state.meta.spirits!=='number') state.meta.spirits=0; if(typeof state.meta.chest!=='number') state.meta.chest=0; if(typeof state.meta.credit!=='number') state.meta.credit=0; if(typeof state.meta.luck!=='number') state.meta.luck=0; if(typeof state.meta.cap!=='number') state.meta.cap=0; if(typeof state.meta.armor!=='number') state.meta.armor=0; if(typeof state.meta.jpboost!=='number') state.meta.jpboost=0; if(typeof state.limboIntroV2!=='boolean') state.limboIntroV2=false; if(typeof state.meta.respin!=='number') state.meta.respin=0; if(typeof state.meta.banktope!=='number') state.meta.banktope=0; if(!state.eq||typeof state.eq!=='object') state.eq={avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'}; if(typeof state.eq.nick!=='string') state.eq.nick='Jugador'; if(!state.life||typeof state.life!=='object') state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; if(typeof state.life.deaths!=='number') state.life.deaths=0; if(typeof state.life.bestGamble!=='number') state.life.bestGamble=0; if(typeof state.life.bestCombo!=='number') state.life.bestCombo=0; if(typeof state.life.got777!=='boolean') state.life.got777=false; if(typeof state.life.holyJackpot!=='boolean') state.life.holyJackpot=false; if(typeof state.life.spins!=='number') state.life.spins=0; if(typeof state.life.gotJackpot!=='boolean') state.life.gotJackpot=false; if(typeof state.life.boneHits!=='number') state.life.boneHits=0; if(typeof state.life.maxBoneLoss!=='number') state.life.maxBoneLoss=0; if(typeof state.life.survivedBigBone!=='boolean') state.life.survivedBigBone=false; if(typeof state.life.maxBank!=='number') state.life.maxBank=0; if(typeof state.life.bankFilled!=='boolean') state.life.bankFilled=false; if(typeof state.life.firstDeposit!=='boolean') state.life.firstDeposit=false; if(typeof state.life.gotInterest!=='boolean') state.life.gotInterest=false; if(typeof state.life.usedSpinBtn!=='boolean') state.life.usedSpinBtn=false; if(typeof state.life.usedLever!=='boolean') state.life.usedLever=false; if(!state.life.logros||typeof state.life.logros!=='object') state.life.logros={}; if(state.eq && state.eq.frame==='arcoiris') state.eq.frame='neon'; if(typeof state.musicTheme!=='string'||['suave','remix','densa','pibble'].indexOf(state.musicTheme)<0) state.musicTheme='suave'; if(!state.badges||typeof state.badges!=='object') state.badges={}; var _avok=['calico','tuxedo','blanco','negro','naranja','luckycat','mitimiti','alien','retro','sinfoto','highroller','raddkatt','diablitty','grisoscuro','crtty','blacknoir','dicekatt','cubo']; if(_avok.indexOf(state.eq.avatar)<0) state.eq.avatar='calico';
     if(typeof state.peak!=='number') state.peak=state.credits||START;
     if(typeof state.runJackpots!=='number') state.runJackpots=0; if(typeof state.bet!=='number'||state.bet<MIN_BET) state.bet=MIN_BET;
     if(!Array.isArray(state.helpSeen)) state.helpSeen=[];
@@ -116,7 +117,7 @@
       state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false;
       state.discount=null; state.skillsUnlocked=false;
       state.meta={spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0};
-      state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false};
+      state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}};
       state.peak=START; state.runStartWorth=START; state.runJackpots=0; state.runStart=Date.now();
       state.limboUnlocked=false;
       state.econVersion=ECON_VERSION;
@@ -127,13 +128,80 @@
   async function saveStateLocalOnly(){ try{ await lsSet(KEY, JSON.stringify(state)); }catch(e){} }
   async function saveState(){ await saveStateLocalOnly(); cloudSaveSoon(); }
 
+  // ===== LOGROS (achievements) =====
+  let _logrosReady=false, _logroQ=[], _logroShowing=false;
+  const LOGROS=[
+    // Giros y suerte
+    {id:'first_spin',cat:'Giros y suerte',icon:'🎉',name:'¡Que empiece la ludopatía!',desc:'Realizá tu primer giro.',tier:'facil',secret:false,chk:function(L){return (L.spins||0)>=1;}},
+    {id:'first_jp',cat:'Giros y suerte',icon:'🐱',name:'Miau-pot',desc:'Conseguí tu primer jackpot.',tier:'facil',secret:false,chk:function(L){return !!L.gotJackpot;}},
+    {id:'big_win',cat:'Giros y suerte',icon:'💎',name:'¿Eso estaba balanceado?',desc:'Conseguí un premio de más de $1.000.000 en un giro.',tier:'dificil',secret:false,chk:function(L){return (L.bestJP||0)>=1000000;}},
+    {id:'good_win',cat:'Giros y suerte',icon:'🍀',name:'Hoy es mi día',desc:'Conseguí un gran premio.',tier:'medio',secret:false,chk:function(L){return (L.bestJP||0)>=50000;}},
+    {id:'impossible',cat:'Giros y suerte',icon:'🎲',name:'Imposible',desc:'Conseguí una combinación con menos de 1% de probabilidad.',tier:'secreto',secret:true,chk:function(L){return !!L.got777;}},
+    {id:'combo10',cat:'Giros y suerte',icon:'😻',name:'Favorito de Kitty',desc:'Ganá 10 veces seguidas.',tier:'medio',secret:false,chk:function(L){return (L.bestCombo||0)>=10;}},
+    {id:'combo25',cat:'Giros y suerte',icon:'🤨',name:'Sospechoso',desc:'Ganá 25 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=25;}},
+    {id:'combo30',cat:'Giros y suerte',icon:'🎰',name:'Revisen sus dados',desc:'Ganá 30 veces seguidas.',tier:'dificil',secret:false,chk:function(L){return (L.bestCombo||0)>=30;}},
+    // Espinas
+    {id:'bone1',cat:'Espinas',icon:'😖',name:'Eso dolió',desc:'Recibí daño de una espina.',tier:'facil',secret:false,chk:function(L){return (L.boneHits||0)>=1;}},
+    {id:'bone_big',cat:'Espinas',icon:'🐟',name:'Pescado traicionero',desc:'Perdé más de $100.000 por una espina.',tier:'medio',secret:false,chk:function(L){return (L.maxBoneLoss||0)>100000;}},
+    {id:'bone100',cat:'Espinas',icon:'🙄',name:'¿En serio otra vez?',desc:'Recibí daño de espinas 100 veces.',tier:'medio',secret:false,chk:function(L){return (L.boneHits||0)>=100;}},
+    {id:'bone500',cat:'Espinas',icon:'🦔',name:'Erizo honorario',desc:'Recibí daño de espinas 500 veces.',tier:'dificil',secret:false,chk:function(L){return (L.boneHits||0)>=500;}},
+    {id:'bone_survive',cat:'Espinas',icon:'💪',name:'Las espinas me fortalecen',desc:'Sobreviví a una espina enorme.',tier:'secreto',secret:true,chk:function(L){return !!L.survivedBigBone;}},
+    // Limbo
+    {id:'limbo_enter',cat:'Limbo',icon:'❓',name:'¿Qué es este lugar?',desc:'Entrá al Limbo.',tier:'facil',secret:false,chk:function(L,s){return !!s.limboUnlocked;}},
+    {id:'asc1',cat:'Limbo',icon:'👋',name:'Nos volveremos a ver',desc:'Ascendé por primera vez.',tier:'facil',secret:false,chk:function(L){return (L.asc||0)>=1;}},
+    {id:'asc10',cat:'Limbo',icon:'🗺️',name:'Ya conozco el camino',desc:'Ascendé 10 veces.',tier:'medio',secret:false,chk:function(L){return (L.asc||0)>=10;}},
+    {id:'asc50',cat:'Limbo',icon:'🏠',name:'Dirección permanente',desc:'Ascendé 50 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=50;}},
+    {id:'asc100',cat:'Limbo',icon:'🏚️',name:'Propiedad del Limbo',desc:'Ascendé 100 veces.',tier:'dificil',secret:false,chk:function(L){return (L.asc||0)>=100;}},
+    // Banco
+    {id:'first_dep',cat:'Banco',icon:'🛏️',name:'Debajo del colchón',desc:'Hacé tu primer depósito.',tier:'facil',secret:false,chk:function(L){return !!L.firstDeposit;}},
+    {id:'bank1m',cat:'Banco',icon:'💼',name:'Ahorrador profesional',desc:'Guardá $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.maxBank||0)>=1000000;}},
+    {id:'bank10m',cat:'Banco',icon:'🏦',name:'Ya casi soy un banco',desc:'Guardá $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.maxBank||0)>=10000000;}},
+    {id:'bank_full',cat:'Banco',icon:'🏛️',name:'Kitty National Bank',desc:'Llená la caja fuerte.',tier:'dificil',secret:false,chk:function(L){return !!L.bankFilled;}},
+    {id:'interest',cat:'Banco',icon:'📈',name:'Dinero que genera dinero',desc:'Obtené intereses por primera vez.',tier:'medio',secret:false,chk:function(L){return !!L.gotInterest;}},
+    // Dinero
+    {id:'money10k',cat:'Dinero',icon:'🍭',name:'Ya alcanza para un chupetín',desc:'Conseguí $10.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000;}},
+    {id:'money100k',cat:'Dinero',icon:'👀',name:'Ahí va...',desc:'Conseguí $100.000.',tier:'facil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000;}},
+    {id:'money1m',cat:'Dinero',icon:'😮',name:'Esto se está poniendo serio',desc:'Conseguí $1.000.000.',tier:'medio',secret:false,chk:function(L){return (L.bestWorth||0)>=1000000;}},
+    {id:'money10m',cat:'Dinero',icon:'🤑',name:'Ahora hablamos de plata',desc:'Conseguí $10.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=10000000;}},
+    {id:'money100m',cat:'Dinero',icon:'💼',name:'El gato emprendedor',desc:'Conseguí $100.000.000.',tier:'dificil',secret:false,chk:function(L){return (L.bestWorth||0)>=100000000;}},
+    {id:'house_loses',cat:'Dinero',icon:'🎰',name:'La casa pierde',desc:'Alcanzá el tope de plata.',tier:'dificil',secret:false,chk:function(L,s){return (s.credits+s.bank-s.debt)>=capValue();}},
+    // Secretos
+    {id:'diff',cat:'Secretos',icon:'🤔',name:'¿Cuál es la diferencia?',desc:'Girá con el botón y con la palanca.',tier:'secreto',secret:true,chk:function(L){return !!L.usedSpinBtn && !!L.usedLever;}}
+  ];
+  function checkLogros(silent){
+    if(!LOGROS_ON) return;
+    var L=state.life; if(!L) return;
+    if(!L.logros||typeof L.logros!=='object') L.logros={};
+    var changed=false;
+    for(var i=0;i<LOGROS.length;i++){ var lo=LOGROS[i];
+      if(L.logros[lo.id]) continue;
+      var ok=false; try{ ok=!!lo.chk(L,state); }catch(e){ ok=false; }
+      if(ok){ L.logros[lo.id]=Date.now(); changed=true; if(!silent) queueLogroToast(lo); }
+    }
+    if(changed) saveState();
+  }
+  function logrosCount(){ var L=(state.life&&state.life.logros)||{}; var n=0; for(var k in L){ if(L.hasOwnProperty(k)) n++; } return n; }
+  function queueLogroToast(lo){ _logroQ.push(lo); if(!_logroShowing) nextLogroToast(); }
+  function nextLogroToast(){ if(!_logroQ.length){ _logroShowing=false; return; } _logroShowing=true; showLogroToast(_logroQ.shift()); setTimeout(nextLogroToast, 3500); }
+  function showLogroToast(lo){
+    var wrap=document.getElementById('logroToast');
+    if(!wrap){ wrap=document.createElement('div'); wrap.id='logroToast'; document.body.appendChild(wrap); }
+    var el=document.createElement('div'); el.className='logro-toast';
+    el.innerHTML='<div class="lt-ico">'+lo.icon+'</div><div class="lt-txt"><div class="lt-top">🏆 ¡LOGRO DESBLOQUEADO!</div><div class="lt-name">'+_rkEsc(lo.name)+'</div></div>';
+    wrap.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('show'); });
+    setTimeout(function(){ el.classList.remove('show'); el.classList.add('hide'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 480); }, 3000);
+  }
+
+
   function refreshAfterLoad(){
     applyPalette(state.palette); pfUpdateIcon();
-    renderBetPresets(); renderPalette(); rebuildPool(); updateUI();
+    renderBetPresets(); renderPalette(); rebuildPool(); updateUI(); updateLimboBtn();
     const bi=document.getElementById('betInput'); if(bi) bi.value=state.bet;
     syncSoundIcons(); renderHold(); updateSuperUI();
     if(_econReset){ _econReset=false; saveState(); setTimeout(function(){ setMsg('🔄 Progreso reiniciado por la nueva economía',false); }, 600); }
     if(!state.introSeen) showIntro();
+    checkLogros(true); _logrosReady=true;
   }
 
   // ---- Firebase: cuentas reales + guardado en la nube (SDK cargado on-demand con import dinámico) ----
@@ -338,7 +406,7 @@
     var tb=el.querySelectorAll('.shop-tab[data-stab]'); for(var j=0;j<tb.length;j++){ tb[j].addEventListener('click', function(){ _shopTab=this.getAttribute('data-stab'); renderShop(); }); }
     var kf=document.getElementById('kattoFace'); if(kf) kf.addEventListener('click', kattoSpeak);
     document.getElementById('shopNote').textContent = state.debt>0 ? 'Pagá tu deuda antes de comprar.' : 'Comprás con tus créditos.'; }
-  function updateUI(){ var _cap=capValue(); var _w0=state.credits+state.bank-state.debt; if(_w0>_cap){ if(!state.limboUnlocked){ state.limboUnlocked=true; updateLimboBtn(); } state.credits=Math.max(0, state.credits-(_w0-_cap)); if(!_capMsgShown){ _capMsgShown=true; if(!state.limboIntroV2){ setTimeout(function(){ explainLimboOnce(null, TXT_LIMBO_CAP); }, 1700); } else { setTimeout(function(){ setMsg('¡TOPE '+fmtCap(_cap)+'! Ascendé en el Limbo 🏔️','big'); },1400); } } } if(!state.skillsUnlocked && state.credits>=SKILL_UNLOCK) state.skillsUnlocked=true; var _nw=state.credits+state.bank-state.debt; if(_nw>(state.peak||0)) state.peak=_nw; if(_nw>((state.life&&state.life.bestWorth)||0)){ state.life.bestWorth=_nw; } if(!state.bankUnlocked && state.credits>=BANK_UNLOCK_CREDITS) unlockBank('rich'); document.getElementById('credits').textContent='$'+fmt(state.credits); document.getElementById('debt').textContent=fmt(state.debt); const ind=state.debt>0; document.getElementById('debtBox').classList.toggle('on', ind); document.getElementById('danger').classList.toggle('on', ind); document.getElementById('debtWarn').style.display=ind?'block':'none'; if(document.getElementById('bank').classList.contains('open')) renderBank(); document.getElementById('jpAmount').textContent='$'+fmt(Math.round(Math.max(state.jackpot, state.bet*jpMult())*winMult())); var _bb=document.getElementById('bankBtn'); if(_bb){ _bb.disabled=!state.bankUnlocked; _bb.textContent=state.bankUnlocked?'🏦 BANCO':'🔒 BANCO'; } updateModalMoney(); updatePet(); }
+  function updateUI(){ var _cap=capValue(); var _w0=state.credits+state.bank-state.debt; if(_w0>_cap){ if(!state.limboUnlocked){ state.limboUnlocked=true; updateLimboBtn(); } state.credits=Math.max(0, state.credits-(_w0-_cap)); if(!_capMsgShown){ _capMsgShown=true; if(!state.limboIntroV2){ setTimeout(function(){ explainLimboOnce(null, TXT_LIMBO_CAP); }, 1700); } else { setTimeout(function(){ setMsg('¡TOPE '+fmtCap(_cap)+'! Ascendé en el Limbo 🏔️','big'); },1400); } } } if(!state.skillsUnlocked && state.credits>=SKILL_UNLOCK) state.skillsUnlocked=true; var _nw=state.credits+state.bank-state.debt; if(_nw>(state.peak||0)) state.peak=_nw; if(_nw>((state.life&&state.life.bestWorth)||0)){ state.life.bestWorth=_nw; } if(!state.bankUnlocked && state.credits>=BANK_UNLOCK_CREDITS) unlockBank('rich'); document.getElementById('credits').textContent='$'+fmt(state.credits); document.getElementById('debt').textContent=fmt(state.debt); const ind=state.debt>0; document.getElementById('debtBox').classList.toggle('on', ind); document.getElementById('danger').classList.toggle('on', ind); document.getElementById('debtWarn').style.display=ind?'block':'none'; if(document.getElementById('bank').classList.contains('open')) renderBank(); document.getElementById('jpAmount').textContent='$'+fmt(Math.round(Math.max(state.jackpot, state.bet*jpMult())*winMult())); var _bb=document.getElementById('bankBtn'); if(_bb){ _bb.disabled=!state.bankUnlocked; _bb.textContent=state.bankUnlocked?'🏦 BANCO':'🔒 BANCO'; } updateModalMoney(); updatePet(); if(state.life){ if(state.bank>(state.life.maxBank||0)) state.life.maxBank=state.bank; if(state.vault && bankCap()>0 && state.bank>=bankCap()) state.life.bankFilled=true; } if(_logrosReady && !_applyingCloud) checkLogros(); }
   function setSpinUI(on){ document.getElementById('spinBtn').disabled=on; document.body.classList.toggle('spin-lock', on); updateSuperUI(); }
   function setMsg(t,cls){ const el=document.getElementById('winMsg'); el.textContent=t; el.className='win-msg'+(cls?(' '+cls):''); }
   function setCombo(){ const el=document.getElementById('combo'); const m=comboMult(); if(combo>=2){ const ONO=['','','¡ZAS!','¡PUM!','¡PAM!','¡BOOM!','¡KABOOM!']; const o=ONO[Math.min(combo,ONO.length-1)]; el.textContent=o+' x'+fmtMult(m); el.classList.add('on'); } else { el.classList.remove('on'); } }
@@ -427,7 +495,7 @@
 
   function spinReel(reelEl, cv, target, duration, onDone){ reelEl.classList.remove('stop'); reelEl.classList.add('spinning'); let elapsed=0, delay=55; (function tick(){ drawSym(cv, randSym()); elapsed+=delay; if(elapsed>=duration){ drawSym(cv,target); reelEl.classList.remove('spinning'); reelEl.classList.add('stop'); sStop(); if(onDone)onDone(); return; } if(elapsed>duration*0.55) delay+=13; setTimeout(tick,delay); })(); }
 
-  function spin(){
+  function spin(src){
     if(_broke){ if(!explainLimboOnce(function(){ openLimboPanel(true); })){ openLimboPanel(true); } return; }
     if(spinning) return;
     hideGamble();
@@ -435,7 +503,7 @@
     if(state.bet>state.credits){ setMsg('TE FALTA — BAJÁ LA APUESTA O PEDÍ PRÉSTAMO',false); return; }
     if(state.bet<MIN_BET){ setMsg('SUBÍ LA APUESTA',false); return; }
     if(state.debt>0){ state.debt+=Math.ceil(state.debt*INTEREST); }
-    spinning=true; setSpinUI(true); setMsg('',false); renderHold();
+    spinning=true; setSpinUI(true); setMsg('',false); renderHold(); state.life.spins=(state.life.spins||0)+1; if(src==='lever'){ state.life.usedLever=true; } else if(src==='btn'){ state.life.usedSpinBtn=true; }
     state.credits-=state.bet; state.jackpot+=Math.max(2,Math.round(state.bet*0.2)); accrueInterest(); updateUI(); tickLoginToast();
     const t=[0,1,2].map(function(i){ return held[i]?cur[i]:randSym(); });
     const idx=[0,1,2].filter(function(i){ return !held[i]; });
@@ -450,12 +518,12 @@
     cur=t.slice(); if(!isRespin){ if(held.indexOf(true)>=0){ holdCD=3; } else { holdCD=Math.max(0,holdCD-1); } held=[false,false,false]; renderHold(); }
     const a=t[0],b=t[1],c=t[2];
     if(a===b && b===c){
-      if(a==='🐱'){ combo++; if(combo>(state.life.bestCombo||0))state.life.bestCombo=combo; _tripleStreak++; if(_tripleStreak>=3)state.life.holyJackpot=true; state.runJackpots=(state.runJackpots||0)+1; const w=Math.round(Math.max(state.jackpot, state.bet*jpMult())*winMult()); state.jackpot=JP_BASE; const net=applyWin(w); updateUI(); setCombo(); setMsg('¡JACKPOT! +'+fmt(w),'big'); confetti(75); sJackpot(); jackpotRain(); const jp=document.getElementById('jpAmount'); jp.classList.add('flash'); setTimeout(function(){jp.classList.remove('flash');},2600); offerGamble(net); saveState(); return; }
-      if(a==='🦴'){ if(!isRespin && respinProcs()){ respin(wasHeld); return; } combo=0; _tripleStreak=0; var _lost=state.credits; state.credits=Math.round(state.credits*(1-boneLoseFrac())); _lost-=state.credits; updateUI(); setCombo(); setMsg('¡ESPINAS! -'+fmt(_lost)+'$ 💀','big bad'); const cab=document.getElementById('cabinet'); cab.classList.add('bad'); setTimeout(function(){cab.classList.remove('bad');},900); sBad(); saveState(); checkBroke(); return; }
+      if(a==='🐱'){ state.life.gotJackpot=true; combo++; if(combo>(state.life.bestCombo||0))state.life.bestCombo=combo; _tripleStreak++; if(_tripleStreak>=3)state.life.holyJackpot=true; state.runJackpots=(state.runJackpots||0)+1; const w=Math.round(Math.max(state.jackpot, state.bet*jpMult())*winMult()); state.jackpot=JP_BASE; const net=applyWin(w); updateUI(); setCombo(); setMsg('¡JACKPOT! +'+fmt(w),'big'); confetti(75); sJackpot(); jackpotRain(); const jp=document.getElementById('jpAmount'); jp.classList.add('flash'); setTimeout(function(){jp.classList.remove('flash');},2600); offerGamble(net); saveState(); return; }
+      if(a==='🦴'){ if(!isRespin && respinProcs()){ respin(wasHeld); return; } combo=0; _tripleStreak=0; var _lost=state.credits; state.credits=Math.round(state.credits*(1-boneLoseFrac())); _lost-=state.credits; state.life.boneHits=(state.life.boneHits||0)+1; if(_lost>(state.life.maxBoneLoss||0)) state.life.maxBoneLoss=_lost; if(_lost>=250000 && state.credits>=MIN_BET) state.life.survivedBigBone=true; updateUI(); setCombo(); setMsg('¡ESPINAS! -'+fmt(_lost)+'$ 💀','big bad'); const cab=document.getElementById('cabinet'); cab.classList.add('bad'); setTimeout(function(){cab.classList.remove('bad');},900); sBad(); saveState(); checkBroke(); return; }
       combo++; if(combo>(state.life.bestCombo||0))state.life.bestCombo=combo; _tripleStreak++; if(_tripleStreak>=3)state.life.holyJackpot=true; if(a==='7️⃣')state.life.got777=true; const mult=comboMult(); const w=Math.round(state.bet*PAY3[a]*mult*winMult()); const net=applyWin(w); updateUI(); setCombo(); const big=PAY3[a]>=25||mult>=2.5; setMsg('TRIPLE'+(mult>1?' x'+fmtMult(mult):'')+' +'+fmt(w), big?'big':''); celebrate(big); offerGamble(net); saveState(); return;
     }
     const bones=t.filter(function(s){return s==='🦴';}).length;
-    if(bones>0){ if(!isRespin && respinProcs()){ respin(wasHeld); return; } combo=0; _tripleStreak=0; const _p=boneEscPct(); const pen=Math.max(1,Math.round(state.bet*bones*(1+_p))); state.credits=Math.max(0,state.credits-pen); updateUI(); setCombo(); setMsg('-'+fmt(pen)+'$','bad'); const cab=document.getElementById('cabinet'); cab.classList.add('bad'); setTimeout(function(){cab.classList.remove('bad');},600); sBad(); saveState(); checkBroke(); return; }
+    if(bones>0){ if(!isRespin && respinProcs()){ respin(wasHeld); return; } combo=0; _tripleStreak=0; const _p=boneEscPct(); const pen=Math.max(1,Math.round(state.bet*bones*(1+_p))); var _bprev=state.credits; state.credits=Math.max(0,state.credits-pen); var _bloss=_bprev-state.credits; state.life.boneHits=(state.life.boneHits||0)+1; if(_bloss>(state.life.maxBoneLoss||0)) state.life.maxBoneLoss=_bloss; if(_bloss>=250000 && state.credits>=MIN_BET) state.life.survivedBigBone=true; updateUI(); setCombo(); setMsg('-'+fmt(pen)+'$','bad'); const cab=document.getElementById('cabinet'); cab.classList.add('bad'); setTimeout(function(){cab.classList.remove('bad');},600); sBad(); saveState(); checkBroke(); return; }
     const ch=t.filter(function(s){return s==='🍒';}).length;
     const chFresh=[0,1,2].filter(function(i){ return t[i]==='🍒' && !wasHeld[i]; }).length;
     var _cnt={}; for(var _i=0;_i<3;_i++){ _cnt[t[_i]]=(_cnt[t[_i]]||0)+1; } var _ws=null,_pv=0; for(var _s in _cnt){ if(_cnt[_s]===2 && PAIR2[_s]!=null && PAIR2[_s]>_pv){ _pv=PAIR2[_s]; _ws=_s; } } if(ch===1 && CH1>_pv){ _pv=CH1; _ws='🍒'; } var _fr=_ws!==null && [0,1,2].some(function(i){ return t[i]===_ws && !wasHeld[i]; }); if(_pv>0 && _fr){ combo++; if(combo>(state.life.bestCombo||0))state.life.bestCombo=combo; _tripleStreak=0; var _mult=comboMult(); var _w=Math.round(state.bet*_pv*_mult*winMult()); var _net=applyWin(_w); updateUI(); setCombo(); var _lbl=(_ws==='🍒'&&ch===1)?'1 CEREZA':('PAR '+_ws); setMsg(_lbl+(_mult>1?' x'+fmtMult(_mult):'')+' +'+fmt(_w), _mult>=2.5?'big':''); celebrate(_mult>=2.5); offerGamble(_net); saveState(); return; }
@@ -467,7 +535,7 @@
   function canLoan(){ return loanAvailable() && state.credits < MIN_BET; }
   function takeLoan(){ if(spinning) return; if(!loanAvailable()){ setMsg('LÍMITE DE PRÉSTAMOS ($'+fmt(creditLimit())+')',false); return; } if(state.credits>=MIN_BET){ setMsg('Solo podés pedir préstamo si no te alcanza para la apuesta mínima ($'+MIN_BET+')',false); return; } state.credits+=LOAN; state.debt+=Math.round(LOAN*(1+LOAN_FEE)); updateUI(); renderBank(); setMsg('PRÉSTAMO: +$'+fmt(LOAN)+' (debés $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+')',false); saveState(); }
   function buyVault(){ if(state.vault||state.debt>0||state.credits<CAJA_COST) return; state.credits-=CAJA_COST; state.vault=true; updateUI(); renderBank(); saveState(); }
-  function deposit(a){ if(!state.vault) return; a=Math.floor(a); if(!a||a<1) return; a=Math.min(a, state.credits, Math.max(0, bankCap()-state.bank)); if(a<=0) return; state.credits-=a; state.bank+=a; updateUI(); renderBank(); saveState(); }
+  function deposit(a){ if(!state.vault) return; a=Math.floor(a); if(!a||a<1) return; a=Math.min(a, state.credits, Math.max(0, bankCap()-state.bank)); if(a<=0) return; state.credits-=a; state.bank+=a; state.life.firstDeposit=true; updateUI(); renderBank(); saveState(); }
   function withdraw(a){ if(!state.vault) return; a=Math.floor(a); if(!a||a<1) return; a=Math.min(a,state.bank); if(a<=0) return; state.bank-=a; state.credits+=a; updateUI(); renderBank(); saveState(); }
   function payDebt(fromBank){ if(state.debt<=0) return; const src=fromBank?state.bank:state.credits; const pp=Math.min(state.debt,src); if(pp<=0) return; state.debt-=pp; if(fromBank) state.bank-=pp; else state.credits-=pp; updateUI(); renderBank(); saveState(); }
   function renderBank(){
@@ -526,7 +594,7 @@
   function creditLimit(){ return CREDIT_LIMITS[Math.min(state.creditLevel||0, CREDIT_LIMITS.length-1)]; }
   function interestRate(){ return INT_RATES[Math.min(state.interestLevel||0, INT_RATES.length-1)] * (1 + 0.20*(state.meta.banker||0)); }
   function interestInterval(){ var base=INT_INTERVALS[Math.min(state.interestLevel||0, INT_INTERVALS.length-1)]; if(base<=0) return base; return Math.max(5, base - 3*(state.meta.premiumvault||0)); }
-  function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; const g=Math.floor(state.bank*interestRate()); if(g>0) state.bank+=g; } }
+  function accrueInterest(){ if((state.interestLevel||0)<=0 || state.bank<=0) return; state.intSpins=(state.intSpins||0)+1; if(state.intSpins>=interestInterval()){ state.intSpins=0; const g=Math.floor(state.bank*interestRate()); if(g>0){ state.bank+=g; state.life.gotInterest=true; } } }
   function buyCredit(){ if(state.debt>0||state.creditLevel>=CREDIT_LIMITS.length-1) return; const cost=CREDIT_COSTS[state.creditLevel]; if(state.credits<cost) return; state.credits-=cost; state.creditLevel++; updateUI(); renderBank(); saveState(); }
   function buyInterest(){ if(state.debt>0||!state.vault||state.interestLevel>=INT_RATES.length-1) return; const cost=INT_COSTS[state.interestLevel]; if(state.credits<cost) return; state.credits-=cost; state.interestLevel++; updateUI(); renderBank(); saveState(); }
   function fullReset(){ exitBankruptcy(); state.credits=START; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=0; state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.bankUnlocked=false; _lifeUsed=false; state.introSeen=false; state.kattoSeen=false; state.discount=null; state.meta={spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0}; state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; state.peak=START; state.runStartWorth=START; state.runJackpots=0; state.helpSeen=[]; state.runStart=Date.now(); _capMsgShown=false; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); state.skillsUnlocked=false; combo=0; rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); saveState(); }
@@ -715,7 +783,7 @@
   function bankMusic(){ bankMode=true; catMode=false; if(state.musicOn && !musicPlaying) startMusic(); }
   function updateLimboBtn(){ var b=document.getElementById('limboBtn'); if(!b) return; if(state.limboUnlocked){ b.disabled=false; b.textContent='👻 LIMBO'; } else { b.disabled=true; b.textContent='🔒 LIMBO'; } }
   function openLimboHub(){ if(spinning) return; if(!explainLimboOnce(function(){ openLimboPanel(false); })){ openLimboPanel(false); } }
-  function ascend(){ var earned=limboEarn(); if(earned<=0) return; if(!confirm('¿ASCENDER? Perdés esta partida pero te llevás +'+earned+' 👻 y reiniciás con tus mejoras permanentes.')) return; state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; renderLimbo(); saveState(); }
+  function ascend(){ var earned=limboEarn(); if(earned<=0) return; if(!confirm('¿ASCENDER? Perdés esta partida pero te llevás +'+earned+' 👻 y reiniciás con tus mejoras permanentes.')) return; state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; renderLimbo(); if(_logrosReady) checkLogros(); saveState(); }
   function closeLimbo(){ document.getElementById('limbo').classList.remove('open'); catMode=false; clearInterval(_cornerTypeT); clearTimeout(_cornerTimer); var _cb=document.getElementById('cornerCatBubble'); if(_cb) _cb.classList.remove('show'); }
   var _afterCat=null; var PET_LINES=['Zzz','Im pibble','Wash my belly','Clean my belly','Belly belly']; var _petTimer=null; function petTalk(){ var pet=document.getElementById('pet'), b=document.getElementById('petBubble'); if(!pet||!b) return; var line=PET_LINES[Math.floor(Math.random()*PET_LINES.length)]; b.textContent=line; b.classList.add('show'); pokePet(); if(typeof sfx==='function') sfx(620+Math.random()*120, 0.03, 0.06, 'sine'); clearTimeout(_petTimer); _petTimer=setTimeout(function(){ b.classList.remove('show'); }, 2200); } var _pibbleSeq=[], _pibbleStep=0; function updatePet(){ var pet=document.getElementById('pet'); if(pet) pet.style.display = state.pibble ? 'block' : 'none'; } var _petLifeT=null, _pokeT=null; function pokePet(){ var pet=document.getElementById('pet'); if(pet){ clearTimeout(_pokeT); pet.classList.remove('poke'); void pet.offsetWidth; pet.classList.add('poke'); _pokeT=setTimeout(function(){ pet.classList.remove('poke'); }, 520); } } function petSay(txt,ms){ var b=document.getElementById('petBubble'); if(b){ b.textContent=txt; b.classList.add('show'); clearTimeout(_petTimer); _petTimer=setTimeout(function(){ b.classList.remove('show'); }, ms||1800); } } function petLifeTick(){ var pet=document.getElementById('pet'); var vis = state.pibble && pet && pet.style.display!=='none' && !document.querySelector('.overlay.open'); if(vis){ if(Math.random()<0.5){ pokePet(); } else { petSay('Zzz', 1700); } } scheduleNextPetLife(); } function scheduleNextPetLife(){ clearTimeout(_petLifeT); _petLifeT=setTimeout(petLifeTick, 7000+Math.random()*9000); } function startPibble(){ _pibbleSeq=[ {msg:'...', btn:'▶ ¿...?'}, {msg:'WASH MY BELLY|WAAASHH MY BELLY', btn:'🫧 lavarle la pancita'}, {msg:'CLEAN MY BELLY', btn:'🧼 limpiarle la pancita'}, {msg:'Yaaay! :D|*Mr.PIBBLE quedó limpio y feliz*', btn:'▶ awww 🤍'} ]; _pibbleStep=0; _afterCat=function(){ unlockPibble(); }; showCat(_pibbleSeq[0].msg, 'pibble'); var cont=document.getElementById('catOk'); if(cont) cont.textContent=_pibbleSeq[0].btn; } function unlockPibble(){ var nuevo=!state.pibble; if(nuevo){ state.pibble=true; saveState(); } updatePet(); var pm=document.getElementById('pfCodeMsg'); if(pm){ pm.textContent= nuevo ? '🐽 ¡Mr.PIBBLE ahora vive en tu pantalla principal! Tocalo para acariciarlo 🤍' : 'Mr.PIBBLE ya está con vos 🐽'; pm.className='pf-code-msg ok'; } }
   var CAT_FRASES=["La muzza de la pizzería es infinita... como mis ganas de Ectofichas. 🍕","Si la suerte se te pincha, en el taller la inflamos de nuevo. 🚲","En las cuevas más oscuras brillan las mejores fichas... no mires atrás. ⛏️","Yo también arranqué fundido. Hoy tengo locales por todos lados. 😎","Un jackpot sabe mejor que una porción recién salida del horno. 🍕","Pedaleá fuerte y el tope te queda cerca. 🚲","Algo se mueve allá abajo en la mina... vos seguí juntando. 👻","Las Ectofichas no se enfrían ni se pinchan. Por eso me encantan. ✨"]; var CAT_HINTS=["Escuché de una bolita blanca escondida por ahí... Mr.PIBBLE. Dicen que aparece si le tipeás un código secreto.","El código de Mr.PIBBLE empieza con su nombre, PIBBLE, y termina en un número bien redondo. 🤔"];
@@ -730,7 +798,7 @@
   function exitBankruptcy(){ if(!_broke) return; _broke=false; document.body.classList.remove('broke'); document.body.classList.remove('spin-lock'); var sb=document.getElementById('spinBtn'); if(sb){ sb.textContent='GIRAR'; sb.classList.remove('to-limbo'); sb.disabled=false; } if(sheetReady){ [0,1,2].forEach(function(i){ drawSym(CV[i], SYMS[[0,1,5][i]]); }); } }
   var NINE_CHANCE=[0,0.30,0.55,0.80];
   function tryNineLives(){ var lv=state.meta.ninevidas||0; if(lv<1 || _lifeUsed) return false; _lifeUsed=true; if(Math.random() < NINE_CHANCE[Math.min(lv,3)]){ state.credits=Math.max(state.credits,500); updateUI(); saveState(); setMsg('🐱 ¡NUEVE VIDAS! Zafaste de la bancarrota 💚 +$500','big'); if(typeof celebrate==='function') celebrate(false); return true; } return false; }
-  function gameOver(){ if(_broke) return; if(document.getElementById('limbo').classList.contains('open')) return; state.limboUnlocked=true; var earned=limboEarn(); state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; state.life.deaths=(state.life.deaths||0)+1; updateLimboBtn(); saveState(); enterBankruptcy(); }
+  function gameOver(){ if(_broke) return; if(document.getElementById('limbo').classList.contains('open')) return; state.limboUnlocked=true; var earned=limboEarn(); state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; _lastEarned=earned; _limboMode='death'; state.life.deaths=(state.life.deaths||0)+1; updateLimboBtn(); if(_logrosReady) checkLogros(); saveState(); enterBankruptcy(); }
   // ===== Árbol del Limbo (4 ramas, paneable + zoom) =====
   var META_TREE={ armor:[90,40], respin:[20,200], ninevidas:[160,200], luck:[370,40], jpboost:[310,200], cap:[440,200], ectoboost:[375,360], chest:[670,40], credit:[610,200], banktope:[740,200], regular:[675,360], bankopen:[920,40], vaultopen:[920,200], banker:[920,360], premiumvault:[920,520] };
   var TREE_BRANCH={ armor:'#ff5b79', respin:'#ff5b79', ninevidas:'#ff5b79', luck:'#39e0e6', jpboost:'#39e0e6', cap:'#39e0e6', ectoboost:'#39e0e6', chest:'#ffd23f', credit:'#ffd23f', banktope:'#ffd23f', regular:'#ffd23f', bankopen:'#ff3d8b', vaultopen:'#ff3d8b', banker:'#ff3d8b', premiumvault:'#ff3d8b' };
@@ -795,9 +863,9 @@
   function gambleMult(t){ if(t.indexOf('🦴')>=0) return 0; const a=t[0],b=t[1],c=t[2]; if(a===b&&b===c){ return a==='🐱'?50:PAY3[a]; } var cnt={}; for(var i=0;i<3;i++){ cnt[t[i]]=(cnt[t[i]]||0)+1; } var pv=0; for(var s in cnt){ if(cnt[s]===2 && PAIR2[s]!=null && PAIR2[s]>pv) pv=PAIR2[s]; } var ch=t.filter(function(x){return x==='🍒';}).length; if(ch===1 && CH1>pv) pv=CH1; return pv; }
   function doGamble(){ if(gambleAmount<=0||spinning) return; gambling=true; spinning=true; setSpinUI(true); held=[false,false,false]; renderHold(); document.getElementById('gambleBar').classList.remove('on'); setMsg('🎲 girando...',false); const t=[randSym(),randSym(),randSym()]; spinReel(REEL[0],CV[0],t[0],700,null); spinReel(REEL[1],CV[1],t[1],1050,null); spinReel(REEL[2],CV[2],t[2],1450,function(){ gambleResult(t); }); }
   function gambleResult(t){ spinning=false; setSpinUI(false); gambling=false; cur=t.slice(); const M=gambleMult(t); if(M>0){ const gain=gambleAmount*(M-1); state.credits+=gain; gambleAmount*=M; if(gambleAmount>((state.life&&state.life.bestJP)||0)) state.life.bestJP=gambleAmount; if(gambleAmount>((state.life&&state.life.bestGamble)||0)) state.life.bestGamble=gambleAmount; updateUI(); setMsg('🎲 x'+M+'!  $'+fmt(gambleAmount),'big'); celebrate(M>=10); saveState(); showGamble(); } else { const lost=gambleAmount; state.credits-=gambleAmount; gambleAmount=0; updateUI(); setMsg('🎲 PERDISTE $'+fmt(lost),'bad'); sBad(); hideGamble(); saveState(); checkBroke(); } }
-  function pull(){ if(spinning) return; const l=document.getElementById('lever'); l.classList.add('pulled'); setTimeout(function(){l.classList.remove('pulled');},320); spin(); }
+  function pull(){ if(spinning) return; const l=document.getElementById('lever'); l.classList.add('pulled'); setTimeout(function(){l.classList.remove('pulled');},320); spin('lever'); }
 
-  document.getElementById('spinBtn').addEventListener('click', spin);
+  document.getElementById('spinBtn').addEventListener('click', function(){ spin('btn'); });
   document.getElementById('lever').addEventListener('click', pull);
   document.getElementById('maxBet').addEventListener('click', function(){ setBet(state.credits); });
   document.getElementById('betInput').addEventListener('change', function(){ setBet(parseInt(this.value,10)); });
@@ -805,6 +873,7 @@
   var SUGG_MAX=280, BUG_MAX=600, FEED_GATE=500000;
   var _feedTab='board'; var _sgRows=[]; var _threadId=null;
   var SG_STATUS={ pending:{t:'⏳ Pendiente',c:'pend'}, approved:{t:'✅ Aprobada',c:'ok'}, rejected:{t:'❌ Rechazada',c:'no'}, done:{t:'🚀 Implementada',c:'done'} };
+  var SG_CLOSED={ approved:1, rejected:1, done:1 }; // estados que cierran voto + debate
   var SG_ORDER=['pending','approved','rejected','done'];
   function feedCanPost(){ if(!(fbReady&&fbUser)) return false; if(hasMedal('staff')) return true; return (((state.life&&state.life.bestWorth)||0) >= FEED_GATE); }
   function feedGateTxt(){ if(!(fbReady&&fbUser)) return '🔒 Iniciá sesión (ícono de cuenta, arriba a la derecha) para participar.'; var w=(state.life&&state.life.bestWorth)||0; if(w<FEED_GATE) return '🔒 Alcanzá <b>$'+fmt(FEED_GATE)+'</b> de patrimonio para sugerir, votar y comentar.<br>Vas $'+fmt(w)+'.'; return ''; }
@@ -836,7 +905,7 @@
     }
   }
   function sgCardHTML(r, staff){
-    var st=SG_STATUS[r.status]||SG_STATUS.pending;
+    var st=SG_STATUS[r.status]||SG_STATUS.pending, closed=!!SG_CLOSED[r.status];
     var V=r.voters||{}, myUid=(fbUser&&fbUser.uid)||null, up=0, down=0, myDir=null;
     for(var u in V){ if(!V[u]) continue; if(V[u].d==='down') down++; else up++; if(u===myUid) myDir=V[u].d; }
     var total=up+down;
@@ -844,10 +913,10 @@
     h+='<div class="sg-head">💡 Sugerencia</div>';
     h+='<div class="sg-text">'+_rkEsc(r.text||'')+'</div>';
     h+='<div class="sg-div"></div>';
-    h+='<div class="sg-meta"><span class="sg-who"><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><b>'+_rkEsc(r.nick||'Jugador')+'</b></span><span class="sg-badge sg-b-'+st.c+'">'+st.t+'</span><span class="sg-id">#'+(r.n||'?')+'</span></div>';
-    h+='<div class="sg-votes"><button class="sg-vote up'+(myDir==='up'?' mine':'')+'" data-id="'+r._id+'" data-dir="up">👍 <b>'+up+'</b></button><button class="sg-vote down'+(myDir==='down'?' mine':'')+'" data-id="'+r._id+'" data-dir="down">👎 <b>'+down+'</b></button></div>';
-    h+='<div class="sg-actions"><button class="sg-thread-btn" data-id="'+r._id+'">💬 Debatir</button>'+(total?'<button class="sg-voters-btn" data-id="'+r._id+'">👀 quién votó ('+total+')</button>':'')+'</div>';
-    if(staff){ h+='<div class="sg-staff">'; for(var i=0;i<SG_ORDER.length;i++){ var k=SG_ORDER[i]; h+='<button class="sg-st-btn'+(r.status===k?' on':'')+'" data-id="'+r._id+'" data-st="'+k+'">'+SG_STATUS[k].t+'</button>'; } h+='</div>'; }
+    h+='<div class="sg-meta"><span class="sg-who'+(r.uid?' sg-who-btn':'')+'" data-uid="'+_rkEsc(r.uid||'')+'" data-nick="'+_rkEsc(r.nick||'Jugador')+'" data-av="'+_rkEsc(r.avatar||'calico')+'"><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><b>'+_rkEsc(r.nick||'Jugador')+'</b></span><span class="sg-badge sg-b-'+st.c+'">'+st.t+'</span><span class="sg-id">#'+(r.n||'?')+'</span></div>';
+    h+='<div class="sg-votes'+(closed?' closed':'')+'"><button class="sg-vote up'+(myDir==='up'?' mine':'')+'" data-id="'+r._id+'" data-dir="up"'+(closed?' disabled':'')+'>👍 <b>'+up+'</b></button><button class="sg-vote down'+(myDir==='down'?' mine':'')+'" data-id="'+r._id+'" data-dir="down"'+(closed?' disabled':'')+'>👎 <b>'+down+'</b></button></div>';
+    h+='<div class="sg-actions"><button class="sg-thread-btn" data-id="'+r._id+'">'+(closed?'💬 Ver debate':'💬 Debatir')+'</button>'+(total?'<button class="sg-voters-btn" data-id="'+r._id+'">👀 quién votó ('+total+')</button>':'')+'</div>';
+    if(staff){ h+='<div class="sg-staff">'; for(var i=0;i<SG_ORDER.length;i++){ var k=SG_ORDER[i]; h+='<button class="sg-st-btn'+(r.status===k?' on':'')+'" data-id="'+r._id+'" data-st="'+k+'">'+SG_STATUS[k].t+'</button>'; } h+='<button class="sg-del-btn" data-id="'+r._id+'">🗑️ Borrar sugerencia</button></div>'; }
     h+='</div>';
     return h;
   }
@@ -871,12 +940,15 @@
     var vbs=box.querySelectorAll('.sg-vote'); for(var k=0;k<vbs.length;k++){ vbs[k].addEventListener('click', function(){ sgVote(this.getAttribute('data-id'), this.getAttribute('data-dir')); }); }
     var vvs=box.querySelectorAll('.sg-voters-btn'); for(var m=0;m<vvs.length;m++){ vvs[m].addEventListener('click', function(){ openVoters(this.getAttribute('data-id')); }); }
     var ths=box.querySelectorAll('.sg-thread-btn'); for(var p=0;p<ths.length;p++){ ths[p].addEventListener('click', function(){ openThread(this.getAttribute('data-id')); }); }
+    var whos=box.querySelectorAll('.sg-who-btn'); for(var w=0;w<whos.length;w++){ whos[w].addEventListener('click', function(){ openUserCard(this.getAttribute('data-uid'), this.getAttribute('data-nick'), this.getAttribute('data-av')); }); }
+    if(staff){ var dls=box.querySelectorAll('.sg-del-btn'); for(var d=0;d<dls.length;d++){ dls[d].addEventListener('click', function(){ deleteSuggestion(this.getAttribute('data-id')); }); } }
   }
   function sgVote(id, dir){
     if(!feedCanPost()){ feedMsg(feedGateTxt(),'err'); return; }
     if(dir!=='up'&&dir!=='down') return;
     var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } }
     if(!row||!fbUser) return;
+    if(SG_CLOSED[row.status]){ feedMsg('Esta sugerencia ya fue resuelta — la votación está cerrada.','err'); return; }
     var uid=fbUser.uid, e=state.eq||{};
     if(!row.voters) row.voters={};
     var prevEntry=row.voters[uid]?{ d:row.voters[uid].d, n:row.voters[uid].n }:null;
@@ -887,6 +959,14 @@
     _fbFsMod.updateDoc(_fbFsMod.doc(fbDB,'suggestions',id), upd).catch(function(){ if(prevEntry){ row.voters[uid]=prevEntry; } else { delete row.voters[uid]; } paintBoard(); feedMsg('No se pudo votar (permisos o conexión).','err'); });
   }
   function sgSetStatus(id, st){ if(!hasMedal('staff')||!SG_STATUS[st]) return; _fbFsMod.setDoc(_fbFsMod.doc(fbDB,'suggestions',id), {status:st}, {merge:true}).then(function(){ renderBoard(); }).catch(function(){ feedMsg('No se pudo cambiar el estado (permisos).','err'); }); }
+  function deleteSuggestion(id){
+    if(!hasMedal('staff')||!id) return;
+    if(!confirm('¿Borrar esta sugerencia para siempre? También se borra su debate.')) return;
+    _fbFsMod.deleteDoc(_fbFsMod.doc(fbDB,'suggestions',id)).then(function(){
+      feedMsg('Sugerencia borrada. 🗑️','ok'); renderBoard();
+      fetchComments(id).then(function(rows){ for(var i=0;i<rows.length;i++){ _fbFsMod.deleteDoc(_fbFsMod.doc(fbDB,'suggestions',id,'comments',rows[i]._id)).catch(function(){}); } }).catch(function(){});
+    }).catch(function(){ feedMsg('No se pudo borrar (permisos).','err'); });
+  }
   function openVoters(id){
     var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } }
     if(!row) return;
@@ -897,6 +977,45 @@
     document.getElementById('votersModal').classList.add('open');
   }
   function closeVoters(){ document.getElementById('votersModal').classList.remove('open'); }
+  function openUserCard(uid, fbNick, fbAvatar){
+    if(!uid) return;
+    var modal=document.getElementById('userCardModal'), body=document.getElementById('userCardBody');
+    if(!modal||!body) return;
+    body.innerHTML='<div class="pf-rk-msg">Cargando perfil…</div>';
+    modal.classList.add('open');
+    if(!(fbReady&&_fbFsMod&&fbDB)){ renderUserCard(uid, null, fbNick, fbAvatar); return; }
+    _fbFsMod.getDoc(_fbFsMod.doc(fbDB,'leaderboard',uid)).then(function(snap){
+      var r=(snap&&snap.exists())?(snap.data()||{}):null; renderUserCard(uid, r, fbNick, fbAvatar);
+    }).catch(function(){ renderUserCard(uid, null, fbNick, fbAvatar); });
+  }
+  function renderUserCard(uid, r, fbNick, fbAvatar){
+    var body=document.getElementById('userCardBody'); if(!body) return;
+    if(!r){
+      var ba=fbAvatar||'calico';
+      body.innerHTML='<div class="pf-rku-card"><div class="pf-avatar" style="margin:0 auto 10px"><span class="cat" style="background-position:'+pfCatPos(ba)+'"></span></div><div class="pf-rku-nick">'+_rkEsc(fbNick||'Jugador')+'</div><div class="pf-rku-meta">🐾 '+avatarName(ba)+'<br>Todavía sin datos en el ranking.</div></div>';
+      return;
+    }
+    var tn=pfTitleName(r.title||'none'), meds=medalsForUID(uid), medHTML='';
+    if(meds.length){ meds.forEach(function(k){ medHTML+='<span class="pf-medal" data-medal="'+k+'" title="'+MEDALS[k].name+' — '+MEDALS[k].desc+'">'+MEDALS[k].svg+'</span>'; }); }
+    var h='<div class="pf-rku-card">';
+    h+='<div class="pf-avatar '+pfFrameCls(r.frame||'none')+'" style="margin:0 auto 10px"><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span></div>';
+    h+='<div class="pf-rku-nick">'+_rkEsc(r.nick||'Jugador')+'</div>';
+    h+= tn? '<div class="pf-title"><span class="title-pill">'+tn+'</span></div>' : '';
+    h+= medHTML? '<div class="pf-medals" style="display:flex">'+medHTML+'</div>' : '';
+    h+= medHTML? '<div class="pf-medal-detail" id="ucMedalDetail"></div>' : '';
+    h+='<div class="pf-rku-meta">🐾 '+avatarName(r.avatar||'calico')+(r.palette?'<br>🎨 '+(PF_TEMANOM[r.palette]||r.palette):'')+(r.hidden?'<br>🚫 Oculto del ranking':'')+'</div>';
+    h+='<div class="pf-stats">';
+    h+='<div class="pf-stat wide"><span class="lbl">👻 Ectofichas ganadas</span><span class="val">'+fmt(r.ecto||0)+'</span></div>';
+    h+='<div class="pf-stat"><div class="lbl">✨ Ascensiones</div><div class="val">'+fmt(r.asc||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">🎲 Partidas</div><div class="val">'+fmt(r.runs||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">💰 Récord plata</div><div class="val">$'+fmt(r.bestWorth||0)+'</div></div>';
+    h+='<div class="pf-stat"><div class="lbl">🎰 Mayor ganancia</div><div class="val">$'+fmt(r.bestJP||0)+'</div></div>';
+    h+='</div></div>';
+    body.innerHTML=h;
+    var _c=body.querySelector('.pf-rku-card'); if(_c&&typeof applyPaletteTo==='function') applyPaletteTo(_c, r.palette||'synthwave');
+    var mels=body.querySelectorAll('.pf-medal[data-medal]'); for(var mi=0;mi<mels.length;mi++){ mels[mi].addEventListener('click', function(){ var k=this.getAttribute('data-medal'); var dt=document.getElementById('ucMedalDetail'); if(dt&&MEDALS[k]){ if(dt.style.display==='block'&&dt.getAttribute('data-shown')===k){ dt.style.display='none'; dt.removeAttribute('data-shown'); } else { dt.innerHTML='<b>'+MEDALS[k].name+'</b><br>'+MEDALS[k].desc; dt.style.display='block'; dt.setAttribute('data-shown',k); } } }); }
+  }
+  function closeUserCard(){ var m=document.getElementById('userCardModal'); if(m) m.classList.remove('open'); }
   function thTime(ts){ if(!ts) return ''; var diff=Math.floor((Date.now()-ts)/1000); if(diff<60) return 'recién'; if(diff<3600) return Math.floor(diff/60)+' min'; if(diff<86400) return Math.floor(diff/3600)+' h'; return new Date(ts).toLocaleDateString('es-AR'); }
   function thMsg(t,cls){ var m=document.getElementById('thMsg'); if(m){ m.innerHTML=t; m.className='feed-msg '+(cls||''); } }
   function openThread(id){ var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } } if(!row) return; _threadId=id; document.getElementById('threadModal').classList.add('open'); renderThread(row); }
@@ -911,20 +1030,24 @@
   function fetchComments(id){ var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'suggestions',id,'comments'), _fbFsMod.orderBy('created','asc'), _fbFsMod.limit(80)); return _fbFsMod.getDocs(q).then(function(snap){ var rows=[]; snap.forEach(function(d){ var x=d.data()||{}; x._id=d.id; rows.push(x); }); return rows; }); }
   function paintThread(rows){
     var body=document.getElementById('threadBody'); if(!body) return;
+    var _sg=null; for(var _q=0;_q<_sgRows.length;_q++){ if(_sgRows[_q]._id===_threadId){ _sg=_sgRows[_q]; break; } } var _closed=!!(_sg&&SG_CLOSED[_sg.status]);
     var staff=hasMedal('staff'), myUid=(fbUser&&fbUser.uid)||null, h='<div class="th-list">';
     if(!rows.length){ h+='<div class="bank-note">Todavía no hay mensajes en este hilo.<br>¡Arrancá el debate! 💬</div>'; }
-    else { for(var i=0;i<rows.length;i++){ var c=rows[i], canDel=staff||(myUid&&c.uid===myUid); h+='<div class="th-msg"><span class="cat th-ava" style="background-position:'+pfCatPos(c.avatar||'calico')+'"></span><div class="th-msg-b"><div class="th-msg-top"><b>'+_rkEsc(c.nick||'Jugador')+'</b><span class="th-time">'+thTime(c.created)+'</span>'+(canDel?'<button class="th-del" data-cid="'+c._id+'" title="Borrar">✕</button>':'')+'</div><div class="th-msg-text">'+_rkEsc(c.text||'')+'</div></div></div>'; } }
+    else { for(var i=0;i<rows.length;i++){ var c=rows[i], canDel=staff||(myUid&&c.uid===myUid); var _cu=_rkEsc(c.uid||''), _cn=_rkEsc(c.nick||'Jugador'), _ca=_rkEsc(c.avatar||'calico'); h+='<div class="th-msg"><span class="cat th-ava'+(c.uid?' th-who-btn':'')+'" data-uid="'+_cu+'" data-nick="'+_cn+'" data-av="'+_ca+'" style="background-position:'+pfCatPos(c.avatar||'calico')+'"></span><div class="th-msg-b"><div class="th-msg-top"><b'+(c.uid?' class="th-who-btn"':'')+' data-uid="'+_cu+'" data-nick="'+_cn+'" data-av="'+_ca+'">'+_rkEsc(c.nick||'Jugador')+'</b><span class="th-time">'+thTime(c.created)+'</span>'+(canDel?'<button class="th-del" data-cid="'+c._id+'" title="Borrar">✕</button>':'')+'</div><div class="th-msg-text">'+_rkEsc(c.text||'')+'</div></div></div>'; } }
     h+='</div>';
-    if(feedCanPost()){ h+='<div class="th-compose"><textarea id="thInput" class="feed-ta" maxlength="300" placeholder="Escribí un comentario…"></textarea><button class="feed-send" id="thSend">💬 Comentar</button></div>'; }
+    if(_closed){ h+='<div class="feed-gate">🔒 Esta sugerencia ya fue resuelta — el debate quedó cerrado.</div>'; }
+    else if(feedCanPost()){ h+='<div class="th-compose"><textarea id="thInput" class="feed-ta" maxlength="300" placeholder="Escribí un comentario…"></textarea><button class="feed-send" id="thSend">💬 Comentar</button></div>'; }
     else { h+='<div class="feed-gate">'+feedGateTxt()+'</div>'; }
     h+='<div class="feed-msg" id="thMsg"></div>';
     body.innerHTML=h;
     var s=document.getElementById('thSend'); if(s) s.addEventListener('click', submitComment);
     var dels=body.querySelectorAll('.th-del'); for(var j=0;j<dels.length;j++){ dels[j].addEventListener('click', function(){ deleteComment(this.getAttribute('data-cid')); }); }
+    var twh=body.querySelectorAll('.th-who-btn'); for(var w=0;w<twh.length;w++){ twh[w].addEventListener('click', function(){ openUserCard(this.getAttribute('data-uid'), this.getAttribute('data-nick'), this.getAttribute('data-av')); }); }
   }
   function submitComment(){
     if(!feedCanPost()){ thMsg(feedGateTxt(),'err'); return; }
     if(!_threadId) return;
+    var _scg=null; for(var _q=0;_q<_sgRows.length;_q++){ if(_sgRows[_q]._id===_threadId){ _scg=_sgRows[_q]; break; } } if(_scg&&SG_CLOSED[_scg.status]){ thMsg('El debate de esta sugerencia está cerrado.','err'); return; }
     var ta=document.getElementById('thInput'); if(!ta) return; var txt=(ta.value||'').trim();
     if(txt.length<1) return; if(txt.length>300) txt=txt.slice(0,300);
     var btn=document.getElementById('thSend'); if(btn){ btn.disabled=true; btn.textContent='Enviando…'; }
@@ -991,6 +1114,8 @@
   document.getElementById('votersClose').addEventListener('click', closeVoters);
   document.getElementById('votersModal').addEventListener('click', function(e){ if(e.target===this) closeVoters(); });
   document.getElementById('threadClose').addEventListener('click', closeThread);
+  document.getElementById('userCardClose').addEventListener('click', closeUserCard);
+  document.getElementById('userCardModal').addEventListener('click', function(e){ if(e.target===this) closeUserCard(); });
   document.getElementById('threadModal').addEventListener('click', function(e){ if(e.target===this) closeThread(); });
   document.getElementById('authSignIn').addEventListener('click', function(){ signIn(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
   document.getElementById('authSignUp').addEventListener('click', function(){ signUp(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
