@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.50">
+<link rel="stylesheet" href="styles.css?v=2.58">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -78,6 +78,7 @@
     </details>
 
     <footer>KITTY'S SLOTS DELUXE · <span id="ver"></span></footer>
+    <div class="pet" id="pet" title="Mr.PIBBLE" style="display:none"><div class="pet-bubble" id="petBubble"></div><img class="pet-img" id="petImg" src="pibble-mascot.png" alt="Mr.PIBBLE" draggable="false"></div>
   </div>
 
   <div class="overlay" id="shop">
@@ -191,6 +192,7 @@
   <div class="overlay cat-overlay" id="catModal">
     <div class="cat-scene">
       <div class="cat-stage"><img class="cat-img" src="cat-mascot.png" alt="Kitty"></div>
+      <div class="cat-name" id="catName"></div>
       <div class="cat-text" id="catSpeech"></div>
       <button class="minibtn cat-login" id="catLogin">🔐 INICIAR SESIÓN</button>
       <div class="cat-continue" id="catOk">▶ TOCÁ PARA SEGUIR</div>
@@ -229,6 +231,7 @@
           <div class="pf-code-row"><input id="pfCodeInput" class="pf-code-input" type="text" placeholder="Código secreto" maxlength="24"><button class="pf-code-btn" id="pfCodeBtn">Canjear</button></div>
           <div class="pf-code-msg" id="pfCodeMsg"></div>
         </div>
+        <button class="pf-btn" id="pfPibbleBtn" style="display:none">🐽 Saludar a Mr.PIBBLE</button>
         <div class="pf-soon">🤝 Pronto: agregá amigos y desafialos (¡al truco! 🃏)</div>
       </div>
       <div id="cosmeticsView" style="display:none">
@@ -251,6 +254,6 @@
     </div>
   </div>
 
-<script src="game.js?v=2.50"></script>
+<script src="game.js?v=2.58"></script>
 </body>
 </html>
