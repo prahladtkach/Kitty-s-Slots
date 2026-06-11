@@ -1,4 +1,4 @@
-// Kitty's Slots Deluxe · versión pública (v2.63) · Orden: los PNG ahora viven en la carpeta assets/ (rutas actualizadas en game.js, index.html y styles.css). Cache busting → 2.63.
+// Kitty's Slots Deluxe · versión pública (v2.67) · Tanda 3 de Sugerencias: hilo de debate por sugerencia (subcolección «comments» en suggestions/{id}/comments). Se carga al abrir el hilo; comentar pide el mismo candado que postear/votar; autor o staff pueden borrar. Requiere agregar regla de Firestore para la subcolección. Cache busting → 2.67.
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -32,7 +32,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.63";
+  const VERSION="2.67";
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -801,6 +801,159 @@
   document.getElementById('lever').addEventListener('click', pull);
   document.getElementById('maxBet').addEventListener('click', function(){ setBet(state.credits); });
   document.getElementById('betInput').addEventListener('change', function(){ setBet(parseInt(this.value,10)); });
+  // ===== SUGERENCIAS + REPORTES (v2.64 · Tanda 1) =====
+  var SUGG_MAX=280, BUG_MAX=600, FEED_GATE=500000;
+  var _feedTab='board'; var _sgRows=[]; var _threadId=null;
+  var SG_STATUS={ pending:{t:'⏳ Pendiente',c:'pend'}, approved:{t:'✅ Aprobada',c:'ok'}, rejected:{t:'❌ Rechazada',c:'no'}, done:{t:'🚀 Implementada',c:'done'} };
+  var SG_ORDER=['pending','approved','rejected','done'];
+  function feedCanPost(){ if(!(fbReady&&fbUser)) return false; if(hasMedal('staff')) return true; return (((state.life&&state.life.bestWorth)||0) >= FEED_GATE); }
+  function feedGateTxt(){ if(!(fbReady&&fbUser)) return '🔒 Iniciá sesión (ícono de cuenta, arriba a la derecha) para participar.'; var w=(state.life&&state.life.bestWorth)||0; if(w<FEED_GATE) return '🔒 Alcanzá <b>$'+fmt(FEED_GATE)+'</b> de patrimonio para sugerir, votar y comentar.<br>Vas $'+fmt(w)+'.'; return ''; }
+  function feedMsg(t,cls){ var m=document.getElementById('feedMsg'); if(m){ m.innerHTML=t; m.className='feed-msg '+(cls||''); } }
+  function bugMsg(t,cls){ var m=document.getElementById('bugMsg'); if(m){ m.innerHTML=t; m.className='feed-msg '+(cls||''); } }
+  function openFeedback(){ if(spinning) return; _feedTab='board'; document.getElementById('feedback').classList.add('open'); renderFeedback(); }
+  function closeFeedback(){ document.getElementById('feedback').classList.remove('open'); }
+  function renderFeedback(){
+    var tabs=document.getElementById('feedTabs');
+    if(tabs){ tabs.innerHTML='<button class="feed-tab'+(_feedTab==='board'?' on':'')+'" data-ft="board">💡 Sugerencias</button><button class="feed-tab'+(_feedTab==='bug'?' on':'')+'" data-ft="bug">🐞 Reportar bug</button>'; var tb=tabs.querySelectorAll('.feed-tab'); for(var i=0;i<tb.length;i++){ tb[i].addEventListener('click', function(){ _feedTab=this.getAttribute('data-ft'); renderFeedback(); }); } }
+    var body=document.getElementById('feedBody'); if(!body) return;
+    if(_feedTab==='bug'){
+      var hb='<div class="bank-note">🔒 Esto lo ve <b>solo el dev</b> (es privado). Contanos el bug con el mayor detalle: qué pasó, qué esperabas y cómo repetirlo. 🐞</div>';
+      if(!(fbReady&&fbUser)){ hb+='<div class="feed-gate">🔒 Iniciá sesión (ícono de cuenta, arriba a la derecha) para reportar.</div>'; }
+      else { hb+='<textarea id="bugInput" class="feed-ta" maxlength="'+BUG_MAX+'" placeholder="Describí el bug…"></textarea><button class="feed-send bug" id="bugSend">🐞 Enviar reporte</button>'; }
+      hb+='<div class="feed-msg" id="bugMsg"></div>';
+      body.innerHTML=hb;
+      var bbtn=document.getElementById('bugSend'); if(bbtn) bbtn.addEventListener('click', submitBug);
+    } else {
+      var hs='';
+      if(feedCanPost()){ hs+='<div class="feed-compose"><textarea id="suggInput" class="feed-ta" maxlength="'+SUGG_MAX+'" placeholder="Tu idea para Kitty\u2019s Slots…"></textarea><button class="feed-send" id="suggSend">✦ Enviar sugerencia</button></div>'; }
+      else { hs+='<div class="feed-gate">'+feedGateTxt()+'</div>'; }
+      hs+='<div class="feed-msg" id="feedMsg"></div>';
+      hs+='<div class="sg-legend">⏳ Pendiente · ✅ Aprobada · ❌ Rechazada · 🚀 Implementada</div>';
+      hs+='<div id="boardList"></div>';
+      body.innerHTML=hs;
+      var sbtn=document.getElementById('suggSend'); if(sbtn) sbtn.addEventListener('click', submitSuggestion);
+      renderBoard();
+    }
+  }
+  function sgCardHTML(r, staff){
+    var st=SG_STATUS[r.status]||SG_STATUS.pending;
+    var V=r.voters||{}, myUid=(fbUser&&fbUser.uid)||null, up=0, down=0, myDir=null;
+    for(var u in V){ if(!V[u]) continue; if(V[u].d==='down') down++; else up++; if(u===myUid) myDir=V[u].d; }
+    var total=up+down;
+    var h='<div class="sg-card sg-'+st.c+'">';
+    h+='<div class="sg-head">💡 Sugerencia</div>';
+    h+='<div class="sg-text">'+_rkEsc(r.text||'')+'</div>';
+    h+='<div class="sg-div"></div>';
+    h+='<div class="sg-meta"><span class="sg-who"><span class="cat" style="background-position:'+pfCatPos(r.avatar||'calico')+'"></span><b>'+_rkEsc(r.nick||'Jugador')+'</b></span><span class="sg-badge sg-b-'+st.c+'">'+st.t+'</span><span class="sg-id">#'+(r.n||'?')+'</span></div>';
+    h+='<div class="sg-votes"><button class="sg-vote up'+(myDir==='up'?' mine':'')+'" data-id="'+r._id+'" data-dir="up">👍 <b>'+up+'</b></button><button class="sg-vote down'+(myDir==='down'?' mine':'')+'" data-id="'+r._id+'" data-dir="down">👎 <b>'+down+'</b></button></div>';
+    h+='<div class="sg-actions"><button class="sg-thread-btn" data-id="'+r._id+'">💬 Debatir</button>'+(total?'<button class="sg-voters-btn" data-id="'+r._id+'">👀 quién votó ('+total+')</button>':'')+'</div>';
+    if(staff){ h+='<div class="sg-staff">'; for(var i=0;i<SG_ORDER.length;i++){ var k=SG_ORDER[i]; h+='<button class="sg-st-btn'+(r.status===k?' on':'')+'" data-id="'+r._id+'" data-st="'+k+'">'+SG_STATUS[k].t+'</button>'; } h+='</div>'; }
+    h+='</div>';
+    return h;
+  }
+  function renderBoard(){
+    var box=document.getElementById('boardList'); if(!box) return;
+    if(!fbReady){ box.innerHTML='<div class="bank-note">Conectando con Firebase…</div>'; return; }
+    box.innerHTML='<div class="bank-note">Cargando sugerencias…</div>';
+    var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'suggestions'), _fbFsMod.orderBy('created','desc'), _fbFsMod.limit(40));
+    _fbFsMod.getDocs(q).then(function(snap){
+      _sgRows=[]; snap.forEach(function(d){ var x=d.data()||{}; x._id=d.id; _sgRows.push(x); });
+      paintBoard();
+    }).catch(function(){ box.innerHTML='<div class="bank-note">No se pudo cargar.<br>(¿Pegaste las reglas de Firebase para «suggestions»?)</div>'; });
+  }
+  function paintBoard(){
+    var box=document.getElementById('boardList'); if(!box) return;
+    if(!_sgRows.length){ box.innerHTML='<div class="bank-note">Todavía no hay sugerencias.<br>¡Sé el primero en proponer algo! 🐱</div>'; return; }
+    var staff=hasMedal('staff'), h='';
+    for(var i=0;i<_sgRows.length;i++) h+=sgCardHTML(_sgRows[i], staff);
+    box.innerHTML=h;
+    if(staff){ var bs=box.querySelectorAll('.sg-st-btn'); for(var j=0;j<bs.length;j++){ bs[j].addEventListener('click', function(){ sgSetStatus(this.getAttribute('data-id'), this.getAttribute('data-st')); }); } }
+    var vbs=box.querySelectorAll('.sg-vote'); for(var k=0;k<vbs.length;k++){ vbs[k].addEventListener('click', function(){ sgVote(this.getAttribute('data-id'), this.getAttribute('data-dir')); }); }
+    var vvs=box.querySelectorAll('.sg-voters-btn'); for(var m=0;m<vvs.length;m++){ vvs[m].addEventListener('click', function(){ openVoters(this.getAttribute('data-id')); }); }
+    var ths=box.querySelectorAll('.sg-thread-btn'); for(var p=0;p<ths.length;p++){ ths[p].addEventListener('click', function(){ openThread(this.getAttribute('data-id')); }); }
+  }
+  function sgVote(id, dir){
+    if(!feedCanPost()){ feedMsg(feedGateTxt(),'err'); return; }
+    if(dir!=='up'&&dir!=='down') return;
+    var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } }
+    if(!row||!fbUser) return;
+    var uid=fbUser.uid, e=state.eq||{};
+    if(!row.voters) row.voters={};
+    var prevEntry=row.voters[uid]?{ d:row.voters[uid].d, n:row.voters[uid].n }:null;
+    var remove=(prevEntry&&prevEntry.d===dir), upd={};
+    if(remove){ delete row.voters[uid]; upd['voters.'+uid]=_fbFsMod.deleteField(); }
+    else { row.voters[uid]={ d:dir, n:(e.nick||'Jugador') }; upd['voters.'+uid]={ d:dir, n:(e.nick||'Jugador') }; }
+    paintBoard();
+    _fbFsMod.updateDoc(_fbFsMod.doc(fbDB,'suggestions',id), upd).catch(function(){ if(prevEntry){ row.voters[uid]=prevEntry; } else { delete row.voters[uid]; } paintBoard(); feedMsg('No se pudo votar (permisos o conexión).','err'); });
+  }
+  function sgSetStatus(id, st){ if(!hasMedal('staff')||!SG_STATUS[st]) return; _fbFsMod.setDoc(_fbFsMod.doc(fbDB,'suggestions',id), {status:st}, {merge:true}).then(function(){ renderBoard(); }).catch(function(){ feedMsg('No se pudo cambiar el estado (permisos).','err'); }); }
+  function openVoters(id){
+    var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } }
+    if(!row) return;
+    var V=row.voters||{}, myUid=(fbUser&&fbUser.uid)||null, ups=[], downs=[];
+    for(var u in V){ if(!V[u]) continue; var nm=(u===myUid)?'vos':_rkEsc(V[u].n||'?'); if(V[u].d==='down') downs.push(nm); else ups.push(nm); }
+    function sec(cls, ic, lbl, arr){ var hh='<div class="vt-sec"><div class="vt-sec-h '+cls+'">'+ic+' '+lbl+' · '+arr.length+'</div>'; if(arr.length){ hh+='<div class="vt-list">'; for(var i=0;i<arr.length;i++) hh+='<span class="vt-name">'+arr[i]+'</span>'; hh+='</div>'; } else { hh+='<div class="vt-empty">Nadie todavía</div>'; } return hh+'</div>'; }
+    var body=document.getElementById('votersBody'); if(body) body.innerHTML='<div class="vt-id">Sugerencia #'+(row.n||'?')+'</div>'+sec('y','👍','A favor',ups)+sec('n','👎','En contra',downs);
+    document.getElementById('votersModal').classList.add('open');
+  }
+  function closeVoters(){ document.getElementById('votersModal').classList.remove('open'); }
+  function thTime(ts){ if(!ts) return ''; var diff=Math.floor((Date.now()-ts)/1000); if(diff<60) return 'recién'; if(diff<3600) return Math.floor(diff/60)+' min'; if(diff<86400) return Math.floor(diff/3600)+' h'; return new Date(ts).toLocaleDateString('es-AR'); }
+  function thMsg(t,cls){ var m=document.getElementById('thMsg'); if(m){ m.innerHTML=t; m.className='feed-msg '+(cls||''); } }
+  function openThread(id){ var row=null; for(var i=0;i<_sgRows.length;i++){ if(_sgRows[i]._id===id){ row=_sgRows[i]; break; } } if(!row) return; _threadId=id; document.getElementById('threadModal').classList.add('open'); renderThread(row); }
+  function closeThread(){ document.getElementById('threadModal').classList.remove('open'); _threadId=null; }
+  function renderThread(row){
+    var head=document.getElementById('threadHead'), body=document.getElementById('threadBody');
+    if(head) head.innerHTML='<div class="th-ctx"><div class="th-ctx-id">💡 Sugerencia #'+(row.n||'?')+'</div><div class="th-ctx-text">'+_rkEsc(row.text||'')+'</div></div>';
+    if(body) body.innerHTML='<div class="bank-note">Cargando comentarios…</div>';
+    var id=_threadId;
+    fetchComments(id).then(function(rows){ if(_threadId===id) paintThread(rows); }).catch(function(){ if(body&&_threadId===id) body.innerHTML='<div class="bank-note">No se pudo cargar el debate.<br>(¿Pegaste la regla de Firebase para «comments»?)</div>'; });
+  }
+  function fetchComments(id){ var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'suggestions',id,'comments'), _fbFsMod.orderBy('created','asc'), _fbFsMod.limit(80)); return _fbFsMod.getDocs(q).then(function(snap){ var rows=[]; snap.forEach(function(d){ var x=d.data()||{}; x._id=d.id; rows.push(x); }); return rows; }); }
+  function paintThread(rows){
+    var body=document.getElementById('threadBody'); if(!body) return;
+    var staff=hasMedal('staff'), myUid=(fbUser&&fbUser.uid)||null, h='<div class="th-list">';
+    if(!rows.length){ h+='<div class="bank-note">Todavía no hay mensajes en este hilo.<br>¡Arrancá el debate! 💬</div>'; }
+    else { for(var i=0;i<rows.length;i++){ var c=rows[i], canDel=staff||(myUid&&c.uid===myUid); h+='<div class="th-msg"><span class="cat th-ava" style="background-position:'+pfCatPos(c.avatar||'calico')+'"></span><div class="th-msg-b"><div class="th-msg-top"><b>'+_rkEsc(c.nick||'Jugador')+'</b><span class="th-time">'+thTime(c.created)+'</span>'+(canDel?'<button class="th-del" data-cid="'+c._id+'" title="Borrar">✕</button>':'')+'</div><div class="th-msg-text">'+_rkEsc(c.text||'')+'</div></div></div>'; } }
+    h+='</div>';
+    if(feedCanPost()){ h+='<div class="th-compose"><textarea id="thInput" class="feed-ta" maxlength="300" placeholder="Escribí un comentario…"></textarea><button class="feed-send" id="thSend">💬 Comentar</button></div>'; }
+    else { h+='<div class="feed-gate">'+feedGateTxt()+'</div>'; }
+    h+='<div class="feed-msg" id="thMsg"></div>';
+    body.innerHTML=h;
+    var s=document.getElementById('thSend'); if(s) s.addEventListener('click', submitComment);
+    var dels=body.querySelectorAll('.th-del'); for(var j=0;j<dels.length;j++){ dels[j].addEventListener('click', function(){ deleteComment(this.getAttribute('data-cid')); }); }
+  }
+  function submitComment(){
+    if(!feedCanPost()){ thMsg(feedGateTxt(),'err'); return; }
+    if(!_threadId) return;
+    var ta=document.getElementById('thInput'); if(!ta) return; var txt=(ta.value||'').trim();
+    if(txt.length<1) return; if(txt.length>300) txt=txt.slice(0,300);
+    var btn=document.getElementById('thSend'); if(btn){ btn.disabled=true; btn.textContent='Enviando…'; }
+    function restore(){ if(btn){ btn.disabled=false; btn.textContent='💬 Comentar'; } }
+    var e=state.eq||{}, id=_threadId;
+    _fbFsMod.addDoc(_fbFsMod.collection(fbDB,'suggestions',id,'comments'), { text:txt, uid:fbUser.uid, nick:(e.nick||'Jugador'), avatar:(e.avatar||'calico'), created:Date.now() }).then(function(){ if(ta) ta.value=''; if(_threadId===id) fetchComments(id).then(function(rows){ if(_threadId===id) paintThread(rows); }); restore(); }).catch(function(){ thMsg('No se pudo comentar (revisá la regla de «comments»).','err'); restore(); });
+  }
+  function deleteComment(cid){ if(!_threadId||!cid) return; if(!confirm('¿Borrar este comentario?')) return; var id=_threadId; _fbFsMod.deleteDoc(_fbFsMod.doc(fbDB,'suggestions',id,'comments',cid)).then(function(){ if(_threadId===id) fetchComments(id).then(function(rows){ if(_threadId===id) paintThread(rows); }); }).catch(function(){ thMsg('No se pudo borrar (permisos).','err'); }); }
+  function submitSuggestion(){
+    if(!feedCanPost()){ feedMsg(feedGateTxt(),'err'); return; }
+    var ta=document.getElementById('suggInput'); if(!ta) return; var txt=(ta.value||'').trim();
+    if(txt.length<6){ feedMsg('Escribí un poco más tu idea 🐱','err'); return; }
+    if(txt.length>SUGG_MAX) txt=txt.slice(0,SUGG_MAX);
+    var btn=document.getElementById('suggSend'); if(btn){ btn.disabled=true; btn.textContent='Enviando…'; }
+    function restore(){ if(btn){ btn.disabled=false; btn.textContent='✦ Enviar sugerencia'; } }
+    var e=state.eq||{}, cRef=_fbFsMod.doc(fbDB,'counters','suggestions'), sRef=_fbFsMod.doc(_fbFsMod.collection(fbDB,'suggestions'));
+    _fbFsMod.runTransaction(fbDB, function(tx){ return tx.get(cRef).then(function(snap){ var cur=(snap.exists()&&typeof snap.data().n==='number')?snap.data().n:0; var next=cur+1; tx.set(cRef,{n:next},{merge:true}); tx.set(sRef,{ n:next, text:txt, uid:fbUser.uid, nick:(e.nick||'Jugador'), avatar:(e.avatar||'calico'), status:'pending', up:0, down:0, created:Date.now() }); return next; }); }).then(function(n){ ta.value=''; feedMsg('¡Sugerencia #'+n+' enviada! 🎉','ok'); renderBoard(); restore(); }).catch(function(){ feedMsg('No se pudo enviar (revisá las reglas de Firebase).','err'); restore(); });
+  }
+  function submitBug(){
+    if(!(fbReady&&fbUser)){ bugMsg('🔒 Iniciá sesión para reportar un bug.','err'); return; }
+    var ta=document.getElementById('bugInput'); if(!ta) return; var txt=(ta.value||'').trim();
+    if(txt.length<6){ bugMsg('Contanos un poco más del bug 🐞','err'); return; }
+    if(txt.length>BUG_MAX) txt=txt.slice(0,BUG_MAX);
+    var btn=document.getElementById('bugSend'); if(btn){ btn.disabled=true; btn.textContent='Enviando…'; }
+    function restore(){ if(btn){ btn.disabled=false; btn.textContent='🐞 Enviar reporte'; } }
+    var e=state.eq||{}, L=state.life||{};
+    _fbFsMod.addDoc(_fbFsMod.collection(fbDB,'bugs'), { text:txt, uid:fbUser.uid, nick:(e.nick||'Jugador'), email:(fbUser.email||''), ver:VERSION, ua:String(navigator.userAgent||'').slice(0,300), snap:{ credits:state.credits, worth:(state.credits+state.bank-state.debt), asc:(L.asc||0), runs:(L.runs||0) }, created:Date.now() }).then(function(){ ta.value=''; bugMsg('¡Gracias! Reporte enviado al dev 🐞✓','ok'); restore(); }).catch(function(){ bugMsg('No se pudo enviar (revisá las reglas de «bugs»).','err'); restore(); });
+  }
+
   document.getElementById('bankBtn').addEventListener('click', function(){ if(!state.bankUnlocked) return; renderBank(); document.getElementById('bank').classList.add('open'); bankMusic(); });
   document.getElementById('bankClose').addEventListener('click', function(){ document.getElementById('bank').classList.remove('open'); bankMode=false; });
   document.getElementById('bank').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); bankMode=false; } });
@@ -832,6 +985,13 @@
   document.getElementById('helpModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
   document.getElementById('authClose').addEventListener('click', function(){ document.getElementById('authModal').classList.remove('open'); });
   document.getElementById('authModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+  document.getElementById('suggestIcon').addEventListener('click', openFeedback);
+  document.getElementById('feedClose').addEventListener('click', closeFeedback);
+  document.getElementById('feedback').addEventListener('click', function(e){ if(e.target===this) closeFeedback(); });
+  document.getElementById('votersClose').addEventListener('click', closeVoters);
+  document.getElementById('votersModal').addEventListener('click', function(e){ if(e.target===this) closeVoters(); });
+  document.getElementById('threadClose').addEventListener('click', closeThread);
+  document.getElementById('threadModal').addEventListener('click', function(e){ if(e.target===this) closeThread(); });
   document.getElementById('authSignIn').addEventListener('click', function(){ signIn(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
   document.getElementById('authSignUp').addEventListener('click', function(){ signUp(document.getElementById('authEmailInput').value.trim(), document.getElementById('authPassInput').value); });
   document.getElementById('authGoogle').addEventListener('click', function(){ signInGoogle(); });

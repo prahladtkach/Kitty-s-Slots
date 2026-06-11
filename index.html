@@ -9,11 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.63">
+<link rel="stylesheet" href="styles.css?v=2.67">
 </head>
 <body>
   <div class="scanlines"></div>
   <div id="danger"></div>
+  <div class="corner-left">
+    <button class="iconbtn sugg-ic" id="suggestIcon" title="Sugerencias y reportes" aria-label="Sugerencias y reportes">💡</button>
+  </div>
   <div class="sound-icons">
     <button class="iconbtn" id="profIcon" title="Perfil" aria-label="Perfil"><span id="profIconImg" class="cat"></span></button>
     <button class="iconbtn" id="accIcon" title="Cuenta" aria-label="Cuenta"><svg viewBox="0 0 16 16" class="ic"><g fill="currentColor"><rect x="6" y="2" width="4" height="4"/><rect x="4" y="9" width="8" height="2"/><rect x="3" y="11" width="10" height="3"/></g></svg></button>
@@ -254,6 +257,32 @@
     </div>
   </div>
 
-<script src="game.js?v=2.63"></script>
+  <div class="overlay" id="feedback">
+    <div class="modal" style="max-width:560px;box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--violet)">
+      <button class="modal-close" id="feedClose">X</button>
+      <h3 style="color:var(--violet)">💡 SUGERENCIAS</h3>
+      <div class="feed-tabs" id="feedTabs"></div>
+      <div id="feedBody"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="votersModal">
+    <div class="modal" style="max-width:380px;box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--cyan)">
+      <button class="modal-close" id="votersClose">X</button>
+      <h3 style="color:var(--cyan)">👀 QUIÉN VOTÓ</h3>
+      <div id="votersBody"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="threadModal">
+    <div class="modal" style="max-width:520px;box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--magenta)">
+      <button class="modal-close" id="threadClose">X</button>
+      <h3 style="color:var(--magenta)">💬 DEBATE</h3>
+      <div id="threadHead"></div>
+      <div id="threadBody"></div>
+    </div>
+  </div>
+
+<script src="game.js?v=2.67"></script>
 </body>
 </html>
