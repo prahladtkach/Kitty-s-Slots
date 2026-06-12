@@ -67,7 +67,7 @@
   #danger{position:fixed;inset:0;z-index:25;pointer-events:none}
   #danger.on{animation:dangerpulse 2.2s ease-in-out infinite}
   @keyframes dangerpulse{0%,100%{box-shadow:inset 0 0 40px 4px rgba(255,40,60,.06)}50%{box-shadow:inset 0 0 60px 8px rgba(255,40,60,.13)}}
-  .controls{width:min(440px,97vw);margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:11px}
+  .controls{width:min(440px,97vw);margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:11px;position:relative}
   .betbar{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center}
   .bet{font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;padding:9px 11px;color:var(--muted);background:var(--panel);box-shadow:0 0 0 3px var(--dark)}
   .bet.active{color:var(--dark);background:var(--violet)}
@@ -521,7 +521,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .modal-money .mm-debt{ color:var(--red); font-size:10px; }
 
 /* ===== MASCOTA · Mr.PIBBLE en el main ===== */
-.pet{ position:fixed; left:4px; bottom:200px; z-index:6; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+.pet{ position:absolute; left:4px; top:18px; z-index:6; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
 .pet-img{ width:74px; height:74px; object-fit:contain; image-rendering:pixelated; display:block; filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)); animation:petIdle 2.8s ease-in-out infinite; }
 .pet.poke .pet-img{ animation:petPoke .5s ease; }
 @keyframes petIdle{ 0%{ transform:translateY(0) scale(1,1) } 25%{ transform:translateY(-3px) scale(0.99,1.02) } 50%{ transform:translateY(-6px) scale(1,1) } 75%{ transform:translateY(-3px) scale(1.01,0.99) } 100%{ transform:translateY(0) scale(1,1) } }
