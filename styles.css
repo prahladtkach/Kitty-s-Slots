@@ -522,7 +522,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 
 /* ===== MASCOTA · Mr.PIBBLE en el main ===== */
 .pet{ position:absolute; left:4px; bottom:200px; z-index:6; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-.pet-img{ width:74px; height:74px; image-rendering:pixelated; display:block; filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)); animation:petIdle 2.8s ease-in-out infinite; }
+.pet-img{ width:74px; height:74px; object-fit:contain; image-rendering:pixelated; display:block; filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)); animation:petIdle 2.8s ease-in-out infinite; }
 .pet.poke .pet-img{ animation:petPoke .5s ease; }
 @keyframes petIdle{ 0%{ transform:translateY(0) scale(1,1) } 25%{ transform:translateY(-3px) scale(0.99,1.02) } 50%{ transform:translateY(-6px) scale(1,1) } 75%{ transform:translateY(-3px) scale(1.01,0.99) } 100%{ transform:translateY(0) scale(1,1) } }
 @keyframes petPoke{ 0%{ transform:translateY(0) scale(1) } 30%{ transform:translateY(-11px) scale(1.08) } 60%{ transform:translateY(0) scale(.95) } 100%{ transform:translateY(0) scale(1) } }
@@ -754,3 +754,32 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .daily-claim{ display:block; width:100%; font-family:'Press Start 2P',monospace; font-size:11px; padding:14px; border:3px solid var(--dark); border-radius:0; background:var(--gold); color:var(--dark); cursor:pointer; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 0 rgba(0,0,0,0.3), 0 5px 0 #a8761b; }
 .daily-claim:active{ transform:translateY(3px); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 0 rgba(0,0,0,0.3), 0 2px 0 #a8761b; }
 .daily-done{ text-align:center; font-family:'VT323',monospace; font-size:17px; color:var(--muted); padding:11px 6px; border:3px solid var(--dark); background:var(--panel2); box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3); }
+
+/* === Mascotas === */
+#petsBody{display:flex;flex-direction:column;gap:10px}
+.pets-ect{font-family:'Press Start 2P';font-size:9px;color:var(--gold);text-align:center;margin-bottom:2px}
+.pets-hint{font-family:'VT323';font-size:14px;color:var(--muted);text-align:center;line-height:1.05;margin-bottom:4px}
+.pets-hint b{color:var(--text)}
+.pet-card{display:flex;align-items:center;gap:10px;background:var(--panel2);border:3px solid #3a2466;padding:10px;box-shadow:inset 2px 2px 0 rgba(255,255,255,.06),inset -2px -2px 0 rgba(0,0,0,.4)}
+.pet-card.active{border-color:var(--gold);box-shadow:inset 2px 2px 0 rgba(255,255,255,.1),0 0 0 2px var(--gold),0 0 10px rgba(255,210,63,.5)}
+.pet-card.locked{opacity:.62;filter:grayscale(.5)}
+.pet-ico{width:48px;height:48px;min-width:48px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--dark);border:2px solid #3a2466;font-size:26px;line-height:1}
+.pet-card.active .pet-ico{border-color:var(--gold)}
+.pet-ico-img{width:42px;height:42px;max-width:100%;max-height:100%;image-rendering:pixelated;object-fit:contain}
+.pet-info{flex:1;min-width:0}
+.pet-name{font-family:'Press Start 2P';font-size:9px;color:var(--text);margin-bottom:4px;line-height:1.5}
+.pet-on{color:var(--dark);background:var(--gold);font-size:7px;padding:2px 4px;margin-left:4px;vertical-align:middle}
+.pet-desc{font-family:'VT323';font-size:15px;color:var(--muted);line-height:1.05;margin-bottom:5px}
+.pet-fx{display:flex;flex-direction:column;gap:2px;font-family:'VT323';font-size:15px;line-height:1.1}
+.pet-buff{color:var(--green)}
+.pet-contra{color:var(--red)}
+.pet-cosmetic{color:var(--muted);font-style:italic}
+.pet-act{min-width:78px;display:flex;align-items:center;justify-content:center}
+.pet-btn{font-family:'Press Start 2P';font-size:8px;color:var(--dark);background:var(--gold);border:none;padding:9px 8px;cursor:pointer;box-shadow:3px 3px 0 rgba(0,0,0,.5);width:100%;line-height:1.3}
+.pet-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.5)}
+.pet-btn.off{background:var(--muted)}
+.pet-btn.buy{background:var(--cyan)}
+.pet-btn:disabled{background:#4a3a6a;color:#8a7aaa;cursor:not-allowed;box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.pet-lock{font-family:'VT323';font-size:13px;color:var(--muted);text-align:center;line-height:1.1}
+.pet-lock b{color:var(--gold);font-family:'VT323';font-size:14px}
+.pets-ic.has-pet{box-shadow:0 0 0 2px var(--gold),0 0 8px rgba(255,210,63,.6)}
