@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2.87">
+<link rel="stylesheet" href="styles.css?v=2.88">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -17,6 +17,7 @@
   <div class="corner-left">
     <button class="iconbtn sugg-ic" id="suggestIcon" title="Sugerencias y reportes" aria-label="Sugerencias y reportes">💡</button>
     <button class="iconbtn logros-ic" id="logrosIcon" title="Logros" aria-label="Logros" style="display:none">🏆</button>
+    <button class="iconbtn daily-ic" id="dailyIcon" title="Racha diaria" aria-label="Racha diaria">🔥</button>
   </div>
   <div class="sound-icons">
     <button class="iconbtn" id="profIcon" title="Perfil" aria-label="Perfil"><span id="profIconImg" class="cat"></span></button>
@@ -301,6 +302,14 @@
     </div>
   </div>
 
-<script src="game.js?v=2.87"></script>
+  <div class="overlay" id="dailyModal">
+    <div class="modal" style="max-width:430px;box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--gold)">
+      <button class="modal-close" id="dailyClose">X</button>
+      <h3 style="color:var(--gold)">🔥 RACHA DIARIA</h3>
+      <div id="dailyBody"></div>
+    </div>
+  </div>
+
+<script src="game.js?v=2.88"></script>
 </body>
 </html>

@@ -32,9 +32,11 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="2.87";
+  const VERSION="2.89";
   const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
+  // Racha diaria: ciclo de 7 días, premio grande al día 7. c=créditos, e=ectofichas. AJUSTABLE (pasalo por Monte Carlo).
+  const DAILY_REWARDS=[{c:2000,e:0},{c:5000,e:0},{c:0,e:1},{c:12000,e:0},{c:25000,e:0},{c:0,e:2},{c:50000,e:3}];
   const INT_RATES=[0,0.01,0.015,0.02,0.025,0.03];
   const INT_INTERVALS=[0,25,22,19,16,13];
   const INT_COSTS=[3500,6000,10000,16000,24000];
@@ -57,7 +59,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION,daily:{last:0,day:0,streak:0}};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'], _broke=false, _lifeUsed=false, _tripleStreak=0, _econReset=false, _rkRows=[], _hiddenRows=[];
   const pool=[];
@@ -95,7 +97,7 @@
     if(typeof state.bankUnlocked!=='boolean') state.bankUnlocked = (state.bank>0||state.debt>0||state.vault||state.creditLevel>0||state.interestLevel>0||state.credits<1);
     if(typeof state.introSeen!=='boolean') state.introSeen = false; if(typeof state.kattoSeen!=='boolean') state.kattoSeen=false; if(typeof state.discount==='undefined') state.discount=null;
     if(!state.meta||typeof state.meta!=='object') state.meta={spirits:0,chest:0,credit:0,luck:0};
-    if(typeof state.meta.spirits!=='number') state.meta.spirits=0; if(typeof state.meta.chest!=='number') state.meta.chest=0; if(typeof state.meta.credit!=='number') state.meta.credit=0; if(typeof state.meta.luck!=='number') state.meta.luck=0; if(typeof state.meta.cap!=='number') state.meta.cap=0; if(typeof state.meta.armor!=='number') state.meta.armor=0; if(typeof state.meta.jpboost!=='number') state.meta.jpboost=0; if(typeof state.limboIntroV2!=='boolean') state.limboIntroV2=false; if(typeof state.meta.respin!=='number') state.meta.respin=0; if(typeof state.meta.banktope!=='number') state.meta.banktope=0; if(!state.eq||typeof state.eq!=='object') state.eq={avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'}; if(typeof state.eq.nick!=='string') state.eq.nick='Jugador'; if(!state.life||typeof state.life!=='object') state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; if(typeof state.life.deaths!=='number') state.life.deaths=0; if(typeof state.life.bestGamble!=='number') state.life.bestGamble=0; if(typeof state.life.bestCombo!=='number') state.life.bestCombo=0; if(typeof state.life.got777!=='boolean') state.life.got777=false; if(typeof state.life.holyJackpot!=='boolean') state.life.holyJackpot=false; if(typeof state.life.spins!=='number') state.life.spins=0; if(typeof state.life.gotJackpot!=='boolean') state.life.gotJackpot=false; if(typeof state.life.boneHits!=='number') state.life.boneHits=0; if(typeof state.life.maxBoneLoss!=='number') state.life.maxBoneLoss=0; if(typeof state.life.survivedBigBone!=='boolean') state.life.survivedBigBone=false; if(typeof state.life.maxBank!=='number') state.life.maxBank=0; if(typeof state.life.bankFilled!=='boolean') state.life.bankFilled=false; if(typeof state.life.firstDeposit!=='boolean') state.life.firstDeposit=false; if(typeof state.life.gotInterest!=='boolean') state.life.gotInterest=false; if(typeof state.life.usedSpinBtn!=='boolean') state.life.usedSpinBtn=false; if(typeof state.life.usedLever!=='boolean') state.life.usedLever=false; if(!state.life.logros||typeof state.life.logros!=='object') state.life.logros={}; if(state.eq && state.eq.frame==='arcoiris') state.eq.frame='neon'; if(typeof state.musicTheme!=='string'||['suave','remix','densa','pibble'].indexOf(state.musicTheme)<0) state.musicTheme='suave'; if(!state.badges||typeof state.badges!=='object') state.badges={}; var _avok=['calico','tuxedo','blanco','negro','naranja','luckycat','mitimiti','alien','retro','sinfoto','highroller','raddkatt','diablitty','grisoscuro','crtty','blacknoir','dicekatt','cubo']; if(_avok.indexOf(state.eq.avatar)<0) state.eq.avatar='calico';
+    if(typeof state.meta.spirits!=='number') state.meta.spirits=0; if(typeof state.meta.chest!=='number') state.meta.chest=0; if(typeof state.meta.credit!=='number') state.meta.credit=0; if(typeof state.meta.luck!=='number') state.meta.luck=0; if(typeof state.meta.cap!=='number') state.meta.cap=0; if(typeof state.meta.armor!=='number') state.meta.armor=0; if(typeof state.meta.jpboost!=='number') state.meta.jpboost=0; if(typeof state.limboIntroV2!=='boolean') state.limboIntroV2=false; if(typeof state.meta.respin!=='number') state.meta.respin=0; if(typeof state.meta.banktope!=='number') state.meta.banktope=0; if(!state.eq||typeof state.eq!=='object') state.eq={avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'}; if(typeof state.eq.nick!=='string') state.eq.nick='Jugador'; if(!state.life||typeof state.life!=='object') state.life={asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false}; if(typeof state.life.deaths!=='number') state.life.deaths=0; if(typeof state.life.bestGamble!=='number') state.life.bestGamble=0; if(typeof state.life.bestCombo!=='number') state.life.bestCombo=0; if(typeof state.life.got777!=='boolean') state.life.got777=false; if(typeof state.life.holyJackpot!=='boolean') state.life.holyJackpot=false; if(typeof state.life.spins!=='number') state.life.spins=0; if(typeof state.life.gotJackpot!=='boolean') state.life.gotJackpot=false; if(typeof state.life.boneHits!=='number') state.life.boneHits=0; if(typeof state.life.maxBoneLoss!=='number') state.life.maxBoneLoss=0; if(typeof state.life.survivedBigBone!=='boolean') state.life.survivedBigBone=false; if(typeof state.life.maxBank!=='number') state.life.maxBank=0; if(typeof state.life.bankFilled!=='boolean') state.life.bankFilled=false; if(typeof state.life.firstDeposit!=='boolean') state.life.firstDeposit=false; if(typeof state.life.gotInterest!=='boolean') state.life.gotInterest=false; if(typeof state.life.usedSpinBtn!=='boolean') state.life.usedSpinBtn=false; if(typeof state.life.usedLever!=='boolean') state.life.usedLever=false; if(!state.life.logros||typeof state.life.logros!=='object') state.life.logros={}; if(state.eq && state.eq.frame==='arcoiris') state.eq.frame='neon'; if(typeof state.musicTheme!=='string'||['suave','remix','densa','pibble'].indexOf(state.musicTheme)<0) state.musicTheme='suave'; if(!state.badges||typeof state.badges!=='object') state.badges={}; var _avok=['calico','tuxedo','blanco','negro','naranja','luckycat','mitimiti','alien','retro','sinfoto','highroller','raddkatt','diablitty','grisoscuro','crtty','blacknoir','dicekatt','cubo']; if(_avok.indexOf(state.eq.avatar)<0) state.eq.avatar='calico'; if(!state.daily||typeof state.daily!=='object') state.daily={last:0,day:0,streak:0};
     if(typeof state.peak!=='number') state.peak=state.credits||START;
     if(typeof state.runJackpots!=='number') state.runJackpots=0; if(typeof state.bet!=='number'||state.bet<MIN_BET) state.bet=MIN_BET;
     if(!Array.isArray(state.helpSeen)) state.helpSeen=[];
@@ -263,6 +265,46 @@
   }
 
 
+  function _dayNum(){ var d=new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/86400000); }
+  function dailyStatus(){
+    var D=state.daily||(state.daily={last:0,day:0,streak:0});
+    var today=_dayNum(), last=D.last||0, lastDay=D.day||0;
+    if(last>0 && today<=last) return {claimable:false, claimedToday:true, cycleDay:(lastDay||1), streak:D.streak||0};
+    var gap=last>0?(today-last):999, nextDay, streak;
+    if(last===0 || gap>1){ nextDay=1; streak=1; }
+    else { nextDay=(lastDay%7)+1; streak=(D.streak||0)+1; }
+    return {claimable:true, claimedToday:false, cycleDay:nextDay, streak:streak};
+  }
+  function claimDaily(){
+    var st=dailyStatus(); if(!st.claimable) return null;
+    var r=DAILY_REWARDS[st.cycleDay-1]||{c:0,e:0};
+    if(r.c) state.credits+=r.c;
+    if(r.e) state.meta.spirits=(state.meta.spirits||0)+r.e;
+    state.daily={last:_dayNum(), day:st.cycleDay, streak:st.streak};
+    saveState(); updateUI(); updateDailyIcon();
+    return r;
+  }
+  function dailyRewLabel(r){ var p=[]; if(r.c) p.push('💰 $'+fmt(r.c)); if(r.e) p.push('👻 '+r.e); return p.join('<br>')||'—'; }
+  function renderDaily(){
+    var body=document.getElementById('dailyBody'); if(!body) return;
+    var st=dailyStatus();
+    var h='<div class="daily-streak">🔥 Racha: <b>'+st.streak+(st.streak===1?' día':' días')+'</b></div>';
+    h+='<div class="daily-grid">';
+    for(var i=1;i<=7;i++){ var r=DAILY_REWARDS[i-1]||{c:0,e:0}, cls='locked', mark='🔒';
+      if(st.claimedToday){ if(i<=st.cycleDay){ cls='claimed'; mark='✓'; } }
+      else { if(i<st.cycleDay){ cls='claimed'; mark='✓'; } else if(i===st.cycleDay){ cls='today'; mark='🎁'; } }
+      h+='<div class="daily-day '+cls+(i===7?' big':'')+'"><div class="dd-lbl">'+(i===7?'★ Día 7':'Día '+i)+'</div><div class="dd-rew">'+dailyRewLabel(r)+'</div><div class="dd-mark">'+mark+'</div></div>';
+    }
+    h+='</div>';
+    if(st.claimable){ h+='<button class="daily-claim" id="dailyClaimBtn">🎁 Reclamar día '+st.cycleDay+'</button>'; }
+    else { var nx=(st.cycleDay%7)+1; h+='<div class="daily-done">✅ ¡Cobraste el día '+st.cycleDay+'! Volvé mañana para el día '+nx+' 🔥</div>'; }
+    body.innerHTML=h;
+    var cb=document.getElementById('dailyClaimBtn'); if(cb) cb.addEventListener('click', function(){ claimDaily(); renderDaily(); });
+  }
+  function openDaily(){ if(spinning) return; var m=document.getElementById('dailyModal'); if(!m) return; m.classList.add('open'); renderDaily(); }
+  function closeDaily(){ var m=document.getElementById('dailyModal'); if(m) m.classList.remove('open'); }
+  function dailyStreakNow(){ var D=state.daily||{}; var last=D.last||0; if(!last) return 0; var gap=_dayNum()-last; return (gap<=1)?(D.streak||0):0; }
+  function updateDailyIcon(){ var ic=document.getElementById('dailyIcon'); if(!ic) return; var n=dailyStreakNow(); ic.innerHTML='🔥'+(n>0?'<span class="dd-count">'+n+'</span>':''); if(dailyStatus().claimable) ic.classList.add('has-claim'); else ic.classList.remove('has-claim'); }
   function refreshAfterLoad(){
     applyPalette(state.palette); pfUpdateIcon();
     renderBetPresets(); renderPalette(); rebuildPool(); updateUI(); updateLimboBtn();
@@ -270,7 +312,7 @@
     syncSoundIcons(); renderHold(); updateSuperUI();
     if(_econReset){ _econReset=false; saveState(); setTimeout(function(){ setMsg('🔄 Progreso reiniciado por la nueva economía',false); }, 600); }
     if(!state.introSeen) showIntro();
-    checkLogros(true); _logrosReady=true;
+    checkLogros(true); _logrosReady=true; updateDailyIcon();
   }
 
   // ---- Firebase: cuentas reales + guardado en la nube (SDK cargado on-demand con import dinámico) ----
@@ -1193,6 +1235,10 @@
   document.getElementById('logrosClose').addEventListener('click', closeLogros);
   document.getElementById('logrosModal').addEventListener('click', function(e){ if(e.target===this) closeLogros(); });
   if(LOGROS_ON){ var _lgi=document.getElementById('logrosIcon'); if(_lgi){ _lgi.style.display=''; _lgi.addEventListener('click', openLogros); } }
+  document.getElementById('dailyClose').addEventListener('click', closeDaily);
+  document.getElementById('dailyModal').addEventListener('click', function(e){ if(e.target===this) closeDaily(); });
+  var _dyi=document.getElementById('dailyIcon'); if(_dyi){ _dyi.addEventListener('click', openDaily); }
+  updateDailyIcon();
   document.getElementById('feedClose').addEventListener('click', closeFeedback);
   document.getElementById('feedback').addEventListener('click', function(e){ if(e.target===this) closeFeedback(); });
   document.getElementById('votersClose').addEventListener('click', closeVoters);
