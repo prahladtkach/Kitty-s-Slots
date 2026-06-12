@@ -521,7 +521,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .modal-money .mm-debt{ color:var(--red); font-size:10px; }
 
 /* ===== MASCOTA · Mr.PIBBLE en el main ===== */
-.pet{ position:absolute; left:4px; bottom:200px; z-index:6; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+.pet{ position:fixed; left:4px; bottom:200px; z-index:6; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
 .pet-img{ width:74px; height:74px; object-fit:contain; image-rendering:pixelated; display:block; filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)); animation:petIdle 2.8s ease-in-out infinite; }
 .pet.poke .pet-img{ animation:petPoke .5s ease; }
 @keyframes petIdle{ 0%{ transform:translateY(0) scale(1,1) } 25%{ transform:translateY(-3px) scale(0.99,1.02) } 50%{ transform:translateY(-6px) scale(1,1) } 75%{ transform:translateY(-3px) scale(1.01,0.99) } 100%{ transform:translateY(0) scale(1,1) } }
