@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===== helpers =====
+    function signedIn(){ return request.auth != null; }
+    function isStaff(){ return signedIn() && request.auth.uid in [
+      '6IXpxyjLvkTBA0Wu8VWnvGiVH1m2',   // LwkPurrfect
+      'npEGnBsHNAMgSNEznHg1DCog6vt2'    // Mishiiii
+    ]; }
+    // ¿la sugerencia sigue abierta? (cerrada si fue aprobada, rechazada o implementada)
+    function suggOpen(id){
+      return !(get(/databases/$(database)/documents/suggestions/$(id)).data.status in ['approved', 'rejected', 'done']);
+    }
+    // ===== tope de cordura del ranking =====
+    // Rechaza valores imposibles en el leaderboard (ej: que alguien ponga bestWorth=1e15 por consola).
+    // OJO: NO verifica que el puntaje sea LEGÍTIMO — eso necesita Cloud Functions. Esto sube la barrera, no es a prueba de balas.
+    function lbSane(d){
+      return d.asc is number       && d.asc >= 0       && d.asc <= 10000000
+          && d.runs is number      && d.runs >= 0      && d.runs <= 10000000
+          && d.ecto is number      && d.ecto >= 0      && d.ecto <= 1000000000000
+          && d.bestJP is number    && d.bestJP >= 0    && d.bestJP <= 1000000000000000
+          && d.bestWorth is number && d.bestWorth >= 0 && d.bestWorth <= 1000000000   // tope duro: el Techo de plata máximo es 1e9
+          && d.score is number     && d.score >= 0     && d.score <= 1100000000000
+          // Cota SUPERIOR del score SIN sqrt ni división. El motor de reglas RECHAZA `math.sqrt(...)/10`: el
+          // parser toma el '/' como inicio de ruta (error real en consola: "Missing 'match' keyword before path"
+          // en '/10.0'). El score real = ecto + floor(sqrt(worth)/10) + floor(sqrt(jp)/10) es SIEMPRE <=
+          // ecto+worth+jp, así que esta cota nunca rechaza a un legítimo; combinada con los topes por campo de
+          // arriba (bestWorth<=1e9, etc.) y el tope absoluto score<=1.1e12, igual frena el inflado grosero.
+          && d.score <= d.ecto + d.bestWorth + d.bestJP + 2
+          && ( !('nick' in d) || (d.nick is string && d.nick.size() <= 60) );
+    }
+    // ===== guardado en la nube =====
+    match /saves/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+    // ===== ranking global =====
+    match /leaderboard/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == uid && lbSane(request.resource.data);
+      // staff: puede moderar sin tope (recalcular, ocultar, etc.).  jugador: solo su propia entrada y con valores sanos.
+      allow update: if signedIn() && ( isStaff() || (request.auth.uid == uid && lbSane(request.resource.data)) );
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+    // ===== racha diaria a prueba de reloj (NUEVO · [CC]) =====
+    // MODELO: cooldown rodante de 20h (NO "día de calendario"). Guarda el último reclamo como serverTimestamp
+    // y obliga a que pasen 20h REALES (request.time = hora del servidor) antes del próximo. Adelantar el reloj
+    // del dispositivo no sirve: la regla mide con la hora de Firebase.
+    //   · 1er reclamo  -> create (no hay timestamp previo que comparar)
+    //   · siguientes   -> update, exige request.time >= last + 20h
+    //   · delete deshabilitado: no se puede "resetear" borrando el doc para volver al create.
+    // Por qué cooldown y no calendario: con un piso de 20h, el modelo "una vez por día de calendario" rechazaría
+    // casos legítimos (reclamar 23:00 y de nuevo 08:00 del día siguiente = 9h). El cooldown evita ese falso
+    // rechazo y además es agnóstico a la zona horaria. CONTRATO: el cliente calcula "reclamable" con el mismo
+    // umbral de 20h sobre el timestamp del servidor.
+    // NOTA: el monto del premio se aplica en el cliente (estado local, no validable sin Cloud Functions).
+    // Lo que esta regla SÍ cierra es el farmeo fácil cambiando la fecha del dispositivo.
+    function dailySane(d){
+      // is number (no is int): el SDK web puede guardar enteros de JS como double; con is int la regla
+      // rechazaría reclamos legítimos. Consistente con lbSane. El rango ya acota valores absurdos.
+      return d.last == request.time                // obliga a usar serverTimestamp()
+          && d.day is number    && d.day >= 1    && d.day <= 7
+          && d.streak is number && d.streak >= 1 && d.streak <= 100000;
+    }
+    match /dailyClaims/{uid} {
+      allow read:   if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid && dailySane(request.resource.data);
+      allow update: if signedIn() && request.auth.uid == uid && dailySane(request.resource.data)
+                       && request.time >= resource.data.last + duration.value(20, 'h');
+      allow delete: if false;
+    }
+    // ===== contador de IDs de sugerencias =====
+    match /counters/{doc} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+    // ===== sugerencias (tablón público) =====
+    match /suggestions/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 280
+        && request.resource.data.status == 'pending'
+        && request.resource.data.up == 0
+        && request.resource.data.down == 0;
+      // staff: cambia estado / borra.  jugadores: SOLO votan (tocan 'voters') y solo si no está resuelta.
+      allow update: if isStaff()
+        || ( signedIn()
+             && !(resource.data.status in ['approved', 'rejected', 'done'])
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voters']) );
+      allow delete: if isStaff();
+      // ===== debate (comentarios de cada sugerencia) =====
+      match /comments/{cid} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 300
+          && suggOpen(id);                  // debate cerrado si fue resuelta
+        allow update: if false;
+        allow delete: if isStaff()
+          || (signedIn() && resource.data.uid == request.auth.uid);
+      }
+    }
+    // ===== reportes de bug (privado, solo staff lee) =====
+    match /bugs/{id} {
+      allow read: if isStaff();
+      allow create: if signedIn()
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 600;
+      allow update, delete: if isStaff();
+    }
+  }
+}

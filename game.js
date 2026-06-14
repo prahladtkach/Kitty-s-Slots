@@ -35,12 +35,13 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="3.5";
+  const VERSION="3.7";
   const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const PETS_UNLOCK_ALL=false; // PREVIEW manual: deja TODAS las mascotas desbloqueadas. (El staff ya las ve todas via hasMedal.)
   // Racha diaria: ciclo de 7 días, premio grande al día 7. c=créditos, e=ectofichas. AJUSTABLE (pasalo por Monte Carlo).
   const DAILY_REWARDS=[{c:2000,e:0},{c:5000,e:0},{c:0,e:1},{c:12000,e:0},{c:25000,e:0},{c:0,e:2},{c:50000,e:3}];
+  const DAILY_COOLDOWN_MS=20*3600*1000, DAILY_GRACE_MS=48*3600*1000; // racha por cooldown: reclamable a las 20h, racha se corta a las 48h (ver CONTRATO-racha.md)
   // === MASCOTAS (compañeros con buff+contra; equipás una sola a la vez). Números AJUSTABLES — pasalos por Monte Carlo. ===
   // ===== PETS — números balanceados con Monte Carlo (ver mc_pets.py). =====
   // 🦖 Dino (tanque/segura): menos espinas y menos daño => te fundís mucho menos, PERO techo de premio bajo (jackpot y combos rinden menos).
@@ -105,7 +106,8 @@
     pibblefru:{id:'pibblefru',img:'pibblefrutilla.png',icon:'🍓',name:'PIBBLE Frutilla',desc:'El PIBBLE ahorrador: la caja fuerte rinde mucho más interés. A cambio, ganás un poco menos en la máquina.',buff:'🏦 Interés del banco +50%',contra:'💸 Ganancias -7%',mods:{interest:PET_PIBFRU_INT,win:PET_PIBFRU_WIN},lines:['Frutilla :3','Nom nom','Im frutilla','Yum','Zzz'],obtain:{via:'logro',logro:'asc50'}}
   };
   var PET_ORDER=['dino','wilson','gaster','milson','pibble','pibblefru'];
-  function activePet(){ var a=state.pets&&state.pets.active; if(a&&a!=='pibble'&&!hasMedal('staff')) return null; return (a&&PETS[a]&&petOwned(a))?PETS[a]:null; }
+  function petsUnlocked(){ return PETS_UNLOCK_ALL || hasMedal('staff') || (((state.meta||{}).kennel||0)>=1); }
+  function activePet(){ var a=state.pets&&state.pets.active; if(a&&a!=='pibble'&&!petsUnlocked()) return null; return (a&&PETS[a]&&petOwned(a))?PETS[a]:null; }
   function petMod(k){ var p=activePet(); return (p&&p.mods&&typeof p.mods[k]==='number')?p.mods[k]:1; }
   function petOwned(id){ if((PETS_UNLOCK_ALL || hasMedal('staff')) && PETS[id]) return true; return !!(state.pets&&state.pets.owned&&state.pets.owned[id]); }
   function winMult(){ return (1 + 0.05*state.upg.win + 0.05*((state.meta&&state.meta.luck)||0)) * petMod('win'); }
@@ -308,21 +310,34 @@
   function _dayNum(){ var d=new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/86400000); }
   function dailyStatus(){
     var D=state.daily||(state.daily={last:0,day:0,streak:0});
-    var today=_dayNum(), last=D.last||0, lastDay=D.day||0;
-    if(last>0 && today<=last) return {claimable:false, claimedToday:true, cycleDay:(lastDay||1), streak:D.streak||0};
-    var gap=last>0?(today-last):999, nextDay, streak;
-    if(last===0 || gap>1){ nextDay=1; streak=1; }
+    var now=Date.now(), last=D.last||0, lastDay=D.day||0;
+    var elapsed = last>0 ? (now-last) : Infinity;
+    if(last>0 && elapsed < DAILY_COOLDOWN_MS) return {claimable:false, claimedToday:true, cycleDay:(lastDay||1), streak:D.streak||0, nextInMs:(last+DAILY_COOLDOWN_MS)-now};
+    var nextDay, streak;
+    if(last===0 || elapsed > DAILY_GRACE_MS){ nextDay=1; streak=1; }
     else { nextDay=(lastDay%7)+1; streak=(D.streak||0)+1; }
     return {claimable:true, claimedToday:false, cycleDay:nextDay, streak:streak};
   }
-  function claimDaily(){
+  async function claimDaily(){
     var st=dailyStatus(); if(!st.claimable) return null;
+    if(fbReady && fbUser){
+      try{ await _fbFsMod.setDoc(_fbFsMod.doc(fbDB,'dailyClaims',fbUser.uid), {last:_fbFsMod.serverTimestamp(), day:st.cycleDay, streak:st.streak}, {merge:true}); }
+      catch(e){ setMsg('Todavía no pasó el tiempo (se mide con la hora del servidor) ⏳',false); await _dailyReconcile(); return null; }
+    }
     var r=DAILY_REWARDS[st.cycleDay-1]||{c:0,e:0};
     if(r.c) state.credits+=r.c;
     if(r.e) state.meta.spirits=(state.meta.spirits||0)+r.e;
-    state.daily={last:_dayNum(), day:st.cycleDay, streak:st.streak};
+    state.daily={last:Date.now(), day:st.cycleDay, streak:st.streak};
     saveState(); updateUI(); updateDailyIcon();
+    if(fbReady && fbUser) _dailyReconcile();
     return r;
+  }
+  async function _dailyReconcile(){
+    if(!fbReady || !fbUser) return;
+    try{
+      var snap=await _fbFsMod.getDoc(_fbFsMod.doc(fbDB,'dailyClaims',fbUser.uid));
+      if(snap.exists()){ var d=snap.data()||{}; var ms=(d.last&&d.last.toMillis)?d.last.toMillis():0; if(ms>0){ if(!state.daily) state.daily={last:0,day:0,streak:0}; state.daily.last=ms; if(typeof d.day==='number') state.daily.day=d.day; if(typeof d.streak==='number') state.daily.streak=d.streak; saveStateLocalOnly(); updateDailyIcon(); var dm=document.getElementById('dailyModal'); if(dm&&dm.classList.contains('open')) renderDaily(); } }
+    }catch(e){}
   }
   function dailyRewLabel(r){ var p=[]; if(r.c) p.push('💰 $'+fmt(r.c)); if(r.e) p.push('👻 '+r.e); return p.join('<br>')||'—'; }
   function renderDaily(){
@@ -337,13 +352,13 @@
     }
     h+='</div>';
     if(st.claimable){ h+='<button class="daily-claim" id="dailyClaimBtn">🎁 Reclamar día '+st.cycleDay+'</button>'; }
-    else { var nx=(st.cycleDay%7)+1; h+='<div class="daily-done">✅ ¡Cobraste el día '+st.cycleDay+'! Volvé mañana para el día '+nx+' 🔥</div>'; }
+    else { var nx=(st.cycleDay%7)+1; var _nm=st.nextInMs||0, _nh=Math.floor(_nm/3600000), _nmin=Math.max(0,Math.floor((_nm%3600000)/60000)); h+='<div class="daily-done">✅ ¡Cobraste el día '+st.cycleDay+'! Próximo premio (día '+nx+') en <b>'+_nh+'h '+_nmin+'m</b> 🔥</div>'; }
     body.innerHTML=h;
-    var cb=document.getElementById('dailyClaimBtn'); if(cb) cb.addEventListener('click', function(){ claimDaily(); renderDaily(); });
+    var cb=document.getElementById('dailyClaimBtn'); if(cb) cb.addEventListener('click', function(){ this.disabled=true; Promise.resolve(claimDaily()).then(function(){ renderDaily(); }); });
   }
   function openDaily(){ if(spinning) return; var m=document.getElementById('dailyModal'); if(!m) return; m.classList.add('open'); renderDaily(); }
   function closeDaily(){ var m=document.getElementById('dailyModal'); if(m) m.classList.remove('open'); }
-  function dailyStreakNow(){ var D=state.daily||{}; var last=D.last||0; if(!last) return 0; var gap=_dayNum()-last; return (gap<=1)?(D.streak||0):0; }
+  function dailyStreakNow(){ var D=state.daily||{}; var last=D.last||0; if(!last) return 0; return ((Date.now()-last)<=DAILY_GRACE_MS)?(D.streak||0):0; }
   function updateDailyIcon(){ var ic=document.getElementById('dailyIcon'); if(!ic) return; var n=dailyStreakNow(); ic.innerHTML='🔥'+(n>0?'<span class="dd-count">'+n+'</span>':''); if(dailyStatus().claimable) ic.classList.add('has-claim'); else ic.classList.remove('has-claim'); }
   var _dailyAutoShown=false;
   function maybeAutoDaily(){ if(_dailyAutoShown) return; if(!dailyStatus().claimable) return; if(document.querySelector('.overlay.open')) return; _dailyAutoShown=true; openDaily(); }
@@ -354,8 +369,8 @@
   function syncPetUnlocks(silent){ if(!state.pets) return; if(!state.pets.owned) state.pets.owned={}; var L=state.life||{}; var got=[]; for(var i=0;i<PET_ORDER.length;i++){ var p=PETS[PET_ORDER[i]]; if(p.obtain.via==='logro' && !state.pets.owned[p.id] && L.logros && L.logros[p.obtain.logro]){ state.pets.owned[p.id]=true; got.push(p); } } if(got.length){ saveState(); updatePetsIcon(); if(!silent){ for(var j=0;j<got.length;j++) showPetToast(got[j]); var pm=document.getElementById('petsModal'); if(pm&&pm.classList.contains('open')) renderPets(); } } }
   function buyPet(id){ var p=PETS[id]; if(!p||p.obtain.via!=='ecto') return; if(petOwned(id)) return; var cost=p.obtain.cost||0; if((state.meta.spirits||0)<cost) return; state.meta.spirits-=cost; if(!state.pets.owned) state.pets.owned={}; state.pets.owned[id]=true; saveState(); showPetToast(p); renderPets(); updatePetsIcon(); }
   function equipPet(id){ if(!petOwned(id)) return; if(!state.pets) state.pets={owned:{},active:null}; state.pets.active=(state.pets.active===id)?null:id; rebuildPool(); updateUI(); renderPets(); updatePetsIcon(); saveState(); }
-  function updatePetsIcon(){ var ic=document.getElementById('petsIcon'); if(!ic) return; if(!hasMedal('staff')){ ic.style.display='none'; return; } ic.style.display=''; if(activePet()) ic.classList.add('has-pet'); else ic.classList.remove('has-pet'); }
-  function openPets(){ if(!hasMedal('staff')) return; if(spinning) return; var m=document.getElementById('petsModal'); if(!m) return; m.classList.add('open'); renderPets(); }
+  function updatePetsIcon(){ var ic=document.getElementById('petsIcon'); if(!ic) return; if(!petsUnlocked()){ ic.style.display='none'; return; } ic.style.display=''; if(activePet()) ic.classList.add('has-pet'); else ic.classList.remove('has-pet'); }
+  function openPets(){ if(!petsUnlocked()) return; if(spinning) return; var m=document.getElementById('petsModal'); if(!m) return; m.classList.add('open'); renderPets(); }
   function closePets(){ var m=document.getElementById('petsModal'); if(m) m.classList.remove('open'); }
   function renderPets(){ var el=document.getElementById('petsBody'); if(!el) return; var h='<div class="pets-ect">👻 Ectofichas: <b>'+(state.meta.spirits||0)+'</b></div><div class="pets-hint">Equipás <b>una sola</b> a la vez. Cada una da un beneficio y una contra.</div>'; var act=state.pets&&state.pets.active; for(var i=0;i<PET_ORDER.length;i++){ var p=PETS[PET_ORDER[i]]; var owned=petOwned(p.id), isAct=(act===p.id); var cls='pet-card'+(isAct?' active':'')+(owned?'':' locked'); h+='<div class="'+cls+'"><div class="pet-ico">'+petIcoHTML(p)+'</div><div class="pet-info"><div class="pet-name">'+_rkEsc(p.name)+(isAct?' <span class="pet-on">EQUIPADA</span>':'')+'</div><div class="pet-desc">'+_rkEsc(p.desc)+'</div>'+(p.cosmetic?'<div class="pet-fx"><span class="pet-cosmetic">🐽 Cosmético · sin efecto</span></div>':'<div class="pet-fx"><span class="pet-buff">'+p.buff+'</span><span class="pet-contra">'+p.contra+'</span></div>')+'</div><div class="pet-act">'; if(owned){ h+='<button class="pet-btn'+(isAct?' off':'')+'" data-eq="'+p.id+'">'+(isAct?'Quitar':'Equipar')+'</button>'; } else if(p.obtain.via==='ecto'){ var cost=p.obtain.cost||0, can=(state.meta.spirits||0)>=cost; h+='<button class="pet-btn buy" data-buy="'+p.id+'"'+(can?'':' disabled')+'>'+cost+' 👻</button>'; } else if(p.obtain.via==='code'){ h+='<div class="pet-lock">🔒 Código<br>secreto 🤫</div>'; } else { var lg=null; for(var z=0;z<LOGROS.length;z++){ if(LOGROS[z].id===p.obtain.logro){ lg=LOGROS[z]; break; } } h+='<div class="pet-lock">🔒 Logro:<br><b>'+(lg?_rkEsc(lg.name):p.obtain.logro)+'</b></div>'; } h+='</div></div>'; } el.innerHTML=h; var ebs=el.querySelectorAll('[data-eq]'); for(var a=0;a<ebs.length;a++){ ebs[a].addEventListener('click', function(){ equipPet(this.getAttribute('data-eq')); }); } var bbs=el.querySelectorAll('[data-buy]'); for(var b=0;b<bbs.length;b++){ bbs[b].addEventListener('click', function(){ buyPet(this.getAttribute('data-buy')); }); } }
   function refreshAfterLoad(){
@@ -436,6 +451,7 @@
       } else {
         await cloudSaveNow(); // primera vez: subimos el progreso local
       }
+      await _dailyReconcile();
     }catch(e){}
   }
   async function cloudSaveNow(){
@@ -794,7 +810,7 @@
   function advancePastLogin(){ if(_introStep!==0) return; setCatLogin(false); _introStep=1; _introText=TXT_INTRO; if(_catWaiting) return; var cont=document.getElementById('catOk'); if(cont) cont.textContent='▶ ¡A JUGAR!'; typeCat(TXT_INTRO); }
   function showIntro(){ var m=document.getElementById('catModal'); if(!m) return; unlockHelp('intro'); unlockHelp('cuenta'); if(fbUser){ _introStep=1; _introText=TXT_INTRO; } else { _introStep=0; _introText=TXT_LOGIN; } setCatLogin(false); _catWaiting=true; var el=document.getElementById('catSpeech'); if(el) el.textContent=''; var cont=document.getElementById('catOk'); if(cont){ cont.textContent='▶ TOCÁ PARA EMPEZAR'; cont.style.visibility='visible'; } m.classList.add('open'); }
   function unlockBank(reason){ if(state.bankUnlocked) return; state.bankUnlocked=true; var b=document.getElementById('bankBtn'); if(b){ b.disabled=false; b.textContent='🏦 BANCO'; } unlockHelp('bank'); setMsg('🏦 ¡BANCO DESBLOQUEADO!',false); showCat(reason==='rich'?TXT_BANK_RICH:TXT_BANK_BROKE); saveState(); }
-  var META={ armor:{name:'🛡️ Protección anti-espinas', desc:'Las espinas pegan menos fuerte (compensa el daño que sube por cada renacimiento)', max:100, cost:function(l){return Math.round(25+l*8+l*l*0.6);}}, respin:{name:'🔄 Re-giro', desc:'Si salen espinas, probabilidad de volver a girar gratis (+8% por nivel)', max:5, cost:function(l){return Math.round(60+l*40);}, req:{k:'armor',n:2}}, chest:{name:'🪙 Cofre inicial', desc:'Empezás con +$500 por nivel', max:20, cost:function(l){return Math.round(25+l*18);}}, luck:{name:'✨ Patita de la suerte', desc:'+5% a TODO lo que ganás, para siempre', max:16, cost:function(l){return Math.round(30+l*22);}, req:{k:'armor',n:1}}, cap:{name:'🏔️ Techo de plata', desc:'Sube el tope de plata de la partida', max:CAP_TIERS.length-1, cost:function(l){return Math.round(220*Math.pow(1.55,l));}, req:{k:'luck',n:1}}, banktope:{name:'🔒 Tope del banco', desc:'Subí cuánta plata podés guardar a salvo en la caja fuerte', max:BANK_TIERS.length-1, cost:function(l){return Math.round(130*Math.pow(1.7,l));}, req:{k:'chest',n:1}}, jpboost:{name:'🎰 Bote mayor', desc:'Sube el multiplicador del bote (+20 por nivel)', max:16, cost:function(l){return Math.round(45+l*34);}, req:{k:'luck',n:1}}, credit:{name:'🏦 Crédito inicial', desc:'Arrancás con más préstamos disponibles', max:5, cost:function(l){return Math.round(60+l*50);}, req:{k:'chest',n:1}}, ninevidas:{name:'👻 Nueve vidas', desc:'1 vez por partida: chance de zafar de la bancarrota', max:5, cost:function(l){return Math.round(150*Math.pow(1.65,l));}, req:{k:'armor',n:3}}, ectoboost:{name:'👻 Ectofichas+', desc:'+3% ectofichas al terminar, por nivel', max:10, cost:function(l){return Math.round(45+l*36);}, req:{k:'luck',n:2}}, bankopen:{name:'🏦 Banco desbloqueado', desc:'Arrancás con el panel del banco abierto', max:1, cost:function(l){return 500;}}, vaultopen:{name:'🔓 Caja fuerte lista', desc:'Arrancás con la caja fuerte ya comprada', max:1, cost:function(l){return 1200;}, req:{k:'bankopen',n:1}}, banker:{name:'💰 Banquero experto', desc:'+20% a la tasa del interés por nivel', max:6, cost:function(l){return Math.round(110*Math.pow(1.6,l));}, req:{k:'vaultopen',n:1}}, premiumvault:{name:'🏦 Caja fuerte premium', desc:'El interés ocurre más seguido (-3 giros/nivel)', max:4, cost:function(l){return Math.round(160*Math.pow(1.7,l));}, req:{k:'banker',n:2}}, regular:{name:'🛒 Cliente regular', desc:'Sube un poco la chance de mejores descuentos y acorta la espera de la próxima rebaja', max:6, cost:function(l){return Math.round(80*Math.pow(1.55,l));}, req:{k:'chest',n:1}} };
+  var META={ armor:{name:'🛡️ Protección anti-espinas', desc:'Las espinas pegan menos fuerte (compensa el daño que sube por cada renacimiento)', max:100, cost:function(l){return Math.round(25+l*8+l*l*0.6);}}, respin:{name:'🔄 Re-giro', desc:'Si salen espinas, probabilidad de volver a girar gratis (+8% por nivel)', max:5, cost:function(l){return Math.round(60+l*40);}, req:{k:'armor',n:2}}, chest:{name:'🪙 Cofre inicial', desc:'Empezás con +$500 por nivel', max:20, cost:function(l){return Math.round(25+l*18);}}, luck:{name:'✨ Patita de la suerte', desc:'+5% a TODO lo que ganás, para siempre', max:16, cost:function(l){return Math.round(30+l*22);}, req:{k:'armor',n:1}}, cap:{name:'🏔️ Techo de plata', desc:'Sube el tope de plata de la partida', max:CAP_TIERS.length-1, cost:function(l){return Math.round(220*Math.pow(1.55,l));}, req:{k:'luck',n:1}}, banktope:{name:'🔒 Tope del banco', desc:'Subí cuánta plata podés guardar a salvo en la caja fuerte', max:BANK_TIERS.length-1, cost:function(l){return Math.round(130*Math.pow(1.7,l));}, req:{k:'chest',n:1}}, jpboost:{name:'🎰 Bote mayor', desc:'Sube el multiplicador del bote (+20 por nivel)', max:16, cost:function(l){return Math.round(45+l*34);}, req:{k:'luck',n:1}}, credit:{name:'🏦 Crédito inicial', desc:'Arrancás con más préstamos disponibles', max:5, cost:function(l){return Math.round(60+l*50);}, req:{k:'chest',n:1}}, ninevidas:{name:'👻 Nueve vidas', desc:'1 vez por partida: chance de zafar de la bancarrota', max:5, cost:function(l){return Math.round(150*Math.pow(1.65,l));}, req:{k:'armor',n:3}}, ectoboost:{name:'👻 Ectofichas+', desc:'+3% ectofichas al terminar, por nivel', max:10, cost:function(l){return Math.round(45+l*36);}, req:{k:'luck',n:2}}, bankopen:{name:'🏦 Banco desbloqueado', desc:'Arrancás con el panel del banco abierto', max:1, cost:function(l){return 500;}}, vaultopen:{name:'🔓 Caja fuerte lista', desc:'Arrancás con la caja fuerte ya comprada', max:1, cost:function(l){return 1200;}, req:{k:'bankopen',n:1}}, banker:{name:'💰 Banquero experto', desc:'+20% a la tasa del interés por nivel', max:6, cost:function(l){return Math.round(110*Math.pow(1.6,l));}, req:{k:'vaultopen',n:1}}, premiumvault:{name:'🏦 Caja fuerte premium', desc:'El interés ocurre más seguido (-3 giros/nivel)', max:4, cost:function(l){return Math.round(160*Math.pow(1.7,l));}, req:{k:'banker',n:2}}, regular:{name:'🛒 Cliente regular', desc:'Sube un poco la chance de mejores descuentos y acorta la espera de la próxima rebaja', max:6, cost:function(l){return Math.round(80*Math.pow(1.55,l));}, req:{k:'chest',n:1}}, kennel:{name:'🏠 Refugio', desc:'Desbloquea las mascotas: podés equipar una y conseguir las demás (por logros, ectofichas o códigos).', max:1, cost:function(l){return 800;}, req:{k:'ectoboost',n:1}} };
   var _lastEarned=0, _limboMode='death', _capMsgShown=false, _limboTab='resumen', _shopTab='mejoras';
   function jpMult(){ return JP_BASE_MULT + ((state.meta&&state.meta.jpboost)||0)*20; }
   function capValue(){ return CAP_TIERS[Math.min(state.meta.cap||0, CAP_TIERS.length-1)]; }
@@ -965,9 +981,9 @@
   function tryNineLives(){ var lv=state.meta.ninevidas||0; if(lv<1 || _lifeUsed) return false; _lifeUsed=true; if(Math.random() < NINE_CHANCE[Math.min(lv,3)]){ state.credits=Math.max(state.credits,500); updateUI(); saveState(); setMsg('🐱 ¡NUEVE VIDAS! Zafaste de la bancarrota 💚 +$500','big'); if(typeof celebrate==='function') celebrate(false); return true; } return false; }
   function gameOver(){ if(_broke) return; if(document.getElementById('limbo').classList.contains('open')) return; state.limboUnlocked=true; var earned=limboEarn(state.peak||0); state.meta.spirits+=earned; state.life.asc=(state.life.asc||0)+1; state.life.ecto=(state.life.ecto||0)+earned; state.runStartWorth=(state.credits+state.bank-state.debt); state.runJackpots=0; _lastEarned=earned; _limboMode='death'; state.life.deaths=(state.life.deaths||0)+1; updateLimboBtn(); if(_logrosReady) checkLogros(); saveState(); enterBankruptcy(); }
   // ===== Árbol del Limbo (4 ramas, paneable + zoom) =====
-  var META_TREE={ armor:[90,40], respin:[20,200], ninevidas:[160,200], luck:[370,40], jpboost:[310,200], cap:[440,200], ectoboost:[375,360], chest:[670,40], credit:[610,200], banktope:[740,200], regular:[675,360], bankopen:[920,40], vaultopen:[920,200], banker:[920,360], premiumvault:[920,520] };
-  var TREE_BRANCH={ armor:'#ff5b79', respin:'#ff5b79', ninevidas:'#ff5b79', luck:'#39e0e6', jpboost:'#39e0e6', cap:'#39e0e6', ectoboost:'#39e0e6', chest:'#ffd23f', credit:'#ffd23f', banktope:'#ffd23f', regular:'#ffd23f', bankopen:'#ff3d8b', vaultopen:'#ff3d8b', banker:'#ff3d8b', premiumvault:'#ff3d8b' };
-  var TREE_LBL={ armor:'Protección', respin:'Re-giro', ninevidas:'Nueve vidas', luck:'Patita', jpboost:'Bote mayor', cap:'Techo', ectoboost:'Ectofichas+', chest:'Cofre', credit:'Crédito', banktope:'Tope banco', regular:'Cliente regular', bankopen:'Banco abierto', vaultopen:'Caja lista', banker:'Banquero', premiumvault:'Caja premium' };
+  var META_TREE={ armor:[90,40], respin:[20,200], ninevidas:[160,200], luck:[370,40], jpboost:[310,200], cap:[440,200], ectoboost:[375,360], chest:[670,40], credit:[610,200], banktope:[740,200], regular:[675,360], bankopen:[920,40], vaultopen:[920,200], banker:[920,360], premiumvault:[920,520], kennel:[375,520] };
+  var TREE_BRANCH={ armor:'#ff5b79', respin:'#ff5b79', ninevidas:'#ff5b79', luck:'#39e0e6', jpboost:'#39e0e6', cap:'#39e0e6', ectoboost:'#39e0e6', chest:'#ffd23f', credit:'#ffd23f', banktope:'#ffd23f', regular:'#ffd23f', bankopen:'#ff3d8b', vaultopen:'#ff3d8b', banker:'#ff3d8b', premiumvault:'#ff3d8b', kennel:'#a96bff' };
+  var TREE_LBL={ armor:'Protección', respin:'Re-giro', ninevidas:'Nueve vidas', luck:'Patita', jpboost:'Bote mayor', cap:'Techo', ectoboost:'Ectofichas+', chest:'Cofre', credit:'Crédito', banktope:'Tope banco', regular:'Cliente regular', bankopen:'Banco abierto', vaultopen:'Caja lista', banker:'Banquero', premiumvault:'Caja premium', kennel:'Refugio' };
   var TREE_W=116, TREE_H=86, _treeX=null, _treeY=null, _treeZoom=null;
   function metaTreeHTML(){
     var lines='';
@@ -1004,7 +1020,7 @@
   function renderLimbo(){ var tabsEl=document.getElementById('limboTabs'), el=document.getElementById('limboBody'); if(!el) return; var dur=fmtDur(Date.now()-(state.runStart||Date.now())), _pe=limboEarn(); if(tabsEl){ tabsEl.innerHTML='<button class="limbo-tab'+(_limboTab==="mejoras"?"":" on")+'" data-tab="resumen">RESUMEN</button><button class="limbo-tab'+(_limboTab==="mejoras"?" on":"")+'" data-tab="mejoras">MEJORAS</button>'; var tb=tabsEl.querySelectorAll('.limbo-tab'); for(var j=0;j<tb.length;j++){ tb[j].addEventListener('click', function(){ _limboTab=this.getAttribute('data-tab'); renderLimbo(); }); } } var h='<div class="limbo-ect">👻 Ectofichas: <b>'+state.meta.spirits+'</b></div>'; if(_limboTab!=='mejoras'){ if(_limboMode==='death'){ h+='<div class="limbo-earn">¡Partida terminada! Te llevás <b>+'+_lastEarned+' 👻</b></div>'; } h+='<div class="limbo-stat-row"><div class="limbo-chip">⏱️ <b>'+dur+'</b></div><div class="limbo-chip">💰 <b>$'+fmt((_limboMode==='death')?(state.peak||0):Math.max(0,state.credits+state.bank-state.debt))+'</b></div><div class="limbo-chip">🎰 <b>'+(state.runJackpots||0)+'</b></div><div class="limbo-chip">🏔️ <b>'+fmtCap(capValue())+'</b></div></div>'; } else { h+=metaTreeHTML(); } if(_limboMode==='hub'){ h+='<div class="limbo-foot"><button class="limbo-asc" id="limboAscend"'+(_pe<=0?' disabled':'')+'>'+(_pe<=0?'✨ ASCENDER<br>sin fichas aún':('✨ ASCENDER<br>+'+_pe+' 👻'))+'</button><button class="limbo-seg" id="limboSeguir">▶ SEGUIR<br>JUGANDO</button></div>'; } else { h+='<div class="limbo-foot"><button class="limbo-asc" id="limboGo">🔄 NUEVA PARTIDA</button></div>'; } el.innerHTML=h; var bs=el.querySelectorAll('.lm-buy'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ buyMeta(this.getAttribute('data-k')); }); } if(_limboTab==='mejoras') setupTree(); if(_limboMode==='hub'){ var a=document.getElementById('limboAscend'); if(a) a.addEventListener('click', ascend); var sg=document.getElementById('limboSeguir'); if(sg) sg.addEventListener('click', closeLimbo); } else { var g=document.getElementById('limboGo'); if(g) g.addEventListener('click', startRun); } }
   function metaUnlocked(k){ var r=META[k].req; return !r || (state.meta[r.k]||0) >= r.n; }
   function clienteRegularLvl(){ return state.meta.regular||0; }
-  function buyMeta(k){ if(!metaUnlocked(k)) return; var u=META[k], lv=state.meta[k]||0; if(lv>=u.max) return; var cost=u.cost(lv); if(state.meta.spirits<cost) return; state.meta.spirits-=cost; state.meta[k]=lv+1; renderLimbo(); saveState(); }
+  function buyMeta(k){ if(!metaUnlocked(k)) return; var u=META[k], lv=state.meta[k]||0; if(lv>=u.max) return; var cost=u.cost(lv); if(state.meta.spirits<cost) return; state.meta.spirits-=cost; state.meta[k]=lv+1; if(k==='kennel') updatePetsIcon(); renderLimbo(); saveState(); }
   function startRun(){ exitBankruptcy(); state.life.runs=(state.life.runs||0)+1; state.credits=START+(state.meta.chest||0)*500; state.jackpot=JP_BASE; state.bet=MIN_BET; state.debt=0; state.bank=0; state.vault=false; state.creditLevel=Math.min((state.meta.credit||0), CREDIT_LIMITS.length-1); state.interestLevel=0; state.intSpins=0; state.upg={win:0,combo:0,cat:0,bone:0}; state.abilities={hold:false,gamble:false}; state.holdLevel=0; state.superLevel=0; state.skillsUnlocked=false; state.bankUnlocked=false; if(state.meta.bankopen) state.bankUnlocked=true; if(state.meta.vaultopen){ state.vault=true; state.bankUnlocked=true; } _lifeUsed=false; state.runStartWorth=state.credits; state.peak=state.credits; state.runJackpots=0; combo=0; luckyUntil=0; superReadyAt=0; document.body.classList.remove('supersuerte'); rebuildPool(); renderBetPresets(); document.getElementById('betInput').value=25; updateUI(); setCombo(); renderPaytable(); renderShop(); renderHold(); updateSuperUI(); document.getElementById('limbo').classList.remove('open'); catMode=false; clearInterval(_cornerTypeT); clearTimeout(_cornerTimer); var _cb2=document.getElementById('cornerCatBubble'); if(_cb2) _cb2.classList.remove('show'); state.runStart=Date.now(); _capMsgShown=false; _tripleStreak=0; setMsg('NUEVA PARTIDA',false); saveState(); }
   function checkBroke(){ if(state.credits<MIN_BET && !state.bankUnlocked) unlockBank(); if(state.credits<MIN_BET && state.bank<1 && !loanAvailable()){ if(!tryNineLives()) gameOver(); } }
   function buyUpg(k){ const u=UPG[k], lv=state.upg[k]; if(lv>=u.max||state.debt>0) return; const cost=discountedCost(k, u.cost(lv)); if(state.credits<cost) return; state.credits-=cost; state.upg[k]++; rebuildPool(); updateUI(); renderShop(); renderPaytable(); saveState(); }
