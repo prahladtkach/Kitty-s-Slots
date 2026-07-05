@@ -630,7 +630,7 @@
   function temaUnlocked(n){ var r=PF_TEMA_REQ[n]; return !r || r.req(); }
   var _pfTab='avatar';
   function pfUnlocked(it){ return it.req? it.req() : true; }
-  function pfCatPos(id){ var idx=0; PF_AVATARS.forEach(function(x){ if(x.id===id) idx=x.idx; }); var c=idx%10, r=Math.floor(idx/10); return (c/9*100)+'% '+(r*100)+'%'; }
+  function pfCatPos(id){ var idx=0; PF_AVATARS.forEach(function(x){ if(x.id===id) idx=x.idx; }); var c=idx%10, r=Math.floor(idx/10); return (c/9*100)+'% '+(r/3*100)+'%'; }
   function pfFrameCls(id){ var f=''; PF_FRAMES.forEach(function(x){if(x.id===id)f=x.cls;}); return f; }
   function pfTitleName(id){ var n=''; PF_TITLES.forEach(function(x){if(x.id===id && x.id!=='none')n=x.name;}); return n; }
   function pfUpdateIcon(){ var pic=document.getElementById('profIconImg'); if(pic && state.eq) pic.style.backgroundPosition=pfCatPos(state.eq.avatar); }

@@ -310,7 +310,7 @@
 #profile .pf-cos-badge{ position:absolute; top:5px; right:7px; font-size:14px; }
 
 /* ===== AVATARES (sprite sheet 10x2, celdas 48px) ===== */
-.cat{ background-image:url('assets/gatitoscasinopfp.png'); background-size:1000% 200%; background-repeat:no-repeat; image-rendering:pixelated; display:block; }
+.cat{ background-image:url('assets/gatitoscasinopfp.png'); background-size:1000% 400%; background-repeat:no-repeat; image-rendering:pixelated; display:block; }
 #profIcon .cat{ width:18px; height:18px; }
 #profile .pf-avatar .cat{ width:88px; height:88px; }
 #profile .pf-cos-prev > .cat{ width:54px; height:54px; }
