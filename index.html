@@ -9,10 +9,100 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3.2">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles.css?v=4.0">
 </head>
 <body>
   <div class="scanlines"></div>
+  <!-- ===== MENU: LA MAQUINA TRAGAMONEDAS ES EL MENU ===== -->
+  <div id="startMenu">
+    <div class="sm-sky" aria-hidden="true">
+      <div class="sm-sun"></div>
+      <img class="sm-sun-mayo" src="assets/sol-de-mayo.png" alt="Sol de Mayo" aria-hidden="true">
+      <div class="sm-stars">
+        <i style="left:10%;top:12%"></i><i style="left:86%;top:8%;background:var(--gold)"></i>
+        <i style="left:24%;top:26%;background:var(--magenta)"></i><i style="left:70%;top:20%"></i>
+        <i style="left:48%;top:6%;background:var(--gold)"></i><i style="left:6%;top:34%;background:var(--magenta)"></i>
+        <i style="left:93%;top:30%"></i><i style="left:36%;top:16%"></i>
+        <i style="left:62%;top:33%;background:var(--gold)"></i><i style="left:16%;top:20%"></i>
+        <i style="left:80%;top:15%;background:var(--magenta)"></i><i style="left:56%;top:24%"></i>
+      </div>
+    </div>
+    <div class="sm-floor" aria-hidden="true"></div>
+    <div class="sm-bg-fx" id="smBgFx" aria-hidden="true"></div>
+
+    <div class="sm-topicons">
+      <button class="sm-ico" id="smAccIco" title="Cuenta" aria-label="Cuenta">👤</button>
+      <button class="sm-ico" id="smLogIco" title="Logros" aria-label="Logros">🏆</button>
+    </div>
+
+    <div class="sm-inner">
+      <div class="sm-kitty-row">
+        <img class="sm-cat" src="assets/cat-mascot.png" alt="Kitty" draggable="false" onerror="this.classList.add('sm-cat-missing')">
+        <div class="sm-bubble"><span id="smBubbleTx"></span><span class="sm-cur">▌</span></div>
+      </div>
+
+      <div class="sm-cabinet">
+        <div class="sm-marquee">
+          <div class="lights"><div class="light" style="background:var(--gold);animation-delay:0.00s"></div><div class="light" style="background:var(--magenta);animation-delay:0.09s"></div><div class="light" style="background:var(--cyan);animation-delay:0.18s"></div><div class="light" style="background:var(--violet);animation-delay:0.27s"></div><div class="light" style="background:var(--gold);animation-delay:0.36s"></div><div class="light" style="background:var(--magenta);animation-delay:0.45s"></div><div class="light" style="background:var(--cyan);animation-delay:0.54s"></div><div class="light" style="background:var(--violet);animation-delay:0.63s"></div><div class="light" style="background:var(--gold);animation-delay:0.72s"></div><div class="light" style="background:var(--magenta);animation-delay:0.81s"></div><div class="light" style="background:var(--cyan);animation-delay:0.90s"></div></div>
+          <div class="sm-logo">KITTY'S <span>SLOTS</span></div>
+        </div>
+
+        <div class="sm-screen">
+          <div class="sm-reelbox">
+            <div class="sm-reels"><div class="sm-reel"><div class="sm-strip" style="animation-duration:3.6s;animation-delay:-0.4s"><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div></div></div><div class="sm-reel"><div class="sm-strip" style="animation-duration:4.4s;animation-delay:-2.5s"><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div></div></div><div class="sm-reel"><div class="sm-strip" style="animation-duration:3.1s;animation-delay:-1.2s"><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div><div class="sm-sym">🍒</div><div class="sm-sym">💎</div><div class="sm-sym">7️⃣</div><div class="sm-sym">⭐</div><div class="sm-sym">🔔</div><div class="sm-sym">🍋</div><div class="sm-sym">🐱</div><div class="sm-sym">🦴</div></div></div></div>
+            <div class="sm-payline"></div>
+          </div>
+          <div class="sm-lever" id="smLever" title="¡Tirá la palanca para jugar!">
+            <div class="sm-lever-track"><div class="sm-lever-arm"><div class="sm-lever-ball"></div></div></div>
+            <div class="sm-lever-base"></div>
+            <div class="sm-lever-hint">TIRÁ ▼</div>
+          </div>
+        </div>
+
+        <div class="sm-panel">
+          <button class="sm-btn play" id="smLibre"><span class="ic">▶</span><span class="tx">MODO LIBRE</span></button>
+          <div class="sm-panel-row">
+            <button class="sm-btn locked half" id="smHistoria"><span class="ic">🔒</span><span class="tx">HISTORIA</span></button>
+            <button class="sm-btn half" id="smOpts"><span class="ic">⚙️</span><span class="tx">OPCIONES</span></button>
+          </div>
+          <div class="sm-hint" id="smHint"></div>
+        </div>
+
+        <div class="sm-base">
+          <div class="sm-tray"><span class="sm-ver">🪙 <span id="smVer"></span> · DELUXE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="smWipe" aria-hidden="true"></div>
+
+  <div id="smSplash">
+    <div class="sm-splash-glow"></div>
+    <img class="sm-splash-logo" src="assets/kittys-slots-logo.png" alt="Kitty's Slots" draggable="false" onerror="this.style.display='none'">
+    <div class="sm-splash-hint">TOCÁ PARA EMPEZAR</div>
+  </div>
+
+
+  <div class="overlay" id="smOptions">
+    <div class="modal" style="box-shadow:0 0 0 4px var(--dark),0 0 0 8px var(--gold);text-align:center">
+      <button class="modal-close" id="smOptClose">X</button>
+      <h3 style="color:var(--gold)">⚙️ OPCIONES</h3>
+      <div class="sm-th-lbl">🎨 TEMA</div>
+      <div class="sm-th-row" id="optThemes"></div>
+      <button class="minibtn sm-opt" id="optSound"><span class="ic">🔊</span> Sonido y música</button>
+      <button class="minibtn sm-opt" id="optAcc"><span class="ic">👤</span> Iniciar sesión / Cuenta</button>
+      <button class="minibtn sm-opt" id="optFull"><span class="ic">🖥️</span> Pantalla completa</button>
+      <button class="minibtn sm-opt" id="optHelp"><span class="ic">❔</span> Cómo jugar</button>
+      <button class="minibtn sm-opt" id="optFeedback"><span class="ic">💡</span> Sugerencias y reportes</button>
+      <div class="sm-opt-about">🐱 Kitty's Slots Deluxe · <span id="smVer2"></span></div>
+    </div>
+  </div>
   <div id="danger"></div>
   <div class="corner-left">
     <button class="iconbtn sugg-ic" id="suggestIcon" title="Sugerencias y reportes" aria-label="Sugerencias y reportes">💡</button>
@@ -319,6 +409,109 @@
     </div>
   </div>
 
-<script src="game.js?v=3.7"></script>
+<script src="game.js?v=4.0"></script>
+<script>
+/* ===== Menú = máquina tragamonedas (capa por encima del juego) ===== */
+(function(){
+  var menu=document.getElementById('startMenu'); if(!menu) return;
+  var opts=document.getElementById('smOptions');
+  function setVer(){ try{ var v=document.getElementById('ver'), t=(v&&v.textContent)||''; ['smVer','smVer2'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=t; }); }catch(_e){} }
+  setVer(); setTimeout(setVer,600); setTimeout(setVer,1600);
+
+  var actx=null;
+  function tone(seq){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); var t=actx.currentTime; seq.forEach(function(n){ var o=actx.createOscillator(), g=actx.createGain(); o.type='square'; o.frequency.value=n[0]; o.connect(g); g.connect(actx.destination); var st=t+n[1], en=st+n[2]; g.gain.setValueAtTime(0.05,st); g.gain.exponentialRampToValueAtTime(0.001,en); o.start(st); o.stop(en); }); }catch(_e){} }
+  function beepSelect(){ tone([[620,0,0.06],[930,0.06,0.09]]); }
+  function beepDenied(){ tone([[300,0,0.12],[175,0.10,0.15]]); }
+  function beepType(){ tone([[880,0,0.014]]); }
+  function beepTick(){ tone([[520,0,0.02]]); }
+  function beepPop(){ tone([[1000,0,0.03],[560,0.03,0.06]]); }
+
+  var MSGS=["¡Bienvenido de nuevo! 🐾","¿Listo para tentar la suerte?","Tirá de la palanca, dale 😼","Hoy es tu día de suerte... ¿o no? 🍀","9 vidas y una palanca.","¡A gamblear se ha dicho!","El jackpot te espera 💰","¿Modo Historia? Pronto, pronto...","Miau significa 'apostá fuerte'.","¡Explotá los gatos del fondo! 💥","La casa siempre... bueno, jugá igual.","¡Otra vez vos! Me caés bien 💜"];
+  function typeBubble(txt){ var el=document.getElementById('smBubbleTx'); if(!el) return; if(el._t) clearInterval(el._t); el.textContent=''; var i=0; el._t=setInterval(function(){ if(i>=txt.length){ clearInterval(el._t); el._t=null; return; } var c=txt.charAt(i++); el.textContent+=c; if(c!==' ') beepType(); }, 42); }
+  function newBubble(){ typeBubble(MSGS[Math.floor(Math.random()*MSGS.length)]); }
+
+  function wipeThen(cb){ var w=document.getElementById('smWipe'); if(!w){ cb&&cb(); return; } w.classList.remove('out'); w.classList.add('in'); setTimeout(function(){ if(cb) cb(); w.classList.remove('in'); w.classList.add('out'); setTimeout(function(){ w.classList.remove('out'); }, 380); }, 320); }
+  function selectThen(btn, fn){ if(btn._busy) return; btn._busy=true; beepSelect(); btn.classList.add('sm-select'); setTimeout(function(){ btn.classList.remove('sm-select'); btn._busy=false; fn(); }, 300); }
+
+  function openGame(iconId, overlayId){ var ov=document.getElementById(overlayId); if(ov) ov.style.zIndex='10002'; var ic=document.getElementById(iconId); if(ic) ic.click(); }
+  function enterLibre(){ menu.classList.add('sm-hidden'); if(opts) opts.classList.remove('open'); ['musicModal','helpModal','authModal','feedback','logrosModal'].forEach(function(id){ var o=document.getElementById(id); if(o) o.style.zIndex=''; }); }
+
+  var inr=document.querySelector('#startMenu .sm-inner');
+  function fastReels(on){ if(inr){ if(on) inr.classList.add('sm-fast'); else inr.classList.remove('sm-fast'); } }
+
+  /* ---- palanca arrastrable ---- */
+  var lever=document.getElementById('smLever');
+  var arm=lever?lever.querySelector('.sm-lever-arm'):null;
+  var MAX=62, cur=0, dragging=false, offY=0, fired=false, _busy=false;
+  function setArm(y){ cur=Math.max(0,Math.min(MAX,y)); if(arm) arm.style.transform='translateX(-50%) translateY('+cur+'px)'; fastReels(cur>MAX*0.28); }
+  function armReset(){ if(lever) lever.classList.add('sm-spring'); setArm(0); setTimeout(function(){ if(lever) lever.classList.remove('sm-spring'); },220); fastReels(false); }
+  function doLibre(){ if(_busy) return; _busy=true; beepSelect(); if(lever){ lever.classList.remove('sm-spring'); } setArm(MAX); fastReels(true); setTimeout(function(){ wipeThen(enterLibre); }, 300); }
+  if(lever){
+    lever.addEventListener('pointerdown', function(e){ if(_busy) return; dragging=true; fired=false; offY=e.clientY-cur; try{lever.setPointerCapture(e.pointerId);}catch(_e){} lever.classList.remove('sm-spring'); lever.style.cursor='grabbing'; beepTick(); e.preventDefault(); });
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var prev=cur; setArm(e.clientY-offY); if(Math.floor(cur/10)!==Math.floor(prev/10)) beepTick(); if(cur>=MAX*0.85 && !fired){ fired=true; dragging=false; doLibre(); } e.preventDefault(); });
+    window.addEventListener('pointerup', function(e){ if(!dragging) return; dragging=false; lever.style.cursor='grab'; if(!fired){ if(cur<8){ doLibre(); } else { armReset(); } } });
+  }
+
+  var libre=document.getElementById('smLibre'); if(libre) libre.addEventListener('click', doLibre);
+  var ob=document.getElementById('smOpts'); if(ob&&opts) ob.addEventListener('click', function(){ selectThen(ob, function(){ buildThemes(); opts.classList.add('open'); }); });
+  var hist=document.getElementById('smHistoria'), hint=document.getElementById('smHint');
+  if(hist) hist.addEventListener('click', function(){ beepDenied(); hist.classList.remove('sm-shake'); void hist.offsetWidth; hist.classList.add('sm-shake'); if(hint){ hint.textContent='🔒 Modo Historia — ¡pronto!'; hint.classList.add('show'); } });
+  var ai=document.getElementById('smAccIco'); if(ai) ai.addEventListener('click', function(){ beepSelect(); openGame('accIcon','authModal'); });
+  var li=document.getElementById('smLogIco'); if(li) li.addEventListener('click', function(){ beepSelect(); openGame('logrosIcon','logrosModal'); });
+
+  var oc=document.getElementById('smOptClose'); if(oc&&opts) oc.addEventListener('click', function(){ opts.classList.remove('open'); });
+  if(opts) opts.addEventListener('click', function(e){ if(e.target===opts) opts.classList.remove('open'); });
+  var s=document.getElementById('optSound'); if(s) s.addEventListener('click', function(){ beepSelect(); openGame('musicIcon','musicModal'); });
+  var oa=document.getElementById('optAcc'); if(oa) oa.addEventListener('click', function(){ beepSelect(); openGame('accIcon','authModal'); });
+  var h=document.getElementById('optHelp'); if(h) h.addEventListener('click', function(){ beepSelect(); openGame('helpIcon','helpModal'); });
+  var f=document.getElementById('optFeedback'); if(f) f.addEventListener('click', function(){ beepSelect(); openGame('suggestIcon','feedback'); });
+  var fs=document.getElementById('optFull'); if(fs){ if(!document.fullscreenEnabled){ fs.style.display='none'; } else fs.addEventListener('click', function(){ beepSelect(); try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(_e){} }); }
+
+  function buildThemes(){ var host=document.getElementById('optThemes'); if(!host) return; host.innerHTML=''; var sws=document.querySelectorAll('#palrow .swatch'); if(!sws.length){ host.innerHTML='<span class="sm-th-empty">Entrá al juego para ver los temas</span>'; return; } sws.forEach(function(orig){ var m=document.createElement('button'); m.className='sm-sw'+(orig.classList.contains('active')?' active':''); m.title=orig.title||''; m.style.background=orig.style.background; m.style.boxShadow=orig.style.boxShadow; m.addEventListener('click', function(){ beepSelect(); orig.click(); setTimeout(buildThemes,40); }); host.appendChild(m); }); }
+
+  function showMenu(){ armReset(); _busy=false; if(opts) opts.classList.remove('open'); menu.classList.remove('sm-hidden'); newBubble(); }
+
+  /* ===== FONDO VIVO: gatitos + símbolos flotando, explotables (tipo Geometry Dash) ===== */
+  var fx=document.getElementById('smBgFx');
+  var CAT_IDX=[0,1,3,5,7,9,11,14,17,20,23,26];
+  var SYM_BG=['🍒','💎','7️⃣','⭐','🍋','🔔'];
+  function rnd(a,b){ return a+Math.random()*(b-a); }
+  function burst(x,y){ var cols=['#ffd23f','#ff3d8b','#39e0e6','#a45cff','#5bd75b']; for(var k=0;k<8;k++){ var p=document.createElement('div'); p.className='sm-burst'; p.style.left=x+'px'; p.style.top=y+'px'; p.style.background=cols[k%cols.length]; var a=Math.random()*6.2832, d=rnd(20,48); p.style.setProperty('--dx',(Math.cos(a)*d).toFixed(1)+'px'); p.style.setProperty('--dy',(Math.sin(a)*d).toFixed(1)+'px'); document.body.appendChild(p); (function(pp){ setTimeout(function(){ if(pp.parentNode) pp.parentNode.removeChild(pp); }, 480); })(p); } }
+  function popFloat(el){ if(el._pop) return; el._pop=true; beepPop(); var r=el.getBoundingClientRect(); burst(r.left+r.width/2, r.top+r.height/2); el.classList.add('sm-fl-pop'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); spawnFloat(); }, 260); }
+  function spawnFloat(){ if(!fx) return; var el=document.createElement('div'); el.className='sm-fl'; var dur=rnd(10,17); el.style.left=rnd(3,93)+'%'; el.style.animationDuration=dur.toFixed(1)+'s'; el.style.animationDelay=(-rnd(0,dur)).toFixed(1)+'s'; el.style.setProperty('--rot',(rnd(-52,52)).toFixed(0)+'deg');
+    if(Math.random()<0.62){ el.classList.add('sm-fl-cat'); var idx=CAT_IDX[(Math.random()*CAT_IDX.length)|0]; el.style.backgroundPosition='-'+((idx%10)*48)+'px -'+(((idx/10)|0)*48)+'px'; }
+    else { el.classList.add('sm-fl-sym'); el.textContent=SYM_BG[(Math.random()*SYM_BG.length)|0]; }
+    el.addEventListener('pointerdown', function(e){ e.stopPropagation(); popFloat(el); });
+    el.addEventListener('animationend', function(){ if(el.parentNode) el.parentNode.removeChild(el); spawnFloat(); });
+    fx.appendChild(el);
+  }
+  if(fx){ for(var q=0;q<9;q++) spawnFloat(); }
+
+  /* MODO LIBRE en el juego: ayuda+música → ícono Opciones (con login adentro) */
+  var mi=document.getElementById('musicIcon'); if(mi) mi.style.display='none';
+  var hi=document.getElementById('helpIcon'); if(hi) hi.style.display='none';
+  var si=document.querySelector('.sound-icons');
+  if(si && !document.getElementById('gearOptsIcon')){ var g=document.createElement('button'); g.className='iconbtn'; g.id='gearOptsIcon'; g.title='Opciones'; g.setAttribute('aria-label','Opciones'); g.textContent='⚙️'; g.addEventListener('click', function(){ beepSelect(); buildThemes(); if(opts) opts.classList.add('open'); }); si.appendChild(g); }
+  var cl=document.querySelector('.corner-left');
+  if(cl && !document.getElementById('menuHomeBtn')){ var hb=document.createElement('button'); hb.className='iconbtn'; hb.id='menuHomeBtn'; hb.title='Menú principal'; hb.setAttribute('aria-label','Menú principal'); hb.textContent='🏠'; hb.addEventListener('click', function(){ beepSelect(); wipeThen(showMenu); }); cl.insertBefore(hb, cl.firstChild); }
+
+  newBubble();
+})();
+</script>
+<script>
+(function(){ var s=document.getElementById('smSplash'); if(!s) return;
+  var go=function(){ if(s._done) return; s._done=true; s.classList.add('sm-splash-go'); setTimeout(function(){ s.style.display='none'; }, 520); };
+  s.addEventListener('pointerdown', go, {once:true});
+  setTimeout(go, 2600);
+})();
+</script>
+<script>
+(function(){ var m=document.getElementById('startMenu'); if(!m) return;
+  function chk(){ try{ var bg=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase(); m.classList.toggle('sm-arg', bg==='#0e2a47'); }catch(_e){} }
+  chk();
+  try{ new MutationObserver(chk).observe(document.documentElement,{attributes:true,attributeFilter:['style']}); }catch(_e){}
+  setInterval(chk, 1200);
+})();
+</script>
 </body>
 </html>
