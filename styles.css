@@ -933,3 +933,29 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 #startMenu.sm-arg .sm-sun{display:none;}
 #startMenu.sm-arg .sm-sun-mayo{display:block;}
 @media (prefers-reduced-motion:reduce){ .sm-sun-mayo{animation:none;} }
+
+
+/* ===== Palmeras synthwave (3 diseños, horizonte, scroll, solo pantalla ancha) ===== */
+.sm-palms{position:absolute;left:0;right:0;bottom:30%;height:210px;z-index:1;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(to top, #000 42%, transparent 96%);mask-image:linear-gradient(to top, #000 42%, transparent 96%);}
+.sm-palms-track{position:absolute;left:0;bottom:0;width:200%;height:100%;animation:smPalmScroll 34s linear infinite;will-change:transform;}
+.sm-palm-group{position:absolute;bottom:0;width:50%;height:100%;}
+.sm-palm-group.g1{left:0;} .sm-palm-group.g2{left:50%;}
+.sm-palm{position:absolute;bottom:0;width:120px;height:150px;transform-origin:bottom center;}
+.sm-palm .pl-svg{width:100%;height:100%;display:block;fill:#140a30;filter:drop-shadow(0 0 3px rgba(255,61,139,.45));}
+@keyframes smPalmScroll{from{transform:translateX(-50%)} to{transform:translateX(0)}}
+@media (max-width:640px){ .sm-palms{display:none;} }
+@media (prefers-reduced-motion:reduce){ .sm-palms-track{animation:none;} }
+
+
+/* ===== Panel combinado Racha + Logros ===== */
+#dailyModal.sm-merged, #logrosModal.sm-merged{ display:none !important; }
+#rewardsModal{ z-index:10120; }
+#rewardsModal .rew-tabs{ display:flex; gap:8px; margin:4px 0 16px; }
+#rewardsModal .rew-tab{ flex:1; font-family:'Press Start 2P',monospace; font-size:11px; line-height:1.5; cursor:pointer; border:none; color:var(--muted); background:var(--panel); box-shadow:0 0 0 3px var(--dark); padding:13px 8px; transition:filter .12s; }
+#rewardsModal .rew-tab.active{ color:var(--dark); background:var(--gold); }
+#rewardsModal .rew-tab:not(.active):hover{ filter:brightness(1.25); }
+#rewardsModal .rew-pane{ min-height:40px; }
+
+/* Logros unificado en el panel de Racha: ocultar el trofeo suelto en Modo Libre */
+#logrosIcon{ display:none !important; }

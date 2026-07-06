@@ -35,7 +35,7 @@
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
   const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
   const MIN_BET=50;
-  const VERSION="4.0";
+  const VERSION="4.1";
   const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const PETS_UNLOCK_ALL=false; // PREVIEW manual: deja TODAS las mascotas desbloqueadas. (El staff ya las ve todas via hasMedal.)
@@ -1349,3 +1349,20 @@
     initFirebase();
     setTimeout(checkVersion, 1500);
   });
+
+  /* ============================================================
+     PUENTE PARA LA RULETA (billetera compartida del Casino)
+     Expone las fichas (state.credits) para que Kitty's Roulette
+     lea y escriba la misma economía, y guarde en la nube.
+     ============================================================ */
+  window.__casino = {
+    getCredits: function(){ return (state && typeof state.credits==='number') ? state.credits : 0; },
+    setCredits: function(n){
+      if(!state) return;
+      n = Math.max(0, Math.round(n||0));
+      state.credits = n;
+      try{ updateUI(); }catch(_e){}
+      try{ saveState(); }catch(_e){}
+    },
+    isLoggedIn: function(){ return !!fbUser; }
+  };
