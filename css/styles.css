@@ -51,7 +51,6 @@
   /* Punto 6: bloquear controles mientras giran los rodillos */
   body.spin-lock .sound-icons,
   body.spin-lock #betbar,
-  body.spin-lock #palrow,
   body.spin-lock .rowbtns,
   body.spin-lock #betInput,
   body.spin-lock #maxBet{ pointer-events:none; opacity:.5; transition:opacity .15s }
@@ -83,8 +82,6 @@
   .minibtn.loan{color:var(--gold)}
   .minibtn.shop{color:var(--cyan)}
   .minibtn.reset{color:var(--red)}
-  .palrow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:2px}
-  .palrow .pl{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--muted)}
   .swatch{width:26px;height:26px;cursor:pointer;box-shadow:0 0 0 2px var(--dark)}
   .swatch.active{box-shadow:0 0 0 2px var(--dark),0 0 0 4px var(--gold)}
   .paytable{width:min(440px,97vw);margin-top:14px;background:var(--panel);box-shadow:0 0 0 3px var(--dark)}
@@ -366,7 +363,7 @@
 /* ===== BANCARROTA (game over épico) ===== */
 body.broke{ background:#070411; }
 body.broke #cabinet{ filter:saturate(.28) brightness(.55); transition:filter .9s ease; }
-body.broke .betbar, body.broke #betInput, body.broke #maxBet, body.broke .rowbtns .shop, body.broke .rowbtns .loan, body.broke .palrow, body.broke .money, body.broke .paytable{ pointer-events:none; opacity:.4; filter:saturate(.3); transition:opacity .9s ease; }
+body.broke .betbar, body.broke #betInput, body.broke #maxBet, body.broke .rowbtns .shop, body.broke .rowbtns .loan, body.broke .money, body.broke .paytable{ pointer-events:none; opacity:.4; filter:saturate(.3); transition:opacity .9s ease; }
 body.broke #spinBtn.to-limbo{ background:linear-gradient(180deg,var(--violet),#4a2487); color:#fff; box-shadow:0 0 0 3px var(--dark),0 0 20px rgba(164,92,255,.85); animation:brokePulse 1.15s ease-in-out infinite; }
 @keyframes brokePulse{ 0%,100%{ transform:translateY(0); box-shadow:0 0 0 3px var(--dark),0 0 16px rgba(164,92,255,.7) } 50%{ transform:translateY(-3px); box-shadow:0 0 0 3px var(--dark),0 0 30px rgba(164,92,255,1) } }
 body.broke .reel{ animation:brokeFlicker 1.2s steps(2,end) infinite; }
@@ -508,7 +505,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 /* Paytable formato 2 columnas (2 iguales / 3 iguales) — restaurado de v2.13 */
 .pt-head{display:grid;grid-template-columns:1.1fr 1fr 1fr;padding:7px 4px 3px;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--muted);text-align:center}
 .pt-r{display:grid;grid-template-columns:1.1fr 1fr 1fr;align-items:center;padding:7px 4px;border-top:2px dotted rgba(255,255,255,.13)}
-.pt-r .sym{font-size:25px;line-height:1}
+.pt-r .sym{width:30px;height:30px;image-rendering:pixelated;display:block}
 .pt-r .v{font-family:'VT323',monospace;font-size:22px;color:var(--gold);text-align:center;line-height:1.05}
 .pt-r .v.none{color:var(--muted);font-size:18px}
 .pt-r .v.jp{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--gold)}
