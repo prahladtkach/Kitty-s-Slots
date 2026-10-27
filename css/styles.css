@@ -735,11 +735,14 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 @keyframes ddpulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
 .daily-streak{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--gold); text-align:center; margin:8px 0 14px; text-shadow:2px 2px 0 rgba(0,0,0,0.5); }
 .daily-streak b{ color:var(--text); }
-.daily-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:16px; }
-.daily-day{ position:relative; background:var(--panel2); border:3px solid var(--dark); border-radius:0; padding:11px 4px 8px; text-align:center; min-height:66px; display:flex; flex-direction:column; justify-content:center; box-shadow: inset 3px 3px 0 rgba(255,255,255,0.06), inset -3px -3px 0 rgba(0,0,0,0.42); }
-.daily-day .dd-lbl{ font-family:'Press Start 2P',monospace; font-size:8px; color:var(--muted); margin-bottom:6px; line-height:1.3; }
-.daily-day .dd-rew{ font-family:'VT323',monospace; font-size:16px; color:var(--text); line-height:1.1; }
-.daily-day .dd-mark{ position:absolute; top:3px; right:5px; font-size:12px; }
+/* 30 dias: 5 columnas y celdas compactas. Con las 3 columnas y 66px de
+   antes eran 10 filas y no entraba en la pantalla. */
+.daily-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:16px; }
+@media (max-width:420px){ .daily-grid{ grid-template-columns:repeat(4,1fr); gap:4px; } }
+.daily-day{ position:relative; background:var(--panel2); border:3px solid var(--dark); border-radius:0; padding:6px 2px 5px; text-align:center; min-height:46px; display:flex; flex-direction:column; justify-content:center; box-shadow: inset 3px 3px 0 rgba(255,255,255,0.06), inset -3px -3px 0 rgba(0,0,0,0.42); }
+.daily-day .dd-lbl{ font-family:'Press Start 2P',monospace; font-size:7px; color:var(--muted); margin-bottom:4px; line-height:1.3; }
+.daily-day .dd-rew{ font-family:'VT323',monospace; font-size:14px; color:var(--text); line-height:1.1; word-break:break-word; }
+.daily-day .dd-mark{ position:absolute; top:2px; right:3px; font-size:9px; }
 .daily-day.claimed{ background:#13301a; box-shadow: inset 3px 3px 0 rgba(91,215,91,0.12), inset -3px -3px 0 rgba(0,0,0,0.45); }
 .daily-day.claimed .dd-rew{ color:var(--green); opacity:.85; }
 .daily-day.today{ border-color:var(--gold); box-shadow: inset 3px 3px 0 rgba(255,210,63,0.2), inset -3px -3px 0 rgba(0,0,0,0.4), 0 0 0 2px var(--gold); animation:ddtoday 0.9s steps(2) infinite; }

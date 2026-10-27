@@ -77,7 +77,7 @@
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const PETS_UNLOCK_ALL=false; // PREVIEW manual: deja TODAS las mascotas desbloqueadas. (El staff ya las ve todas via hasMedal.)
   // Racha diaria: ciclo de 7 días, premio grande al día 7. c=créditos, e=ectofichas. AJUSTABLE (pasalo por Monte Carlo).
-  const DAILY_REWARDS=[{c:2000,e:0},{c:5000,e:0},{c:0,e:1},{c:12000,e:0},{c:25000,e:0},{c:0,e:2},{c:50000,e:3}];
+  const DAILY_REWARDS=[{c:5000,e:0},{c:8000,e:0},{c:0,e:1},{c:15000,e:0},{c:25000,e:0},{c:0,e:2},{c:40000,e:0},{c:0,e:3},{c:60000,e:0},{c:80000,e:5},{c:90000,e:0},{c:0,e:4},{c:120000,e:0},{c:150000,e:0},{c:0,e:5},{c:180000,e:0},{c:220000,e:0},{c:0,e:6},{c:260000,e:0},{c:300000,e:10},{c:320000,e:0},{c:0,e:8},{c:350000,e:0},{c:400000,e:0},{c:0,e:10},{c:450000,e:0},{c:500000,e:0},{c:0,e:12},{c:600000,e:0},{c:1000000,e:25,p:1}];
   const DAILY_COOLDOWN_MS=20*3600*1000, DAILY_GRACE_MS=48*3600*1000; // racha por cooldown: reclamable a las 20h, racha se corta a las 48h (ver CONTRATO-racha.md)
   // === MASCOTAS (compañeros con buff+contra; equipás una sola a la vez). Números AJUSTABLES — pasalos por Monte Carlo. ===
   // ===== PETS — números balanceados con Monte Carlo (ver mc_pets.py). =====
@@ -368,8 +368,21 @@
     if(last>0 && elapsed < DAILY_COOLDOWN_MS) return {claimable:false, claimedToday:true, cycleDay:(lastDay||1), streak:D.streak||0, nextInMs:(last+DAILY_COOLDOWN_MS)-now};
     var nextDay, streak;
     if(last===0 || elapsed > DAILY_GRACE_MS){ nextDay=1; streak=1; }
-    else { nextDay=(lastDay%7)+1; streak=(D.streak||0)+1; }
+    else { nextDay=(lastDay%30)+1; streak=(D.streak||0)+1; }
     return {claimable:true, claimedToday:false, cycleDay:nextDay, streak:streak};
+  }
+  /* Entrega la primera mascota que al jugador le falte. Mr. PIBBLE queda
+     afuera a proposito: esa se consigue con el codigo secreto.
+     Devuelve el id, o null si ya las tiene todas. */
+  const DAILY_PET_ORDER=['milson','wilson','dino','gaster','pibblefru'];
+  function dailyGrantPet(){
+    if(!state.pets) state.pets={owned:{},active:null};
+    if(!state.pets.owned) state.pets.owned={};
+    for(var i=0;i<DAILY_PET_ORDER.length;i++){
+      var id=DAILY_PET_ORDER[i];
+      if(PETS[id] && !state.pets.owned[id]){ state.pets.owned[id]=true; return id; }
+    }
+    return null;
   }
   async function claimDaily(){
     var st=dailyStatus(); if(!st.claimable) return null;
@@ -380,6 +393,10 @@
     var r=DAILY_REWARDS[st.cycleDay-1]||{c:0,e:0};
     if(r.c) state.credits+=r.c;
     if(r.e) state.meta.spirits=(state.meta.spirits||0)+r.e;
+    // si el dia daba mascota y ya las tiene todas, va en ectofichas
+    var petWon=null;
+    if(r.p){ petWon=dailyGrantPet(); if(!petWon) state.meta.spirits=(state.meta.spirits||0)+10; }
+    r=Object.assign({}, r, {petWon:petWon});
     state.daily={last:Date.now(), day:st.cycleDay, streak:st.streak};
     saveState(); updateUI(); updateDailyIcon();
     if(fbReady && fbUser) _dailyReconcile();
@@ -392,22 +409,30 @@
       if(snap.exists()){ var d=snap.data()||{}; var ms=(d.last&&d.last.toMillis)?d.last.toMillis():0; if(ms>0){ if(!state.daily) state.daily={last:0,day:0,streak:0}; state.daily.last=ms; if(typeof d.day==='number') state.daily.day=d.day; if(typeof d.streak==='number') state.daily.streak=d.streak; saveStateLocalOnly(); updateDailyIcon(); var dm=document.getElementById('dailyModal'); if(dm&&dm.classList.contains('open')) renderDaily(); } }
     }catch(e){}
   }
-  function dailyRewLabel(r){ var p=[]; if(r.c) p.push('💰 $'+fmt(r.c)); if(r.e) p.push('👻 '+r.e); return p.join('<br>')||'—'; }
+  function dailyRewLabel(r){ var p=[]; if(r.c) p.push('💰 $'+fmt(r.c)); if(r.e) p.push('👻 '+r.e); if(r.p) p.push('🐾 MASCOTA'); return p.join('<br>')||'—'; }
+  /* version corta para la grilla de 30: no entra "$450.000" en una celda chica */
+  function dailyCorto(n){
+    if(n>=1000000) return (n%1000000? (n/1000000).toFixed(1) : (n/1000000))+'M';
+    if(n>=1000)    return Math.round(n/1000)+'k';
+    return ''+n;
+  }
+  function dailyRewMini(r){ var p=[]; if(r.c) p.push('$'+dailyCorto(r.c)); if(r.e) p.push('👻'+r.e); if(r.p) p.push('🐾'); return p.join(' '); }
   function renderDaily(){
     var body=document.getElementById('dailyBody'); if(!body) return;
     var st=dailyStatus();
     var h='<div class="daily-streak">🔥 Racha: <b>'+st.streak+(st.streak===1?' día':' días')+'</b></div>';
     h+='<div class="daily-grid">';
-    for(var i=1;i<=7;i++){ var r=DAILY_REWARDS[i-1]||{c:0,e:0}, cls='locked', mark='🔒';
+    for(var i=1;i<=DAILY_REWARDS.length;i++){ var r=DAILY_REWARDS[i-1]||{c:0,e:0}, cls='locked', mark='🔒';
       if(st.claimedToday){ if(i<=st.cycleDay){ cls='claimed'; mark='✓'; } }
       else { if(i<st.cycleDay){ cls='claimed'; mark='✓'; } else if(i===st.cycleDay){ cls='today'; mark='🎁'; } }
-      h+='<div class="daily-day '+cls+(i===7?' big':'')+'"><div class="dd-lbl">'+(i===7?'★ Día 7':'Día '+i)+'</div><div class="dd-rew">'+dailyRewLabel(r)+'</div><div class="dd-mark">'+mark+'</div></div>';
+      var _ult=(i===DAILY_REWARDS.length);
+      h+='<div class="daily-day '+cls+(_ult?' big':'')+'"><div class="dd-lbl">'+(_ult?'★ Día '+i:''+i)+'</div><div class="dd-rew">'+(_ult?dailyRewLabel(r):dailyRewMini(r))+'</div><div class="dd-mark">'+mark+'</div></div>';
     }
     h+='</div>';
     if(st.claimable){ h+='<button class="daily-claim" id="dailyClaimBtn">🎁 Reclamar día '+st.cycleDay+'</button>'; }
-    else { var nx=(st.cycleDay%7)+1; var _nm=st.nextInMs||0, _nh=Math.floor(_nm/3600000), _nmin=Math.max(0,Math.floor((_nm%3600000)/60000)); h+='<div class="daily-done">✅ ¡Cobraste el día '+st.cycleDay+'! Próximo premio (día '+nx+') en <b>'+_nh+'h '+_nmin+'m</b> 🔥</div>'; }
+    else { var nx=(st.cycleDay%30)+1; var _nm=st.nextInMs||0, _nh=Math.floor(_nm/3600000), _nmin=Math.max(0,Math.floor((_nm%3600000)/60000)); h+='<div class="daily-done">✅ ¡Cobraste el día '+st.cycleDay+'! Próximo premio (día '+nx+') en <b>'+_nh+'h '+_nmin+'m</b> 🔥</div>'; }
     body.innerHTML=h;
-    var cb=document.getElementById('dailyClaimBtn'); if(cb) cb.addEventListener('click', function(){ this.disabled=true; Promise.resolve(claimDaily()).then(function(){ renderDaily(); }); });
+    var cb=document.getElementById('dailyClaimBtn'); if(cb) cb.addEventListener('click', function(){ this.disabled=true; Promise.resolve(claimDaily()).then(function(res){ renderDaily(); /* la mascota es el mejor premio de la tabla: hay que avisar, si no pasa desapercibida */ if(res && res.petWon && PETS[res.petWon]){ var _pn=PETS[res.petWon].name; setMsg(petsUnlocked() ? ('¡Conseguiste una mascota: '+_pn+'! 🐾 Equipala desde el menú de mascotas.') : ('¡Conseguiste una mascota: '+_pn+'! 🐾 Comprá el 🏠 Refugio en el Limbo para poder usarla.'), 'big'); } }); });
   }
   function openDaily(){ if(spinning) return; var m=document.getElementById('dailyModal'); if(!m) return; m.classList.add('open'); renderDaily(); }
   function closeDaily(){ var m=document.getElementById('dailyModal'); if(m) m.classList.remove('open'); }

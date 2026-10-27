@@ -58,7 +58,7 @@ service cloud.firestore {
       // is number (no is int): el SDK web puede guardar enteros de JS como double; con is int la regla
       // rechazaría reclamos legítimos. Consistente con lbSane. El rango ya acota valores absurdos.
       return d.last == request.time                // obliga a usar serverTimestamp()
-          && d.day is number    && d.day >= 1    && d.day <= 7
+          && d.day is number    && d.day >= 1    && d.day <= 30
           && d.streak is number && d.streak >= 1 && d.streak <= 100000;
     }
     match /dailyClaims/{uid} {
