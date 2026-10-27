@@ -1,0 +1,14 @@
+# ===== Kitty's Casino — archivos que NO van al repo =====
+
+# Logs y basura de editores/herramientas
+*.log
+*.node-runtime
+
+# Proyecto aparte: tracker de sprites de videojuego.
+# No es parte del casino. El archivo sigue en la carpeta, solo que git lo ignora.
+sprites-tracker/
+
+# Secretos (por si alguna vez aparecen)
+.env
+*.pem
+serviceAccount*.json

@@ -310,7 +310,7 @@
 #profile .pf-cos-badge{ position:absolute; top:5px; right:7px; font-size:14px; }
 
 /* ===== AVATARES (sprite sheet 10x2, celdas 48px) ===== */
-.cat{ background-image:url('assets/gatitoscasinopfp.png'); background-size:1000% 400%; background-repeat:no-repeat; image-rendering:pixelated; display:block; }
+.cat{ background-image:url('../assets/gatitoscasinopfp.png'); background-size:1000% 600%; background-repeat:no-repeat; image-rendering:pixelated; display:block; }
 #profIcon .cat{ width:18px; height:18px; }
 #profile .pf-avatar .cat{ width:88px; height:88px; }
 #profile .pf-cos-prev > .cat{ width:54px; height:54px; }
@@ -817,7 +817,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .sm-bg-fx{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none;}
 .sm-fl{position:absolute;bottom:-12%;opacity:0;pointer-events:auto;cursor:pointer;animation-name:smFloatUp;animation-timing-function:linear;animation-iteration-count:1;will-change:transform,opacity;}
 @keyframes smFloatUp{0%{transform:translateY(0) rotate(0deg);opacity:0}12%{opacity:.5}88%{opacity:.5}100%{transform:translateY(-122vh) rotate(var(--rot,28deg));opacity:0}}
-.sm-fl-cat{width:48px;height:48px;background-image:url('assets/gatitoscasinopfp.png');background-size:480px 192px;background-repeat:no-repeat;image-rendering:pixelated;}
+.sm-fl-cat{width:48px;height:48px;background-image:url('../assets/gatitoscasinopfp.png');background-size:480px 288px;background-repeat:no-repeat;image-rendering:pixelated;}
 .sm-fl-sym{font-size:26px;font-style:normal;line-height:1;filter:drop-shadow(0 0 6px rgba(0,0,0,.4));}
 .sm-fl-pop{animation:smPop .26s ease-out forwards !important;}
 @keyframes smPop{0%{transform:scale(1);opacity:.7}40%{transform:scale(1.5);opacity:1}100%{transform:scale(0);opacity:0}}

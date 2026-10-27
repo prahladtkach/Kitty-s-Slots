@@ -1,4 +1,41 @@
 // Kitty's Slots Deluxe · versión pública (v2.67) · Tanda 3 de Sugerencias: hilo de debate por sugerencia (subcolección «comments» en suggestions/{id}/comments). Se carga al abrir el hilo; comentar pide el mismo candado que postear/votar; autor o staff pueden borrar. Requiere agregar regla de Firestore para la subcolección. Cache busting → 2.67.
+
+  /* ═══════════════════════════════════════════════════════════════════
+     📑 ÍNDICE  ·  Kitty's Slots  ·  game.js
+     ───────────────────────────────────────────────────────────────────
+     Para saltar a una sección: buscá (Ctrl+F) el texto de la ║ ║ box.
+
+       CONFIG          → firebaseConfig, constantes (SYMS, PAY3, PETS…)
+       state           → el objeto de estado del juego
+       💾 ALMACENAMIENTO  → IndexedDB / localStorage
+       💾 ESTADO          → carga y guardado
+       🏅 LOGROS          → achievements
+       📅 RACHA DIARIA    → daily rewards
+       🐾 MASCOTAS        → compañeros con buff/contra
+       ☁️ FIREBASE        → cuentas y guardado en la nube
+       🔊 AUDIO           → efectos de sonido
+       🎵 MÚSICA          → motor chiptune
+       🎨 UI (render)     → luces, paleta, paytable, sprites
+       🛒 TIENDA          → mejoras y descuentos
+       🖥️ updateUI        → actualizador central
+       👤 PERFIL          → cosméticos y medallas
+       🏆 RANKINGS        → tabla global
+       🎰 SLOTS           → motor de giro y premios
+       💵 APUESTA         → controles de bet
+       🏦 BANCO           → préstamos, crédito, interés
+       ❓ AYUDA           → sistema de ayuda + toasts
+       🐱 DIÁLOGOS        → Kitty / Katto / Pibble
+       📐 ECONOMÍA        → fórmulas de balance
+       🔐 BÓVEDA          → dibujo SVG de la caja fuerte
+       💀 ESPINAS         → escape y pérdida
+       🌳 LIMBO           → árbol de meta-progresión
+       💬 FEEDBACK        → sugerencias, votos, comentarios, bugs
+       🎛️ MÚSICA (modal)  → tocadiscos
+       🔄 VERSIÓN         → chequeo de actualización
+
+     ⚠️  Este archivo usa un scope cerrado (IIFE): todas las funciones y
+        variables se ven entre sí. NO hace falta orden de declaración.
+     ═══════════════════════════════════════════════════════════════════ */
   /* ============================================================
      FIREBASE  —  PEGÁ ACÁ LA CONFIG DE TU PROYECTO
      Reemplazá los valores "TU_..." por los de tu app web.
@@ -33,9 +70,9 @@
   // Versión de la economía. Si subís este número, TODOS los jugadores resetean su progreso una vez (para testear cambios de balance).
   const ECON_VERSION=3;
   const CAP_TIERS=[1e6,2.5e6,6e6,15e6,40e6,100e6,300e6,1e9];
-  const BANK_TIERS=[50000,250000,1000000,5000000,25000000];
+  const BANK_TIERS=[50000,250000,1000000,5000000,25000000,150000000];
   const MIN_BET=50;
-  const VERSION="4.1";
+  const VERSION="4.4";
   const LOGROS_ON=true; // Fase 2: poner en true cuando el panel de logros esté listo para producción
   const LOGRO_IMG_ON=true; // poner en true cuando haya imágenes en assets/logros/<id>.png (cae al emoji si falta el archivo)
   const PETS_UNLOCK_ALL=false; // PREVIEW manual: deja TODAS las mascotas desbloqueadas. (El staff ya las ve todas via hasMedal.)
@@ -117,6 +154,10 @@
 
   // ---- Guardado local: window.storage (preview de Claude) -> localStorage (GitHub Pages) -> memoria ----
   let _mem = {};
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  💾 ALMACENAMIENTO LOCAL (IndexedDB / localStorage)
+  // ╚══════════════════════════════════════════════════════════╝
   async function lsGet(k){
     try{ if(window.storage&&window.storage.get){ const r=await window.storage.get(k); if(r&&r.value!=null) return r.value; } }catch(e){}
     try{ const v=localStorage.getItem(k); if(v!=null) return v; }catch(e){}
@@ -127,6 +168,10 @@
     try{ localStorage.setItem(k,v); return; }catch(e){}
     _mem[k]=v;
   }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  💾 ESTADO · CARGA Y GUARDADO
+  // ╚══════════════════════════════════════════════════════════╝
   function applySave(d){
     if(!d||typeof d!=='object') return;
     Object.assign(state,d);
@@ -219,6 +264,10 @@
     // Secretos
     {id:'diff',cat:'Secretos',icon:'🤔',name:'¿Cuál es la diferencia?',desc:'Girá con el botón y con la palanca.',tier:'secreto',secret:true,chk:function(L){return !!L.usedSpinBtn && !!L.usedLever;}}
   ];
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🏅 LOGROS (achievements)
+  // ╚══════════════════════════════════════════════════════════╝
   function checkLogros(silent){
     if(!LOGROS_ON) return;
     var L=state.life; if(!L) return;
@@ -307,6 +356,10 @@
   }
 
 
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  📅 RACHA DIARIA
+  // ╚══════════════════════════════════════════════════════════╝
   function _dayNum(){ var d=new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/86400000); }
   function dailyStatus(){
     var D=state.daily||(state.daily={last:0,day:0,streak:0});
@@ -362,6 +415,10 @@
   function updateDailyIcon(){ var ic=document.getElementById('dailyIcon'); if(!ic) return; var n=dailyStreakNow(); ic.innerHTML='🔥'+(n>0?'<span class="dd-count">'+n+'</span>':''); if(dailyStatus().claimable) ic.classList.add('has-claim'); else ic.classList.remove('has-claim'); }
   var _dailyAutoShown=false;
   function maybeAutoDaily(){ if(_dailyAutoShown) return; if(!dailyStatus().claimable) return; if(document.querySelector('.overlay.open')) return; _dailyAutoShown=true; openDaily(); }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🐾 MASCOTAS
+  // ╚══════════════════════════════════════════════════════════╝
   function petImgBase(p){ var f=p.img||(p.id+'.png'); return (f.indexOf('/')>=0)?f:('assets/pets/'+f); }
   function petImgSrc(p){ var f=(p.themeImg&&p.themeImg[state.palette]); if(f) return (f.indexOf('/')>=0)?f:('assets/pets/'+f); return petImgBase(p); }
   function petIcoHTML(p){ return '<img class="pet-ico-img" src="'+petImgSrc(p)+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'"><span class="pet-ico-em" style="display:none">'+p.icon+'</span>'; }
@@ -385,6 +442,10 @@
 
   // ---- Firebase: cuentas reales + guardado en la nube (SDK cargado on-demand con import dinámico) ----
   let fbReady=false, fbAuth=null, fbDB=null, fbUser=null, _fbAuthMod=null, _fbFsMod=null, _cloudTimer=null, _applyingCloud=false;
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  ☁️ FIREBASE · CUENTAS Y NUBE
+  // ╚══════════════════════════════════════════════════════════╝
   function fbConfigured(){ return !!(firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('TU_')!==0); }
   function setAuthMsg(t,cls){ const el=document.getElementById('authMsg'); if(!el) return; el.textContent=t||''; el.className='auth-msg'+(cls?(' '+cls):''); }
   function renderAccount(){
@@ -478,6 +539,10 @@
     return 'Error: '+(c||'desconocido');
   }
 
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🔊 AUDIO · EFECTOS DE SONIDO
+  // ╚══════════════════════════════════════════════════════════╝
   function ac(){ if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return audioCtx; }
   function tone(f,dur,vol,type,when){ const c=ac(); if(!c)return; try{ const o=c.createOscillator(),g=c.createGain(); o.type=type||'square'; o.frequency.value=f; o.connect(g); g.connect(c.destination); const t=c.currentTime+(when||0); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur); }catch(e){} }
   function sfx(f,dur,vol,type,when){ if(state.sfxOn) tone(f,dur,vol,type,when); }
@@ -491,6 +556,10 @@
   const BPM=128, STEP=60/BPM/4;            // 16th-note duration in seconds
   let musicPlaying=false, schedTimer=null, nextNoteT=0, step16=0, catMode=false, bankMode=false, shopMode=false, pibbleMode=false;
   let _musicBus=null, _noiseBuf=null;
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🎵 MÚSICA · MOTOR CHIPTUNE
+  // ╚══════════════════════════════════════════════════════════╝
   function musicBus(){ const c=ac(); if(!c) return null; if(!_musicBus){ _musicBus=c.createGain(); _musicBus.gain.value=0.16; _musicBus.connect(c.destination); } return _musicBus; }
   function noiseBuf(){ const c=ac(); if(!c) return null; if(!_noiseBuf){ _noiseBuf=c.createBuffer(1,Math.floor(c.sampleRate*0.3),c.sampleRate); const d=_noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return _noiseBuf; }
   const NSEMI={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
@@ -547,6 +616,10 @@
   const sheetAr=new Image(); let sheetArReady=false; sheetAr.onload=function(){ sheetArReady=true; if(state.palette==='argentina' && typeof CV!=='undefined'){ CV.forEach(function(cv){ if(cv&&cv._sym) drawSym(cv,cv._sym); }); } }; sheetAr.src='assets/argentinasprites2026.png';
   const CV=[document.getElementById('cv0'),document.getElementById('cv1'),document.getElementById('cv2')];
   const REEL=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🎨 UI · RENDER E INTERFAZ CENTRAL
+  // ╚══════════════════════════════════════════════════════════╝
   function drawSym(cv, sym){ const x=cv.getContext('2d'); x.imageSmoothingEnabled=false; x.clearRect(0,0,cv.width,cv.height); cv._sym=sym; const idx=SPRITE_ORDER.indexOf(sym); var _ar=(state.palette==='argentina' && sheetArReady); var _sh=_ar?sheetAr:sheet; if(idx<0||(!_ar&&!sheetReady)) return; var _tw=(_sh.naturalWidth||(SPRITE_ORDER.length*32))/SPRITE_ORDER.length, _th=_sh.naturalHeight||32; x.drawImage(_sh, idx*_tw,0,_tw,_th, 0,0,cv.width,cv.height); }
 
   function renderLights(){ const el=document.getElementById('lights'); el.innerHTML=''; const cols=['var(--gold)','var(--magenta)','var(--cyan)','var(--violet)']; for(let i=0;i<14;i++){ const d=document.createElement('div'); d.className='light'; d.style.background=cols[i%cols.length]; d.style.animationDelay=(i*0.09)+'s'; el.appendChild(d); } }
@@ -554,6 +627,10 @@
   function renderPalette(){ const el=document.getElementById('palrow'); el.querySelectorAll('.swatch').forEach(function(s){s.remove();}); PALNAMES.forEach(function(n){ if(!temaUnlocked(n)) return; const sw=document.createElement('div'); sw.className='swatch'+(n===state.palette?' active':''); sw.title=n; sw.style.background=PALETTES[n].violet; sw.style.boxShadow='0 0 0 2px '+PALETTES[n].dark+(n===state.palette?',0 0 0 4px '+PALETTES[n].gold:''); sw.addEventListener('click',function(){ applyPalette(n); }); el.appendChild(sw); }); }
   function renderPaytable(){ const el=document.getElementById('ptBody'); const rows=[{s:'🐱',v2:'—',v3:'JACKPOT',k:'jp'},{s:'🐟',v2:'x4',v3:'x30'},{s:'7️⃣',v2:'—',v3:'x20',n:'solo 777 (no paga de a 2)'},{s:'💎',v2:'x3',v3:'x12'},{s:'⭐',v2:'x1.5',v3:'x7'},{s:'🍒',v2:'x3',v3:'x6',n:'¡1 sola cereza ya paga x1.5!'},{s:'🔔',v2:'x1',v3:'x4'},{s:'🍋',v2:'x0.5',v3:'x2.5'},{s:'🦴',v2:'−apuesta',v3:'PIERDES TODO',k:'bones'}]; el.innerHTML=''; var head=document.createElement('div'); head.className='pt-head'; head.innerHTML='<span></span><span>2 IGUALES</span><span>3 IGUALES</span>'; el.appendChild(head); rows.forEach(function(r){ var row=document.createElement('div'); row.className='pt-r'+(r.k==='jp'?' jackpot':'')+(r.k==='bones'?' bones':''); var sy=document.createElement('span'); sy.className='sym'; sy.textContent=symDisp(r.s); var v2=document.createElement('span'); v2.className='v'+(r.v2==='—'?' none':'')+(r.k==='bones'?' bad':''); v2.textContent=r.v2; var v3=document.createElement('span'); v3.className='v'+(r.k==='jp'?' jp':'')+(r.k==='bones'?' bad':''); v3.textContent=r.v3; row.appendChild(sy); row.appendChild(v2); row.appendChild(v3); if(r.n){ var nt=document.createElement('span'); nt.className='pt-note'; nt.textContent='↳ '+r.n; row.appendChild(nt); } el.appendChild(row); }); var note=document.createElement('div'); note.style.cssText='margin-top:11px;color:var(--muted);line-height:1.45;font-family:VT323;font-size:15px'; note.innerHTML='⚡ COMBO: 2+ premios seguidos multiplican (hasta x'+fmtMult(comboCap())+'). 🦴 Las espinas pegan más fuerte con cada renacimiento — subí la armadura 🛡️ en el Limbo para compensar.'; el.appendChild(note); }
   var KATTO_STALL_SVG='<svg viewBox="0 0 360 360" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="27" y="90" width="306" height="153" fill="#241046"/><rect x="9" y="9" width="342" height="9" fill="#ffd23f" stroke="#0a0618" stroke-width="1.5"/><rect x="9" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="27" y="18" width="18" height="45" fill="#a45cff"/><rect x="45" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="63" y="18" width="18" height="45" fill="#a45cff"/><rect x="81" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="99" y="18" width="18" height="45" fill="#a45cff"/><rect x="117" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="135" y="18" width="18" height="45" fill="#a45cff"/><rect x="153" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="171" y="18" width="18" height="45" fill="#a45cff"/><rect x="189" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="207" y="18" width="18" height="45" fill="#a45cff"/><rect x="225" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="243" y="18" width="18" height="45" fill="#a45cff"/><rect x="261" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="279" y="18" width="18" height="45" fill="#a45cff"/><rect x="297" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="315" y="18" width="18" height="45" fill="#a45cff"/><rect x="333" y="18" width="18" height="45" fill="#ff3d8b"/><rect x="9" y="18" width="342" height="45" fill="none" stroke="#0a0618" stroke-width="3"/><rect x="9" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="36" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="45" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="72" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="81" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="108" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="117" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="144" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="153" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="180" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="189" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="216" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="225" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="252" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="261" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="288" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="297" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="324" y="63" width="9" height="9" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><rect x="333" y="63" width="9" height="9" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="9" y="81" width="9" height="9" fill="#39e0e6"/><rect x="27" y="81" width="9" height="9" fill="#ffd23f"/><rect x="45" y="81" width="9" height="9" fill="#39e0e6"/><rect x="63" y="81" width="9" height="9" fill="#ffd23f"/><rect x="81" y="81" width="9" height="9" fill="#39e0e6"/><rect x="99" y="81" width="9" height="9" fill="#ffd23f"/><rect x="117" y="81" width="9" height="9" fill="#39e0e6"/><rect x="135" y="81" width="9" height="9" fill="#ffd23f"/><rect x="153" y="81" width="9" height="9" fill="#39e0e6"/><rect x="171" y="81" width="9" height="9" fill="#ffd23f"/><rect x="189" y="81" width="9" height="9" fill="#39e0e6"/><rect x="207" y="81" width="9" height="9" fill="#ffd23f"/><rect x="225" y="81" width="9" height="9" fill="#39e0e6"/><rect x="243" y="81" width="9" height="9" fill="#ffd23f"/><rect x="261" y="81" width="9" height="9" fill="#39e0e6"/><rect x="279" y="81" width="9" height="9" fill="#ffd23f"/><rect x="297" y="81" width="9" height="9" fill="#39e0e6"/><rect x="315" y="81" width="9" height="9" fill="#ffd23f"/><rect x="333" y="81" width="9" height="9" fill="#39e0e6"/><rect x="18" y="90" width="9" height="153" fill="#6d34c4"/><rect x="27" y="90" width="9" height="153" fill="#2d1b54"/><rect x="36" y="90" width="9" height="153" fill="#241046"/><rect x="18" y="90" width="27" height="153" fill="none" stroke="#0a0618" stroke-width="3"/><rect x="315" y="90" width="9" height="153" fill="#6d34c4"/><rect x="324" y="90" width="9" height="153" fill="#2d1b54"/><rect x="333" y="90" width="9" height="153" fill="#241046"/><rect x="315" y="90" width="27" height="153" fill="none" stroke="#0a0618" stroke-width="3"/><rect x="9" y="234" width="342" height="18" fill="#2d1b54" stroke="#0a0618" stroke-width="3"/><rect x="18" y="252" width="324" height="90" fill="#241046" stroke="#0a0618" stroke-width="3"/><line x1="90" y1="252" x2="90" y2="342" stroke="#0a0618" stroke-width="2" opacity=".55"/><line x1="144" y1="252" x2="144" y2="342" stroke="#0a0618" stroke-width="2" opacity=".55"/><line x1="198" y1="252" x2="198" y2="342" stroke="#0a0618" stroke-width="2" opacity=".55"/><line x1="252" y1="252" x2="252" y2="342" stroke="#0a0618" stroke-width="2" opacity=".55"/><rect x="117" y="270" width="126" height="45" fill="#ffd23f" stroke="#0a0618" stroke-width="3"/><rect x="126" y="279" width="108" height="27" fill="none" stroke="#0a0618" stroke-width="2"/><line x1="333" y1="117" x2="333" y2="135" stroke="#0a0618" stroke-width="2"/><rect x="315" y="135" width="45" height="27" fill="#ff3d8b" stroke="#0a0618" stroke-width="3"/><rect x="324" y="144" width="9" height="9" fill="#0a0618"/></svg>';
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🛒 TIENDA · MEJORAS Y DESCUENTOS
+  // ╚══════════════════════════════════════════════════════════╝
   function shopItemCost(id){ if(id==='hold') return HOLD_COSTS[Math.min(state.holdLevel,HOLD_COSTS.length-1)]; if(id==='super') return superCost(state.superLevel); if(ABIL[id]) return ABIL[id].cost; return UPG[id]?UPG[id].cost(state.upg[id]):0; }
   function shopItemLevel(id){ if(id==='hold') return state.holdLevel; if(id==='super') return state.superLevel; if(ABIL[id]) return state.abilities[id]?1:0; return UPG[id]?state.upg[id]:0; }
   function shopItemMaxed(id){ if(id==='hold') return state.holdLevel>=2; if(id==='super') return state.superLevel>=SUPER_MAX; if(ABIL[id]) return !!state.abilities[id]; return UPG[id]?state.upg[id]>=UPG[id].max:true; }
@@ -587,6 +664,10 @@
     var tb=el.querySelectorAll('.shop-tab[data-stab]'); for(var j=0;j<tb.length;j++){ tb[j].addEventListener('click', function(){ _shopTab=this.getAttribute('data-stab'); renderShop(); }); }
     var kf=document.getElementById('kattoFace'); if(kf) kf.addEventListener('click', kattoSpeak);
     document.getElementById('shopNote').textContent = state.debt>0 ? 'Pagá tu deuda antes de comprar.' : 'Comprás con tus créditos.'; }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🖥️ UI · updateUI (actualizador central)
+  // ╚══════════════════════════════════════════════════════════╝
   function updateUI(){ var _cap=capValue(); var _w0=state.credits+state.bank-state.debt; if(_w0>_cap){ if(!state.limboUnlocked){ state.limboUnlocked=true; updateLimboBtn(); } state.credits=Math.max(0, state.credits-(_w0-_cap)); if(!_capMsgShown){ _capMsgShown=true; if(!state.limboIntroV2){ setTimeout(function(){ explainLimboOnce(null, TXT_LIMBO_CAP); }, 1700); } else { setTimeout(function(){ setMsg('¡TOPE '+fmtCap(_cap)+'! Ascendé en el Limbo 🏔️','big'); },1400); } } } if(!state.skillsUnlocked && state.credits>=SKILL_UNLOCK) state.skillsUnlocked=true; var _nw=state.credits+state.bank-state.debt; if(_nw>(state.peak||0)) state.peak=_nw; if(_nw>((state.life&&state.life.bestWorth)||0)){ state.life.bestWorth=_nw; } if(!state.bankUnlocked && state.credits>=BANK_UNLOCK_CREDITS) unlockBank('rich'); document.getElementById('credits').textContent='$'+fmt(state.credits); document.getElementById('debt').textContent=fmt(state.debt); const ind=state.debt>0; document.getElementById('debtBox').classList.toggle('on', ind); document.getElementById('danger').classList.toggle('on', ind); document.getElementById('debtWarn').style.display=ind?'block':'none'; if(document.getElementById('bank').classList.contains('open')) renderBank(); document.getElementById('jpAmount').textContent='$'+fmt(Math.round(Math.max(state.jackpot, state.bet*jpMult())*winMult()*petMod('jpPay'))); var _bb=document.getElementById('bankBtn'); if(_bb){ _bb.disabled=!state.bankUnlocked; _bb.textContent=state.bankUnlocked?'🏦 BANCO':'🔒 BANCO'; } updateModalMoney(); updatePet(); if(state.life){ if(state.bank>(state.life.maxBank||0)) state.life.maxBank=state.bank; if(state.vault && bankCap()>0 && state.bank>=bankCap()) state.life.bankFilled=true; } if(_logrosReady && !_applyingCloud) checkLogros(); }
   function setSpinUI(on){ document.getElementById('spinBtn').disabled=on; document.body.classList.toggle('spin-lock', on); updateSuperUI(); }
   function setMsg(t,cls){ const el=document.getElementById('winMsg'); el.textContent=t; el.className='win-msg'+(cls?(' '+cls):''); }
@@ -620,6 +701,10 @@
     betatester:{ name:'Betatester', desc:'Probó el juego antes que nadie 🧪', svg:'<svg viewBox="0 0 64 64" class="medal-svg"><circle cx="32" cy="32" r="28" fill="#1a1030" stroke="#39e0e6" stroke-width="3"/><rect x="28" y="14" width="8" height="10" fill="#cfd8e8" stroke="#0a0618" stroke-width="1.5"/><rect x="26" y="12" width="12" height="3" fill="#e8eef5" stroke="#0a0618" stroke-width="1.5"/><path d="M 28 24 L 18 44 Q 18 48 22 48 L 42 48 Q 46 48 46 44 L 36 24 Z" fill="#1a2438" stroke="#0a0618" stroke-width="1.5"/><path d="M 24 36 L 21 43 Q 21 46 24 46 L 40 46 Q 43 46 43 43 L 40 36 Z" fill="#39e0e6"/><circle cx="28" cy="40" r="2" fill="#9af0f4"/><circle cx="34" cy="42" r="1.5" fill="#9af0f4"/><circle cx="31" cy="38" r="1" fill="#e8feff"/></svg>' },
     staff:{ name:'Staff Team', desc:'Parte del equipo de Kitty\u2019s 👑', svg:'<svg viewBox="0 0 64 64" class="medal-svg"><circle cx="32" cy="32" r="28" fill="#1a1030" stroke="#ffd23f" stroke-width="3"/><path d="M 16 40 L 14 22 L 23 30 L 32 18 L 41 30 L 50 22 L 48 40 Z" fill="#ffd23f" stroke="#0a0618" stroke-width="2"/><rect x="16" y="40" width="32" height="6" fill="#f0b020" stroke="#0a0618" stroke-width="2"/><circle cx="14" cy="22" r="2.5" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><circle cx="32" cy="18" r="3" fill="#a45cff" stroke="#0a0618" stroke-width="1"/><circle cx="50" cy="22" r="2.5" fill="#ff3d8b" stroke="#0a0618" stroke-width="1"/><rect x="29" y="40" width="6" height="6" fill="#39e0e6" stroke="#0a0618" stroke-width="1"/></svg>' }
   };
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  👤 PERFIL · COSMÉTICOS Y MEDALLAS
+  // ╚══════════════════════════════════════════════════════════╝
   function hasMedal(id){ if(id==='staff') return !!(fbUser && STAFF_UIDS.indexOf(fbUser.uid)>=0); if(id==='betatester') return !!(fbUser && BETA_UIDS.indexOf(fbUser.uid)>=0); return !!(state.badges && state.badges[id]); }
   function userMedals(){ var out=[]; for(var k in MEDALS){ if(hasMedal(k)) out.push(k); } return out; }
   function redeemCode(code){ code=(code||'').trim().toUpperCase(); var mid=MEDAL_CODES[code]; if(!mid || !MEDALS[mid]) return 'mal'; if(!state.badges) state.badges={}; if(state.badges[mid]) return 'ya'; state.badges[mid]=true; saveState(); return 'ok'; }
@@ -630,7 +715,7 @@
   function temaUnlocked(n){ var r=PF_TEMA_REQ[n]; return !r || r.req(); }
   var _pfTab='avatar';
   function pfUnlocked(it){ return it.req? it.req() : true; }
-  function pfCatPos(id){ var idx=0; PF_AVATARS.forEach(function(x){ if(x.id===id) idx=x.idx; }); var c=idx%10, r=Math.floor(idx/10); return (c/9*100)+'% '+(r/3*100)+'%'; }
+  function pfCatPos(id){ var idx=0; PF_AVATARS.forEach(function(x){ if(x.id===id) idx=x.idx; }); var c=idx%10, r=Math.floor(idx/10); return (c/9*100)+'% '+(r/5*100)+'%'; }
   function pfFrameCls(id){ var f=''; PF_FRAMES.forEach(function(x){if(x.id===id)f=x.cls;}); return f; }
   function pfTitleName(id){ var n=''; PF_TITLES.forEach(function(x){if(x.id===id && x.id!=='none')n=x.name;}); return n; }
   function pfUpdateIcon(){ var pic=document.getElementById('profIconImg'); if(pic && state.eq) pic.style.backgroundPosition=pfCatPos(state.eq.avatar); }
@@ -638,6 +723,10 @@
   function renderProfile(){ var eq=state.eq; document.getElementById('pfAvatarImg').style.backgroundPosition=pfCatPos(eq.avatar); document.getElementById('pfAvatar').className='pf-avatar '+pfFrameCls(eq.frame); document.getElementById('pfName').textContent=eq.nick||'Jugador'; var tn=pfTitleName(eq.title); document.getElementById('pfTitle').innerHTML = tn? '<span class="title-pill">'+tn+'</span>' : ''; var md=document.getElementById('pfMedals'); if(md){ var meds=userMedals(); if(meds.length){ var mh=''; meds.forEach(function(k){ mh+='<span class="pf-medal" data-medal="'+k+'" title="'+MEDALS[k].name+' — '+MEDALS[k].desc+'">'+MEDALS[k].svg+'</span>'; }); md.innerHTML=mh; md.style.display='flex'; var mels=md.querySelectorAll('.pf-medal'); for(var mi=0;mi<mels.length;mi++){ mels[mi].addEventListener('click', function(){ var k=this.getAttribute('data-medal'); var dt=document.getElementById('pfMedalDetail'); if(dt&&MEDALS[k]){ if(dt.style.display==='block'&&dt.getAttribute('data-shown')===k){ dt.style.display='none'; dt.removeAttribute('data-shown'); } else { dt.innerHTML='<b>'+MEDALS[k].name+'</b><br>'+MEDALS[k].desc; dt.style.display='block'; dt.setAttribute('data-shown',k); } } }); } } else { md.innerHTML=''; md.style.display='none'; var dt0=document.getElementById('pfMedalDetail'); if(dt0) dt0.style.display='none'; } } var L=state.life||{}; document.getElementById('pfEcto').textContent=fmt(L.ecto||0); document.getElementById('pfAsc').textContent=(L.asc||0); document.getElementById('pfRuns').textContent=(L.runs||0); document.getElementById('pfWorth').textContent='$'+fmt(L.bestWorth||0); document.getElementById('pfJP').textContent='$'+fmt(L.bestJP||0); var _pc=document.getElementById('pfCode'); if(_pc) _pc.style.display='block'; var _pb=document.getElementById('pfPibbleBtn'); if(_pb) _pb.style.display = state.pibble ? 'block' : 'none'; updateRankBtn(); pfUpdateIcon(); }
   function renderCos(){ var eq=state.eq, h=''; if(_pfTab==='tema'){ PALNAMES.forEach(function(n){ var equipped=state.palette===n, p=PALETTES[n], unl=temaUnlocked(n); var status= unl ? (equipped?'EQUIPADO':'tocá para equipar') : ('🔒 '+(PF_TEMA_REQ[n]?PF_TEMA_REQ[n].lk:'Bloqueado')); var badge= equipped?'✓':(unl?'':'🔒'); h+='<div class="pf-cos-card'+(equipped?' equipped':'')+(unl?'':' locked')+'" data-id="'+n+'">'+(badge?'<div class="pf-cos-badge">'+badge+'</div>':'')+'<div class="pf-cos-prev"><span class="pf-swatch" style="background:'+p.panel+'; box-shadow:0 0 0 3px '+p.violet+'"></span></div><div class="pf-cos-name">'+(PF_TEMANOM[n]||n)+'</div><div class="pf-cos-status">'+status+'</div></div>'; }); } else { var arr = _pfTab==='avatar'?PF_AVATARS : _pfTab==='frame'?PF_FRAMES : PF_TITLES; arr.forEach(function(it){ var equipped=eq[_pfTab]===it.id, unl=pfUnlocked(it) && !it.locked; var prev=''; if(_pfTab==='avatar'){ prev = '<span class="cat" style="background-position:'+pfCatPos(it.id)+'"></span>'; } else if(_pfTab==='frame'){ prev='<span class="mini '+(it.cls||'')+'"><span class="cat" style="background-position:'+pfCatPos(eq.avatar)+'"></span></span>'; } else { prev='<span class="title-pill">'+(it.id==='none'?'—':it.name)+'</span>'; } var lockTxt = it.locked? it.locked : (it.lk||'Bloqueado'); var status = unl ? (equipped?'EQUIPADO':'tocá para equipar') : ('🔒 '+lockTxt); var badge = equipped? '✓' : (unl?'':'🔒'); var nm = (_pfTab==='title' && it.id==='none')?'Sin título':it.name; h+='<div class="pf-cos-card'+(equipped?' equipped':'')+(unl?'':' locked')+'" data-id="'+it.id+'">'+(badge?'<div class="pf-cos-badge">'+badge+'</div>':'')+'<div class="pf-cos-prev">'+prev+'</div><div class="pf-cos-name">'+nm+'</div><div class="pf-cos-status">'+status+'</div></div>'; }); } document.getElementById('pfCosGrid').innerHTML=h; var cards=document.querySelectorAll('#pfCosGrid .pf-cos-card'); for(var i=0;i<cards.length;i++){ cards[i].addEventListener('click', function(){ var id=this.getAttribute('data-id'); if(_pfTab==='tema'){ if(!temaUnlocked(id)) return; applyPalette(id); renderCos(); return; } var arr2 = _pfTab==='avatar'?PF_AVATARS : _pfTab==='frame'?PF_FRAMES : PF_TITLES; var it=null; arr2.forEach(function(x){if(x.id===id)it=x;}); if(!it || it.locked || !pfUnlocked(it)) return; state.eq[_pfTab]=id; saveState(); renderCos(); renderProfile(); }); } }
   function openProfile(){ if(spinning) return; _pfTab='avatar'; var t=document.querySelectorAll('.pf-cos-tab'); for(var j=0;j<t.length;j++) t[j].classList.toggle('on', t[j].getAttribute('data-ct')==='avatar'); document.getElementById('profileView').style.display='block'; document.getElementById('cosmeticsView').style.display='none'; var _rv=document.getElementById('rankingsView'); if(_rv) _rv.style.display='none'; renderProfile(); document.getElementById('profile').classList.add('open'); }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🏆 RANKINGS GLOBALES
+  // ╚══════════════════════════════════════════════════════════╝
   function lbScore(L){ L=L||{}; var ecto=L.ecto||0, jp=L.bestJP||0, worth=L.bestWorth||0; return Math.round(ecto + Math.floor(Math.sqrt(worth)/10) + Math.floor(Math.sqrt(jp)/10)); }
   function _rkEsc(x){ return String(x==null?'':x).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   async function fetchHidden(){ var out=[]; try{ var q=_fbFsMod.query(_fbFsMod.collection(fbDB,'leaderboard'), _fbFsMod.where('hidden','==',true)); var snap=await _fbFsMod.getDocs(q); snap.forEach(function(d){ var x=d.data()||{}; x._uid=d.id; out.push(x); }); }catch(_e){ return null; } return out; }
@@ -669,6 +758,10 @@
     var mels=pane.querySelectorAll('.pf-medal[data-medal]'); for(var mi=0;mi<mels.length;mi++){ mels[mi].addEventListener('click', function(){ var k=this.getAttribute('data-medal'); var dt=document.getElementById('rkuMedalDetail'); if(dt&&MEDALS[k]){ if(dt.style.display==='block'&&dt.getAttribute('data-shown')===k){ dt.style.display='none'; dt.removeAttribute('data-shown'); } else { dt.innerHTML='<b>'+MEDALS[k].name+'</b><br>'+MEDALS[k].desc; dt.style.display='block'; dt.setAttribute('data-shown',k); } } }); } }
 
 
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🎰 SLOTS · MOTOR DE GIRO Y PREMIOS
+  // ╚══════════════════════════════════════════════════════════╝
   function confetti(n){ const real=['#ffd23f','#ff3d8b','#39e0e6','#a45cff','#5bd75b']; for(let i=0;i<n;i++){ const c=document.createElement('div'); c.className='confetti'; c.style.left=(50+(Math.random()*44-22))+'vw'; c.style.top='30vh'; c.style.background=real[i%real.length]; c.style.transform='translateX('+((Math.random()*2-1)*250)+'px)'; c.style.animation='fall '+(0.9+Math.random())+'s steps(12) forwards'; c.style.animationDelay=(Math.random()*0.2)+'s'; document.body.appendChild(c); setTimeout(function(){c.remove();},2300); } }
 
   function applyWin(w){ if(w>((state.life&&state.life.bestJP)||0)) state.life.bestJP=w; /* bestJP = mayor ganancia de una tirada (cualquier premio; el doble-o-nada se trackea en gambleResult) */ if(state.debt>0){ const p=Math.min(w,state.debt); state.debt-=p; w-=p; } state.credits+=w; return w; }
@@ -711,7 +804,15 @@
     combo=0; _tripleStreak=0; setCombo(); setMsg('SUERTE LA PROXIMA',false); saveState(); checkBroke();
   }
 
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  💵 APUESTA · controles de bet
+  // ╚══════════════════════════════════════════════════════════╝
   function setBet(v){ v=Math.floor(v); if(isNaN(v)||v<MIN_BET)v=MIN_BET; if(state.credits>=MIN_BET && v>state.credits) v=state.credits; state.bet=v; document.getElementById('betInput').value=v; renderBetPresets(); updateUI(); saveState(); }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🏦 BANCO · PRÉSTAMOS, CRÉDITO, INTERÉS
+  // ╚══════════════════════════════════════════════════════════╝
   function loanAvailable(){ return state.debt + LOAN <= creditLimit(); }
   function canLoan(){ return loanAvailable() && (state.credits+state.bank) < MIN_BET; }
   function takeLoan(){ if(spinning) return; if(!loanAvailable()){ setMsg('LÍMITE DE PRÉSTAMOS ($'+fmt(creditLimit())+')',false); return; } if((state.credits+state.bank)>=MIN_BET){ setMsg(state.bank>0?('Primero retirá tu plata del banco (tenés $'+fmt(state.bank)+' guardados).'):('Solo podés pedir préstamo si no te alcanza para la apuesta mínima ($'+MIN_BET+')'),false); return; } state.credits+=LOAN; state.debt+=Math.round(LOAN*(1+LOAN_FEE)); updateUI(); renderBank(); setMsg('PRÉSTAMO: +$'+fmt(LOAN)+' (debés $'+fmt(Math.round(LOAN*(1+LOAN_FEE)))+')',false); saveState(); }
@@ -790,6 +891,10 @@
   var TXT_LIMBO_TUT="¡MIAU! 🐱 Esto es EL LIMBO 👻||Tu PICO de plata de la partida se convierte en Ectofichas. Con ellas comprás mejoras PERMANENTES para cada partida nueva.||🏔️ Subí el techo de plata para romper topes más grandes. 🛡️ Comprá protección anti-espinas para que las espinas peguen menos.||Cuando quieras, ASCENDÉ: cobrás todo y arrancás de nuevo, más fuerte. 😼";
   var TXT_LIMBO_CAP="¡MIAU! 🐱 ¡LLEGASTE AL TOPE! 🏔️👑||Tocaste el techo de plata de esta partida, ¡crack! Más arriba no se puede... salvo en el LIMBO.||Andá al LIMBO 👻 (botón al lado de RESET): tu PICO de plata se vuelve Ectofichas, y con ellas comprás mejoras PERMANENTES para cada partida.||🏔️ Subí el techo para topes más grandes. 🛡️ Protección anti-espinas = los huesitos pegan menos.||ASCENDÉ cuando quieras: cobrás y arrancás de nuevo, más fuerte. 😼";
   const HELP_TOPICS=[ {id:'intro',label:'🎮 Cómo jugar',text:TXT_INTRO}, {id:'cuenta',label:'👤 Cuenta y progreso',text:TXT_CUENTA}, {id:'bank',label:'🏦 Banco y préstamos',text:TXT_BANK}, {id:'limbo',label:'👻 El Limbo',text:TXT_LIMBO_TUT} ];
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  ❓ AYUDA · sistema de ayuda + toasts login
+  // ╚══════════════════════════════════════════════════════════╝
   function unlockHelp(id){ if(!state.helpSeen) state.helpSeen=[]; if(state.helpSeen.indexOf(id)<0){ state.helpSeen.push(id); saveState(); } }
   function renderHelp(){ var el=document.getElementById('helpBody'); if(!el) return; var seen=state.helpSeen||[]; var h=''; if(!seen.length){ h+='<div class="bank-note">Todavía no desbloqueaste explicaciones. ¡Jugá y Kitty te irá enseñando! 🐱</div>'; } else { h+='<div class="bank-note">¿Qué querés que te explique Kitty? 🐱</div>'; HELP_TOPICS.forEach(function(t){ if(seen.indexOf(t.id)>=0) h+='<button class="help-item" data-id="'+t.id+'">'+t.label+'</button>'; }); } el.innerHTML=h; var bs=el.querySelectorAll('.help-item'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ var id=this.getAttribute('data-id'); document.getElementById('helpModal').classList.remove('open'); var t=null,j; for(j=0;j<HELP_TOPICS.length;j++){ if(HELP_TOPICS[j].id===id) t=HELP_TOPICS[j]; } if(t) showCat(t.text); }); } }
   var _catTimer=null, _catFull='', _catTyping=false, _catWaiting=false, _introText='', _introStep=-1;
@@ -799,6 +904,10 @@
   function showLoginToast(){ if(fbUser||_toastShownCount>=4) return; if(document.querySelector('.overlay.open')) return; var t=document.getElementById('loginToast'); if(!t) return; t.classList.add('show'); _toastShownCount++; clearTimeout(_toastTimer); _toastTimer=setTimeout(hideLoginToast,9000); }
   function hideLoginToast(){ var t=document.getElementById('loginToast'); if(t) t.classList.remove('show'); clearTimeout(_toastTimer); }
   var _catWho='kitty';
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🐱 MASCOTA · DIÁLOGOS (Kitty / Katto / Pibble)
+  // ╚══════════════════════════════════════════════════════════╝
   function typeCat(text){ _catFull=text; _catTyping=true; var el=document.getElementById('catSpeech'), cont=document.getElementById('catOk'); if(cont) cont.style.visibility='hidden'; if(el) el.textContent=''; var i=0; clearInterval(_catTimer); _catTimer=setInterval(function(){ if(i>=_catFull.length){ clearInterval(_catTimer); _catTyping=false; if(cont) cont.style.visibility='visible'; return; } var ch=_catFull.charAt(i); if(el){ el.textContent += (ch==='|') ? String.fromCharCode(10) : ch; } if(ch!==' ' && ch!=='|') sfx((_catWho==='katto'?330:715)+Math.random()*90,0.02,0.035,'square'); i++; }, 42); }
   function catSkip(){ if(!_catTyping) return; clearInterval(_catTimer); _catTyping=false; var el=document.getElementById('catSpeech'), cont=document.getElementById('catOk'); if(el) el.textContent=_catFull.split('|').join(String.fromCharCode(10)); if(cont) cont.style.visibility='visible'; }
   function closeCat(){ var m=document.getElementById('catModal'); if(m){ m.classList.remove('open'); m.classList.remove('katto'); } _catWho='kitty'; catMode=false; pibbleMode=false; setCatLogin(false); if(_afterCat){ var f=_afterCat; _afterCat=null; setTimeout(f,120); } }
@@ -812,6 +921,10 @@
   function unlockBank(reason){ if(state.bankUnlocked) return; state.bankUnlocked=true; var b=document.getElementById('bankBtn'); if(b){ b.disabled=false; b.textContent='🏦 BANCO'; } unlockHelp('bank'); setMsg('🏦 ¡BANCO DESBLOQUEADO!',false); showCat(reason==='rich'?TXT_BANK_RICH:TXT_BANK_BROKE); saveState(); }
   var META={ armor:{name:'🛡️ Protección anti-espinas', desc:'Las espinas pegan menos fuerte (compensa el daño que sube por cada renacimiento)', max:100, cost:function(l){return Math.round(25+l*8+l*l*0.6);}}, respin:{name:'🔄 Re-giro', desc:'Si salen espinas, probabilidad de volver a girar gratis (+8% por nivel)', max:5, cost:function(l){return Math.round(60+l*40);}, req:{k:'armor',n:2}}, chest:{name:'🪙 Cofre inicial', desc:'Empezás con +$500 por nivel', max:20, cost:function(l){return Math.round(25+l*18);}}, luck:{name:'✨ Patita de la suerte', desc:'+5% a TODO lo que ganás, para siempre', max:16, cost:function(l){return Math.round(30+l*22);}, req:{k:'armor',n:1}}, cap:{name:'🏔️ Techo de plata', desc:'Sube el tope de plata de la partida', max:CAP_TIERS.length-1, cost:function(l){return Math.round(220*Math.pow(1.55,l));}, req:{k:'luck',n:1}}, banktope:{name:'🔒 Tope del banco', desc:'Subí cuánta plata podés guardar a salvo en la caja fuerte', max:BANK_TIERS.length-1, cost:function(l){return Math.round(130*Math.pow(1.7,l));}, req:{k:'chest',n:1}}, jpboost:{name:'🎰 Bote mayor', desc:'Sube el multiplicador del bote (+20 por nivel)', max:16, cost:function(l){return Math.round(45+l*34);}, req:{k:'luck',n:1}}, credit:{name:'🏦 Crédito inicial', desc:'Arrancás con más préstamos disponibles', max:5, cost:function(l){return Math.round(60+l*50);}, req:{k:'chest',n:1}}, ninevidas:{name:'👻 Nueve vidas', desc:'1 vez por partida: chance de zafar de la bancarrota', max:5, cost:function(l){return Math.round(150*Math.pow(1.65,l));}, req:{k:'armor',n:3}}, ectoboost:{name:'👻 Ectofichas+', desc:'+3% ectofichas al terminar, por nivel', max:10, cost:function(l){return Math.round(45+l*36);}, req:{k:'luck',n:2}}, bankopen:{name:'🏦 Banco desbloqueado', desc:'Arrancás con el panel del banco abierto', max:1, cost:function(l){return 500;}}, vaultopen:{name:'🔓 Caja fuerte lista', desc:'Arrancás con la caja fuerte ya comprada', max:1, cost:function(l){return 1200;}, req:{k:'bankopen',n:1}}, banker:{name:'💰 Banquero experto', desc:'+20% a la tasa del interés por nivel', max:6, cost:function(l){return Math.round(110*Math.pow(1.6,l));}, req:{k:'vaultopen',n:1}}, premiumvault:{name:'🏦 Caja fuerte premium', desc:'El interés ocurre más seguido (-3 giros/nivel)', max:4, cost:function(l){return Math.round(160*Math.pow(1.7,l));}, req:{k:'banker',n:2}}, regular:{name:'🛒 Cliente regular', desc:'Sube un poco la chance de mejores descuentos y acorta la espera de la próxima rebaja', max:6, cost:function(l){return Math.round(80*Math.pow(1.55,l));}, req:{k:'chest',n:1}}, kennel:{name:'🏠 Refugio', desc:'Desbloquea las mascotas: podés equipar una y conseguir las demás (por logros, ectofichas o códigos).', max:1, cost:function(l){return 800;}, req:{k:'ectoboost',n:1}} };
   var _lastEarned=0, _limboMode='death', _capMsgShown=false, _limboTab='resumen', _shopTab='mejoras';
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  📐 ECONOMÍA · fórmulas de balance (mult, caps, límites)
+  // ╚══════════════════════════════════════════════════════════╝
   function jpMult(){ return JP_BASE_MULT + ((state.meta&&state.meta.jpboost)||0)*20; }
   function capValue(){ return CAP_TIERS[Math.min(state.meta.cap||0, CAP_TIERS.length-1)]; }
   function bankCap(){ return BANK_TIERS[Math.min(state.meta.banktope||0, BANK_TIERS.length-1)]; }
@@ -834,6 +947,10 @@
   ];
 
   // extras dibujados sobre la cara de la puerta (centrada en cx,cy con radio r)
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🔐 BÓVEDA · dibujo SVG de la caja fuerte
+  // ╚══════════════════════════════════════════════════════════╝
   function vaultExtras(s, cx, cy){
     var x=s.x, h='';
     if(x.rivets){ // anillo extra de remaches entre los existentes (r76)
@@ -950,9 +1067,13 @@
         '</g></g></svg>';
     }
   }
-  function vaultSkinIdx(){ var asc=(state.life&&state.life.asc)||0; if(asc>=15) return 5; return Math.min(4, (state.meta&&state.meta.banktope)||0); }
+  function vaultSkinIdx(){ return Math.min(VAULT_SKINS.length-1, (state.meta&&state.meta.banktope)||0); }
 
   function fmtCap(n){ if(n>=1e6) return '$'+(n/1e6).toLocaleString('es-AR')+'M'; return '$'+fmt(n); }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  💀 ESPINAS · escape y pérdida (balance)
+  // ╚══════════════════════════════════════════════════════════╝
   function boneEscPct(){ var asc=(state.life&&state.life.asc)||0; var arm=state.meta.armor||0; var r=Math.max(0, Math.min(1, (asc-arm)/100)); return 0.10 + 0.30*r; }
   function boneLoseFrac(){ return Math.max(0.25, 1-(state.meta.armor||0)*0.0075); }
   function respinChance(){ return Math.min(0.5, (state.meta.respin||0)*0.08); }
@@ -985,6 +1106,10 @@
   var TREE_BRANCH={ armor:'#ff5b79', respin:'#ff5b79', ninevidas:'#ff5b79', luck:'#39e0e6', jpboost:'#39e0e6', cap:'#39e0e6', ectoboost:'#39e0e6', chest:'#ffd23f', credit:'#ffd23f', banktope:'#ffd23f', regular:'#ffd23f', bankopen:'#ff3d8b', vaultopen:'#ff3d8b', banker:'#ff3d8b', premiumvault:'#ff3d8b', kennel:'#a96bff' };
   var TREE_LBL={ armor:'Protección', respin:'Re-giro', ninevidas:'Nueve vidas', luck:'Patita', jpboost:'Bote mayor', cap:'Techo', ectoboost:'Ectofichas+', chest:'Cofre', credit:'Crédito', banktope:'Tope banco', regular:'Cliente regular', bankopen:'Banco abierto', vaultopen:'Caja lista', banker:'Banquero', premiumvault:'Caja premium', kennel:'Refugio' };
   var TREE_W=116, TREE_H=86, _treeX=null, _treeY=null, _treeZoom=null;
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🌳 LIMBO · árbol de meta-progresión
+  // ╚══════════════════════════════════════════════════════════╝
   function metaTreeHTML(){
     var lines='';
     for(var k in META){ var u=META[k]; if(u.req && META_TREE[k] && META_TREE[u.req.k]){ var p=META_TREE[u.req.k], c=META_TREE[k]; var x1=p[0]+TREE_W/2, y1=p[1]+TREE_H, x2=c[0]+TREE_W/2, y2=c[1], my=(y1+y2)/2; var on=metaUnlocked(k); lines+='<path d="M '+x1+' '+y1+' C '+x1+' '+my+' '+x2+' '+my+' '+x2+' '+y2+'" stroke="'+(on?(TREE_BRANCH[k]||'#39e0e6'):'#5a3d8c')+'" stroke-width="4" fill="none" opacity="'+(on?'.85':'.45')+'"/>'; } }
@@ -1056,6 +1181,10 @@
   var SG_STATUS={ pending:{t:'⏳ Pendiente',c:'pend'}, approved:{t:'✅ Aprobada',c:'ok'}, rejected:{t:'❌ Rechazada',c:'no'}, done:{t:'🚀 Implementada',c:'done'} };
   var SG_CLOSED={ approved:1, rejected:1, done:1 }; // estados que cierran voto + debate
   var SG_ORDER=['pending','approved','rejected','done'];
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  💬 FEEDBACK · sugerencias, votos, comentarios, bugs
+  // ╚══════════════════════════════════════════════════════════╝
   function feedCanPost(){ if(!(fbReady&&fbUser)) return false; if(hasMedal('staff')) return true; return (((state.life&&state.life.bestWorth)||0) >= FEED_GATE); }
   function feedGateTxt(){ if(!(fbReady&&fbUser)) return '🔒 Iniciá sesión (ícono de cuenta, arriba a la derecha) para participar.'; var w=(state.life&&state.life.bestWorth)||0; if(w<FEED_GATE) return '🔒 Alcanzá <b>$'+fmt(FEED_GATE)+'</b> de patrimonio para sugerir, votar y comentar.<br>Vas $'+fmt(w)+'.'; return ''; }
   function feedMsg(t,cls){ var m=document.getElementById('feedMsg'); if(m){ m.innerHTML=t; m.className='feed-msg '+(cls||''); } }
@@ -1277,6 +1406,10 @@
   document.getElementById('shopBtn').addEventListener('click', function(){ renderShop(); document.getElementById('shop').classList.add('open'); if(state.musicOn){ shopMode=true; catMode=false; bankMode=false; if(!musicPlaying) startMusic(); } if(state.kattoSeen){ setTimeout(kattoSpeak, 350); } else { kattoIntroOnce(); } });
   document.getElementById('shopClose').addEventListener('click', function(){ document.getElementById('shop').classList.remove('open'); shopMode=false; clearInterval(_kattoTypeT); clearTimeout(_kattoTimer); var _kb=document.getElementById('kattoBubble'); if(_kb) _kb.classList.remove('show'); });
   document.getElementById('shop').addEventListener('click', function(e){ if(e.target===this){ this.classList.remove('open'); shopMode=false; clearInterval(_kattoTypeT); clearTimeout(_kattoTimer); var _kb=document.getElementById('kattoBubble'); if(_kb) _kb.classList.remove('show'); } });
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🎛️ MÚSICA · modal del tocadiscos
+  // ╚══════════════════════════════════════════════════════════╝
   function renderMusicModal(){ var th=document.getElementById('ttThemes'); if(th){ var h=''; MUSIC_ORDER.forEach(function(k){ if(k==='pibble' && !state.pibble) return; var T=MUSIC_THEMES[k]; h+='<button class="tt-theme'+(state.musicTheme===k?' sel':'')+'" data-th="'+k+'">'+(state.musicTheme===k?'▶ ':'')+T.nom+' <span class="tt-ver">'+T.ver+'</span></button>'; }); th.innerHTML=h; var bs=th.querySelectorAll('.tt-theme'); for(var i=0;i<bs.length;i++){ bs[i].addEventListener('click', function(){ state.musicTheme=this.getAttribute('data-th'); if(!state.musicOn){ state.musicOn=true; musicStarted=true; } stopMusic(); startMusic(); syncSoundIcons(); renderMusicModal(); saveState(); }); } } var nm=document.getElementById('ttNow'); if(nm) nm.textContent=state.musicOn?(MUSIC_THEMES[state.musicTheme].nom+' '+MUSIC_THEMES[state.musicTheme].ver):'En pausa'; var tt=document.getElementById('turntable'); if(tt) tt.classList.toggle('spinning', state.musicOn); var ms=document.getElementById('ttMusicSt'); if(ms) ms.textContent=state.musicOn?'ON':'OFF'; var mb=document.getElementById('ttMusic'); if(mb) mb.classList.toggle('off', !state.musicOn); var ss=document.getElementById('ttSfxSt'); if(ss) ss.textContent=state.sfxOn?'ON':'OFF'; var sb=document.getElementById('ttSfx'); if(sb) sb.classList.toggle('off', !state.sfxOn); }
   document.getElementById('musicIcon').addEventListener('click', function(){ renderMusicModal(); document.getElementById('musicModal').classList.add('open'); });
   document.getElementById('musicClose').addEventListener('click', function(){ document.getElementById('musicModal').classList.remove('open'); });
@@ -1340,6 +1473,10 @@
 
   renderLights(); renderBetPresets(); renderPalette(); renderPaytable(); updateLimboBtn(); var _cc=document.getElementById('cornerCat'); if(_cc){ _cc.addEventListener('click', cornerCatSpeak); } var _ver=document.getElementById('ver'); if(_ver) _ver.textContent='v'+VERSION;
   rebuildPool();
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🔄 VERSIÓN · chequeo de actualización
+  // ╚══════════════════════════════════════════════════════════╝
   function verNum(v){ var p=String(v||'0').split('.'); return (parseInt(p[0],10)||0)*1000 + (parseInt(p[1],10)||0); }
   function forceUpdate(){ try{ sessionStorage.setItem('ks-upd','1'); }catch(_e){} location.href=location.pathname+'?u='+Date.now()+location.hash; }
   function showUpdatePrompt(newVer){ var m=document.getElementById('catModal'); if(!m||m.classList.contains('open')) return; try{ if(sessionStorage.getItem('ks-upd')) return; }catch(_e){} _catWho='kitty'; _introStep=-1; _catWaiting=false; _afterCat=function(){ forceUpdate(); }; setCatLogin(false); var ci=m.querySelector('.cat-img'); if(ci){ ci.onerror=function(){ this.onerror=null; this.src='assets/cat-mascot.png'; }; ci.src='assets/cat-mascot.png'; } m.classList.remove('katto'); m.classList.add('open'); if(state.musicOn){ catMode=true; if(!musicPlaying) startMusic(); } var cont=document.getElementById('catOk'); if(cont) cont.textContent='🔄 ACTUALIZAR'; typeCat('¡Actualicé el juego a la v'+newVer+'! 🎮✨|Tocá ACTUALIZAR acá abajo para refrescar y ver las novedades.|(Si en la compu no se actualiza, probá Ctrl+Shift+R)'); }
