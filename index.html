@@ -17,15 +17,18 @@
     <link rel="stylesheet" href="css/styles.css?v=4.5">
 <style id="rl-styles">
 #rlApp{
-  --bg:#0e0826; --bg2:#160a33; --dark:#0a0618; --panel:#241247; --panel2:#2d1b54;
-  --gold:#ffd23f; --magenta:#ff3d8b; --cyan:#3fe0e0; --violet:#a45cff;
-  --muted:#b3a7dd; --text:#ece7ff; --red:#e02850; --black:#181030; --green:#1fbf6b;
+  /* Sigue la paleta: no redefine --bg, --bg2, --dark, --panel, --panel2,
+     --gold, --magenta, --cyan, --violet, --muted ni --text. */
+  /* Fijos a proposito: los colores del tablero. La rueda se dibuja en SVG
+     con estos mismos valores desde roulette.js, asi que si el tablero
+     siguiera la paleta dejaria de coincidir con la rueda. */
+  --red:#e02850; --black:#181030; --green:#1fbf6b;
 }
 #rlApp *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 #rlApp, #rlApp{margin:0; height:100%;}
 #rlApp{
   font-family:'VT323',monospace; color:var(--text); background:
-    radial-gradient(120% 85% at 50% 0%, #2a1150 0%, #160a33 48%, #0a0618 100%);
+    radial-gradient(120% 85% at 50% 0%, var(--panel) 0%, var(--bg) 48%, var(--dark) 100%);
   min-height:100%; display:flex; flex-direction:column; align-items:center;
   overflow-x:hidden; position:relative; padding:14px 16px 28px;
 }
@@ -252,55 +255,65 @@
 </style>
 <style id="gamepick-styles">
 #gamePick{ position:fixed; inset:0; z-index:9500; display:none; align-items:center; justify-content:center;
-  background:radial-gradient(120% 85% at 50% 0%, #2a1150 0%, #160a33 48%, #0a0618 100%); padding:20px; }
+  background:radial-gradient(120% 85% at 50% 0%, var(--panel) 0%, var(--bg) 48%, var(--dark) 100%); padding:20px; }
 #gamePick.open{ display:flex; }
 #gamePick .gp-inner{ width:100%; max-width:460px; text-align:center; }
-#gamePick .gp-title{ font-family:'Press Start 2P',monospace; font-size:22px; color:#ffd23f;
-  text-shadow:3px 3px 0 #ff3d8b, -1px -1px 0 #0a0618; margin-bottom:8px; }
-#gamePick .gp-sub{ font-family:'VT323',monospace; font-size:19px; color:#b3a7dd; margin-bottom:26px; }
+#gamePick .gp-title{ font-family:'Press Start 2P',monospace; font-size:22px; color:var(--gold);
+  text-shadow:3px 3px 0 var(--magenta), -1px -1px 0 var(--dark); margin-bottom:8px; }
+#gamePick .gp-sub{ font-family:'VT323',monospace; font-size:19px; color:var(--muted); margin-bottom:26px; }
 #gamePick .gp-cards{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
 #gamePick .gp-card{ position:relative; flex:1 1 180px; max-width:210px; height:200px; border:none; cursor:pointer;
   background-size:cover; background-position:center; overflow:hidden;
-  box-shadow:0 0 0 3px #0a0618, 0 6px 0 rgba(0,0,0,.4); padding:0; color:#ece7ff;
+  box-shadow:0 0 0 3px var(--dark), 0 6px 0 rgba(0,0,0,.4); padding:0; color:var(--text);
   transition:transform .1s, filter .1s, box-shadow .1s; }
-#gamePick .gp-card:hover{ filter:brightness(1.08); transform:translateY(-3px); box-shadow:0 0 0 3px #0a0618, 0 9px 0 rgba(0,0,0,.45), 0 0 22px rgba(164,92,255,.55); }
-#gamePick .gp-card:active{ transform:translateY(2px); box-shadow:0 0 0 3px #0a0618, 0 3px 0 rgba(0,0,0,.4); }
+#gamePick .gp-card:hover{ filter:brightness(1.08); transform:translateY(-3px); box-shadow:0 0 0 3px var(--dark), 0 9px 0 rgba(0,0,0,.45), 0 0 22px rgba(164,92,255,.55); }
+#gamePick .gp-card:active{ transform:translateY(2px); box-shadow:0 0 0 3px var(--dark), 0 3px 0 rgba(0,0,0,.4); }
 /* overlay oscuro para que el texto se lea */
 #gamePick .gp-shade{ position:absolute; inset:0; background:linear-gradient(to bottom, rgba(10,6,24,.35) 0%, rgba(10,6,24,.5) 45%, rgba(10,6,24,.85) 100%); }
 #gamePick .gp-label{ position:absolute; left:0; right:0; bottom:0; padding:14px 12px; text-align:center; }
-#gamePick .gp-name{ font-family:'Press Start 2P',monospace; font-size:16px; color:#ffd23f; margin-bottom:6px; text-shadow:2px 2px 0 #0a0618, 0 0 8px rgba(0,0,0,.8); }
-#gamePick .gp-desc{ font-family:'VT323',monospace; font-size:17px; color:#ece7ff; text-shadow:1px 1px 0 #0a0618, 0 0 6px rgba(0,0,0,.9); }
-#gamePick .gp-back{ font-family:'Press Start 2P',monospace; font-size:11px; color:#ece7ff; background:#2d1b54;
-  border:none; cursor:pointer; padding:12px 20px; box-shadow:0 0 0 3px #0a0618, 0 4px 0 rgba(0,0,0,.35); transition:transform .08s, filter .1s; }
+#gamePick .gp-name{ font-family:'Press Start 2P',monospace; font-size:16px; color:var(--gold); margin-bottom:6px; text-shadow:2px 2px 0 var(--dark), 0 0 8px rgba(0,0,0,.8); }
+#gamePick .gp-desc{ font-family:'VT323',monospace; font-size:17px; color:var(--text); text-shadow:1px 1px 0 var(--dark), 0 0 6px rgba(0,0,0,.9); }
+#gamePick .gp-back{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--text); background:var(--panel);
+  border:none; cursor:pointer; padding:12px 20px; box-shadow:0 0 0 3px var(--dark), 0 4px 0 rgba(0,0,0,.35); transition:transform .08s, filter .1s; }
 #gamePick .gp-back:hover{ filter:brightness(1.1); }
 #gamePick .gp-back:active{ transform:translateY(2px); }
 /* botón "volver al menú" dentro de la ruleta */
 #rlApp .rl-home{ position:fixed; top:12px; left:12px; z-index:9100; font-family:'Press Start 2P',monospace; font-size:11px;
-  color:#ece7ff; background:#2d1b54; border:none; cursor:pointer; width:auto; padding:9px 12px;
-  box-shadow:0 0 0 3px #0a0618, 0 3px 0 rgba(0,0,0,.35); transition:transform .08s, filter .1s; }
+  color:var(--text); background:var(--panel); border:none; cursor:pointer; width:auto; padding:9px 12px;
+  box-shadow:0 0 0 3px var(--dark), 0 3px 0 rgba(0,0,0,.35); transition:transform .08s, filter .1s; }
 #rlApp .rl-home:hover{ filter:brightness(1.1); }
 #rlApp .rl-home:active{ transform:translateY(2px); }
 </style>
 <style id="bj-styles">
 #bjApp{
-    --bg:#0d0620; --bg2:#160a2e;
+    /* Sigue la paleta: --bg, --bg2, --gold, --magenta y --cyan NO se
+       redefinen aca, asi heredan las del tema activo. */
+    --purple:var(--violet); --purple-d:var(--panel);
+    --ink:var(--text); --ink-dim:var(--muted); --line:var(--panel2);
+    --gold-l:#ffe08a; --gold-d:#c9901f;
+    /* Fijos a proposito: el pano de la mesa, el rojo de corazones y
+       diamantes, y el semaforo de ganar/perder. Si siguieran la paleta,
+       con el tema Gameboy tendrias cartas rojas de color verde. */
     --felt:#123a2e; --felt2:#0c2a20; --felt-line:#1d5c46;
-    --purple:#a45cff; --purple-d:#6a3bb0;
-    --gold:#ffd23f; --gold-l:#ffe08a; --gold-d:#c9901f;
-    --magenta:#ff3d8b; --cyan:#39e0e6;
-    --ink:#f3ecff; --ink-dim:#9d86c9; --line:#2e1c56;
-    --red:#e23b52; --dark:#20232b;
+    --red:#e23b52;
     --win:#39e06a; --lose:#ff4d5e;
   }
 #bjApp *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* la misma grilla de fondo que usa el slots en body::before, para que el
+   blackjack no se vea plano. Va detras de todo y no recibe clicks. */
+#bjApp::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--panel) 2px,transparent 2px),linear-gradient(90deg,var(--panel) 2px,transparent 2px);
+  background-size:26px 26px;opacity:.18}
 #bjApp{
-    background:radial-gradient(circle at 50% -10%, #24123f 0%, var(--bg) 55%);
+    background:radial-gradient(circle at 50% -10%, var(--panel) 0%, var(--bg2) 55%);
     min-height:100vh; color:var(--ink);
     font-family:'Press Start 2P', monospace;
     display:flex; align-items:center; justify-content:center;
     padding:14px;
   }
 #bjApp .machine{
+    position:relative; z-index:1;   /* por encima de la grilla de fondo */
+    margin:auto;                    /* centrada, sin recortar si no entra */
     width:100%; max-width:520px; background:linear-gradient(180deg,var(--bg2),#0a0518);
     border:3px solid var(--purple-d); border-radius:14px;
     box-shadow:0 0 0 2px #000, 0 12px 40px rgba(0,0,0,.6), inset 0 0 40px rgba(164,92,255,.08);
