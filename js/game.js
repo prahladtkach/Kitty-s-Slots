@@ -1487,9 +1487,13 @@
   });
 
   /* ============================================================
-     PUENTE PARA LA RULETA (billetera compartida del Casino)
-     Expone las fichas (state.credits) para que Kitty's Roulette
-     lea y escriba la misma economía, y guarde en la nube.
+     PUENTE DEL CASINO (window.__casino)
+     Lo único que game.js le expone al resto: la ruleta, el blackjack
+     y el menú de inicio viven en sus propios archivos y no ven nada
+     de acá adentro.
+       - billetera compartida: las fichas de state.credits
+       - temas: para que el menu pueda cambiar la paleta
+     Si agregas algo acá, avisale al otro agente: es la frontera.
      ============================================================ */
   window.__casino = {
     getCredits: function(){ return (state && typeof state.credits==='number') ? state.credits : 0; },
@@ -1500,5 +1504,35 @@
       try{ updateUI(); }catch(_e){}
       try{ saveState(); }catch(_e){}
     },
-    isLoggedIn: function(){ return !!fbUser; }
+    isLoggedIn: function(){ return !!fbUser; },
+
+    /* ---- temas, para el menu de inicio (contrato con menu.js) ----
+       themes()     devuelve TODOS los temas con su bandera unlocked;
+                    quien llama decide si muestra los bloqueados.
+       setTheme(id) valida y aplica. applyPalette ya hace saveState().
+       Devuelve true si lo aplico, false si no existe o esta bloqueado. */
+    themes: function(){
+      try{
+        return PALNAMES.map(function(n){
+          var p = PALETTES[n] || {};
+          return {
+            id: n,
+            name: (typeof PF_TEMANOM !== 'undefined' && PF_TEMANOM[n]) || n,
+            panel: p.panel,
+            dark: p.dark,
+            violet: p.violet,
+            gold: p.gold,
+            unlocked: temaUnlocked(n),
+            active: state.palette === n
+          };
+        });
+      }catch(_e){ return []; }
+    },
+    setTheme: function(id){
+      try{
+        if(!PALETTES[id] || !temaUnlocked(id)) return false;
+        applyPalette(id);
+        return true;
+      }catch(_e){ return false; }
+    }
   };

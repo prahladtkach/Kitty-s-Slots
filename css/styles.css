@@ -852,7 +852,21 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .sm-reels{display:flex;gap:5px;}
 .sm-reel{width:clamp(46px,14vw,56px);height:66px;overflow:hidden;background:var(--cream,#f4ead2);box-shadow:0 0 0 3px var(--dark,#0a0618), inset 0 0 8px rgba(0,0,0,.3);}
 .sm-strip{display:flex;flex-direction:column;animation-name:reelSpin;animation-timing-function:linear;animation-iteration-count:infinite;}
-.sm-sym{height:66px;line-height:66px;font-size:32px;text-align:center;flex:none;}
+/* la maquinita del menu dibuja los sprites de verdad (kitty-sprites.png),
+   no emojis. La hoja son 9 sprites de 32px en fila: con un ::before
+   cuadrado y background-size:900%, cada uno ocupa el cuadrado entero y
+   background-position-x elige cual. */
+.sm-sym{height:66px;flex:none;display:flex;align-items:center;justify-content:center;--sm-sprite:46px;}
+.sm-sym::before{content:'';display:block;width:var(--sm-sprite);height:var(--sm-sprite);background-image:url('../assets/kitty-sprites.png');background-size:900% 100%;background-repeat:no-repeat;image-rendering:pixelated;}
+.sm-sym.sym-limon::before{background-position:0% 0;}
+.sm-sym.sym-cereza::before{background-position:12.5% 0;}
+.sm-sym.sym-campana::before{background-position:25% 0;}
+.sm-sym.sym-estrella::before{background-position:37.5% 0;}
+.sm-sym.sym-siete::before{background-position:50% 0;}
+.sm-sym.sym-diamante::before{background-position:62.5% 0;}
+.sm-sym.sym-pez::before{background-position:75% 0;}
+.sm-sym.sym-gato::before{background-position:87.5% 0;}
+.sm-sym.sym-espina::before{background-position:100% 0;}
 @keyframes reelSpin{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 .sm-inner.sm-fast .sm-strip{animation-duration:.3s !important;}
 .sm-payline{position:absolute;left:-4px;right:-4px;top:50%;height:3px;transform:translateY(-1px);background:var(--gold,#ffd23f);box-shadow:0 0 8px var(--gold,#ffd23f);opacity:.85;pointer-events:none;}
@@ -902,7 +916,7 @@ body.broke #lever{ filter:grayscale(.85) brightness(.45); pointer-events:none; }
 .sm-th-empty{font-family:'VT323',monospace;font-size:15px;color:var(--muted,#b3a7dd);}
 .sm-opt-about{font-family:'VT323',monospace;font-size:16px;color:var(--muted,#b3a7dd);text-align:center;margin-top:6px;line-height:1.5;}
 
-@media (max-height:720px){ #startMenu{overflow-y:auto;align-items:flex-start;} .sm-inner{margin:6px auto;} .sm-kitty-row{margin-bottom:6px;} .sm-cat{width:clamp(44px,11vw,60px);} .sm-reel{height:56px;} .sm-sym{height:56px;line-height:56px;font-size:28px;} .sm-lever-track{height:78px;} }
+@media (max-height:720px){ #startMenu{overflow-y:auto;align-items:flex-start;} .sm-inner{margin:6px auto;} .sm-kitty-row{margin-bottom:6px;} .sm-cat{width:clamp(44px,11vw,60px);} .sm-reel{height:56px;} .sm-sym{height:56px;line-height:56px;font-size:28px;} .sm-sym{--sm-sprite:38px;} .sm-lever-track{height:78px;} }
 @media (max-width:340px){ .sm-btn{font-size:10px;} .sm-bubble{font-size:16px;max-width:180px;} .sm-screen{gap:8px;padding:12px 8px;} }
 @media (prefers-reduced-motion:reduce){ .sm-cur,.sm-shake,.sm-select,.sm-cat,.sm-floor::before,.sm-stars i,.light,.sm-fl,.sm-lever-hint{animation:none;} }
 

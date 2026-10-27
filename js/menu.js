@@ -37,17 +37,19 @@
   function pickSlots(){ closeGamePick(); enterLibre(); }        // Slots: el juego de siempre
   function pickRoulette(){ stopBubble(); closeGamePick(); menu.classList.add('sm-hidden'); if(typeof window.rlOpen==='function') window.rlOpen(); }
   function pickBlackjack(){ stopBubble(); closeGamePick(); menu.classList.add('sm-hidden'); if(typeof window.bjOpen==='function') window.bjOpen(); }
+  var pickBusy=false;
+  function selectPick(fn){ if(pickBusy) return; pickBusy=true; beepSelect(); wipeThen(function(){ try{ fn(); } finally { pickBusy=false; } }); }
   function wireGamePickButtons(){
     var gps=document.getElementById('gpSlots'), gpr=document.getElementById('gpRoulette'), gpb=document.getElementById('gpBack');
-    if(gps && !gps._wired){ gps._wired=1; gps.addEventListener('click', function(){ beepSelect(); pickSlots(); }); }
-    if(gpr && !gpr._wired){ gpr._wired=1; gpr.addEventListener('click', function(){ beepSelect(); pickRoulette(); }); }
+    if(gps && !gps._wired){ gps._wired=1; gps.addEventListener('click', function(){ selectPick(pickSlots); }); }
+    if(gpr && !gpr._wired){ gpr._wired=1; gpr.addEventListener('click', function(){ selectPick(pickRoulette); }); }
     var gpbj=document.getElementById('gpBlackjack');
-    if(gpbj && !gpbj._wired){ gpbj._wired=1; gpbj.addEventListener('click', function(){ beepSelect(); pickBlackjack(); }); }
-    if(gpb && !gpb._wired){ gpb._wired=1; gpb.addEventListener('click', function(){ beepSelect(); closeGamePick(); _busy=false; showMenu(); }); }
+    if(gpbj && !gpbj._wired){ gpbj._wired=1; gpbj.addEventListener('click', function(){ selectPick(pickBlackjack); }); }
+    if(gpb && !gpb._wired){ gpb._wired=1; gpb.addEventListener('click', function(){ selectPick(function(){ closeGamePick(); _busy=false; showMenu(); }); }); }
     var rh=document.getElementById('rlHome');
-    if(rh && !rh._wired){ rh._wired=1; rh.addEventListener('click', function(){ if(typeof window.rlClose==='function') window.rlClose(); wipeThen(function(){ _busy=false; showMenu(); }); }); }
+    if(rh && !rh._wired){ rh._wired=1; rh.addEventListener('click', function(){ selectPick(function(){ if(typeof window.rlClose==='function') window.rlClose(); openGamePick(); }); }); }
     var bh=document.getElementById('bjHome');
-    if(bh && !bh._wired){ bh._wired=1; bh.addEventListener('click', function(){ if(typeof window.bjClose==='function') window.bjClose(); wipeThen(function(){ _busy=false; showMenu(); }); }); }
+    if(bh && !bh._wired){ bh._wired=1; bh.addEventListener('click', function(){ selectPick(function(){ if(typeof window.bjClose==='function') window.bjClose(); openGamePick(); }); }); }
   }
   wireGamePickButtons();
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', wireGamePickButtons); }
@@ -84,20 +86,38 @@
   var f=document.getElementById('optFeedback'); if(f) f.addEventListener('click', function(){ beepSelect(); openGame('suggestIcon','feedback'); });
   var fs=document.getElementById('optFull'); if(fs){ if(!document.fullscreenEnabled){ fs.style.display='none'; } else fs.addEventListener('click', function(){ beepSelect(); try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(_e){} }); }
 
-  function buildThemes(){ var host=document.getElementById('optThemes'); if(!host) return; host.innerHTML=''; var sws=document.querySelectorAll('#palrow .swatch'); if(!sws.length){ host.innerHTML='<span class="sm-th-empty">Entrá al juego para ver los temas</span>'; return; } sws.forEach(function(orig){ var m=document.createElement('button'); m.className='sm-sw'+(orig.classList.contains('active')?' active':''); m.title=orig.title||''; m.style.background=orig.style.background; m.style.boxShadow=orig.style.boxShadow; m.addEventListener('click', function(){ beepSelect(); orig.click(); setTimeout(buildThemes,40); }); host.appendChild(m); }); }
+  function buildThemes(){
+    var host=document.getElementById('optThemes'); if(!host) return;
+    host.innerHTML='';
+    var api=window.__casino;
+    if(!api || typeof api.themes!=='function' || typeof api.setTheme!=='function'){
+      host.textContent='Temas no disponibles'; return;
+    }
+    api.themes().forEach(function(theme){
+      if(!theme.unlocked) return;
+      var button=document.createElement('button');
+      button.className='sm-sw'+(theme.active?' active':'');
+      button.title=theme.name;
+      button.setAttribute('aria-label',theme.name);
+      button.style.background=theme.panel || theme.dark;
+      button.style.boxShadow='0 0 0 3px '+theme.violet;
+      button.addEventListener('click',function(){ beepSelect(); api.setTheme(theme.id); buildThemes(); });
+      host.appendChild(button);
+    });
+  }
 
   function showMenu(){ armReset(); _busy=false; if(opts) opts.classList.remove('open'); menu.classList.remove('sm-hidden'); stopBubble(); setTimeout(newBubble, 420); }
 
   /* ===== FONDO VIVO: gatitos + símbolos flotando, explotables (tipo Geometry Dash) ===== */
   var fx=document.getElementById('smBgFx');
   var CAT_IDX=[0,1,3,5,7,9,11,14,17,20,23,26];
-  var SYM_BG=['🍒','💎','7️⃣','⭐','🍋','🔔'];
+  var SYM_BG=['sym-cereza','sym-diamante','sym-siete','sym-estrella','sym-limon','sym-campana'];
   function rnd(a,b){ return a+Math.random()*(b-a); }
   function burst(x,y){ var cols=['#ffd23f','#ff3d8b','#39e0e6','#a45cff','#5bd75b']; for(var k=0;k<8;k++){ var p=document.createElement('div'); p.className='sm-burst'; p.style.left=x+'px'; p.style.top=y+'px'; p.style.background=cols[k%cols.length]; var a=Math.random()*6.2832, d=rnd(20,48); p.style.setProperty('--dx',(Math.cos(a)*d).toFixed(1)+'px'); p.style.setProperty('--dy',(Math.sin(a)*d).toFixed(1)+'px'); document.body.appendChild(p); (function(pp){ setTimeout(function(){ if(pp.parentNode) pp.parentNode.removeChild(pp); }, 480); })(p); } }
   function popFloat(el){ if(el._pop) return; el._pop=true; beepPop(); var r=el.getBoundingClientRect(); burst(r.left+r.width/2, r.top+r.height/2); el.classList.add('sm-fl-pop'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); spawnFloat(); }, 260); }
   function spawnFloat(){ if(!fx) return; var el=document.createElement('div'); el.className='sm-fl'; var dur=rnd(10,17); el.style.left=rnd(3,93)+'%'; el.style.animationDuration=dur.toFixed(1)+'s'; el.style.animationDelay=(-rnd(0,dur)).toFixed(1)+'s'; el.style.setProperty('--rot',(rnd(-52,52)).toFixed(0)+'deg');
     if(Math.random()<0.62){ el.classList.add('sm-fl-cat'); var idx=CAT_IDX[(Math.random()*CAT_IDX.length)|0]; el.style.backgroundPosition='-'+((idx%10)*48)+'px -'+(((idx/10)|0)*48)+'px'; }
-    else { el.classList.add('sm-fl-sym'); el.textContent=SYM_BG[(Math.random()*SYM_BG.length)|0]; }
+    else { el.classList.add('sm-fl-sym','sm-sym',SYM_BG[(Math.random()*SYM_BG.length)|0]); el.style.height='26px'; el.style.setProperty('--sm-sprite','26px'); }
     el.addEventListener('pointerdown', function(e){ e.stopPropagation(); popFloat(el); });
     el.addEventListener('animationend', function(){ if(el.parentNode) el.parentNode.removeChild(el); spawnFloat(); });
     fx.appendChild(el);
@@ -110,7 +130,7 @@
   var si=document.querySelector('.sound-icons');
   if(si && !document.getElementById('gearOptsIcon')){ var g=document.createElement('button'); g.className='iconbtn'; g.id='gearOptsIcon'; g.title='Opciones'; g.setAttribute('aria-label','Opciones'); g.textContent='⚙️'; g.addEventListener('click', function(){ beepSelect(); buildThemes(); if(opts) opts.classList.add('open'); }); si.appendChild(g); }
   var cl=document.querySelector('.corner-left');
-  if(cl && !document.getElementById('menuHomeBtn')){ var hb=document.createElement('button'); hb.className='iconbtn'; hb.id='menuHomeBtn'; hb.title='Menú principal'; hb.setAttribute('aria-label','Menú principal'); hb.textContent='🏠'; hb.addEventListener('click', function(){ beepSelect(); wipeThen(showMenu); }); cl.insertBefore(hb, cl.firstChild); }
+  if(cl && !document.getElementById('menuHomeBtn')){ var hb=document.createElement('button'); hb.className='iconbtn'; hb.id='menuHomeBtn'; hb.title='Selector de juegos'; hb.setAttribute('aria-label','Selector de juegos'); hb.textContent='🏠'; hb.addEventListener('click', function(){ selectPick(openGamePick); }); cl.insertBefore(hb, cl.firstChild); }
 
   newBubble();
 })();

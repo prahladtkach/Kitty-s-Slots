@@ -211,7 +211,6 @@
     // keep last bet for convenience; if broke, drop bet to 0
     if(bet>balance){ bet = balance; }
     showPhase('result');
-    document.getElementById('bjResetBtn').parentElement.style.display = balance<=0 ? 'block' : 'block';
   }
 
   function nextHand(){
@@ -225,7 +224,6 @@
     showPhase('bet');
   }
 
-  function resetBank(){ balance=1000; bet=0; player=[]; dealer=[]; renderHands(); refreshMoney(); setMsg('Saldo reiniciado. ¡A jugar!'); showPhase('bet'); }
 
   // ---- wire up ----
   var chips = document.querySelectorAll('.chip');
