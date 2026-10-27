@@ -585,8 +585,6 @@
   function rlFit(){
     var app=document.getElementById('rlApp'); if(!app || !app.classList.contains('rl-active')) return;
     var wrap=app.querySelector('.wrap'); if(!wrap) return;
-    // En PC (pantallas anchas) usamos layout de 2 columnas por CSS: no achicar por altura.
-    if(window.innerWidth >= 900){ wrap.style.transform='none'; wrap.style.marginBottom=''; app.classList.remove('rl-fitted'); return; }
     // medir a escala 1
     wrap.style.transform='none';
     wrap.style.marginBottom='';

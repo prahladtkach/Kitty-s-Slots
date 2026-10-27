@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" href="css/styles.css?v=4.4">
+    <link rel="stylesheet" href="css/styles.css?v=4.5">
 <style id="rl-styles">
 #rlApp{
   --bg:#0e0826; --bg2:#160a33; --dark:#0a0618; --panel:#241247; --panel2:#2d1b54;
@@ -274,98 +274,6 @@
   border:none; cursor:pointer; padding:12px 20px; box-shadow:0 0 0 3px #0a0618, 0 4px 0 rgba(0,0,0,.35); transition:transform .08s, filter .1s; }
 #gamePick .gp-back:hover{ filter:brightness(1.1); }
 #gamePick .gp-back:active{ transform:translateY(2px); }
-/* ═══════════════════════════════════════════════════════════════
-   LAYOUT DE PC — dos columnas (rueda izquierda | apuestas derecha)
-   Solo se activa en pantallas anchas. En mobile queda TODO igual.
-   ═══════════════════════════════════════════════════════════════ */
-@media (min-width: 900px){
-  /* la ruleta usa casi todo el ancho disponible */
-  #rlApp .wrap{
-    max-width: 1280px;
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;   /* derecha un poco más ancha para la mesa */
-    grid-template-areas:
-      "topbar topbar"
-      "wheel  board"
-      "extras board";
-    column-gap: 40px;
-    row-gap: 10px;
-    align-items: start;
-    min-height: calc(100vh - 40px);        /* que el layout use el alto de la pantalla */
-  }
-  /* la barra de arriba cruza las dos columnas */
-  #rlApp .topbar{ grid-area: topbar; }
-
-  /* ── COLUMNA IZQUIERDA: la rueda, grande y CENTRADA ── */
-  #rlApp .wheel-wrap{
-    grid-area: wheel;
-    width: min(440px, 42vw);
-    height: min(440px, 42vw);
-    margin: 0 auto;                        /* centrada horizontalmente */
-    justify-self: center;                  /* centrar la rueda en su columna */
-    align-self: center;                    /* centrar verticalmente en su celda */
-  }
-  #rlApp .wheel-wrap, #rlApp #wheel{ width: min(440px, 42vw); height: min(440px, 42vw); }
-
-  /* la celda de la rueda tiene alto propio para poder centrarla bien */
-  #rlApp .wrap{ grid-template-rows: auto minmax(460px, auto) auto; }
-
-  /* debajo de la rueda: Kitty + resultado + racha, centrados y compactos */
-  #rlApp .result, #rlApp .recents, #rlApp .streak, #rlApp .kitty{
-    grid-area: extras;
-    justify-self: center;
-    max-width: 440px;
-    width: 100%;
-  }
-  #rlApp .result{ margin-top: 6px; }
-
-  /* ── COLUMNA DERECHA: mesa + fichas + botones, repartidos en el alto ── */
-  #rlApp .board{
-    grid-area: board;
-    align-self: stretch;                   /* que la mesa ocupe el alto de su celda */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    max-width: 640px;                      /* mesa más ancha */
-    margin: 8px auto 0;
-    width: 100%;
-  }
-  /* la grilla de números se ESTIRA para llenar el espacio vertical */
-  /* la grilla de números: proporción natural (horizontal, como mesa real), NO estirada a lo alto */
-  #rlApp .board .grid{
-    grid-template-rows: repeat(3, 44px);   /* filas un poco más altas que el mobile (34px), pero fijas y proporcionadas */
-    gap: 4px;
-  }
-  #rlApp .board .cell{ font-size: 12px; }  /* números más grandes al ensanchar la mesa */
-  #rlApp .board .cell.zero{ font-size: 16px; }
-  #rlApp .board .rowbets, #rlApp .board .rowbets2{ margin-top: 4px; }
-  #rlApp .board .rowbets .obet, #rlApp .board .rowbets2 .obet{
-    min-height: 34px; font-size: 10px;     /* apuestas de afuera: horizontales y anchas, como mesa real */
-  }
-
-  /* fichas + botones: en la columna derecha, debajo de la mesa */
-  #rlApp .bethint, #rlApp .chips, #rlApp .rebet, #rlApp .actions{
-    grid-column: 2;
-    max-width: 640px;
-    margin-left: auto; margin-right: auto;
-    width: 100%;
-  }
-  #rlApp .bethint{ margin-top: 18px; font-size: 13px; }
-
-  /* fichas un poco más grandes (sin exagerar) */
-  #rlApp .chips .chip{ width: 64px; height: 64px; font-size: 13px; }
-  #rlApp .chips{ gap: 14px; margin-top: 10px; }
-
-  /* botones repetir/doblar/all-in */
-  #rlApp .rebet{ gap: 10px; margin-top: 12px; }
-  #rlApp .rebet .btn{ font-size: 11px; padding: 10px 12px; }
-
-  /* botones LIMPIAR y GIRAR: grandes pero que NO se salgan de la mesa */
-  #rlApp .actions{ gap: 12px; margin-top: 12px; }
-  #rlApp .actions .btn{ font-size: 13px; padding: 14px 16px; }
-  #rlApp .actions .btn.spin{ font-size: 15px; }
-}
-
 /* botón "volver al menú" dentro de la ruleta */
 #rlApp .rl-home{ position:fixed; top:12px; left:12px; z-index:9100; font-family:'Press Start 2P',monospace; font-size:11px;
   color:#ece7ff; background:#2d1b54; border:none; cursor:pointer; width:auto; padding:9px 12px;
@@ -1024,7 +932,7 @@
      game.js
      El motor principal del juego (slots, banco, limbo, etc.)
      ══════════════════════════════════════════════════════════════ -->
-<script src="js/game.js?v=4.4"></script>
+<script src="js/game.js?v=4.5"></script>
 <!-- ══════════════════════════════════════════════════════════════
      🎰 MENÚ DE INICIO
      La máquina tragamonedas de portada (capa sobre el juego)
@@ -1134,7 +1042,7 @@
      🎡 RULETA (JUEGO COMPLETO)
      Kitty's Roulette entero — candidato #1 a extraer a roulette.js
      ══════════════════════════════════════════════════════════════ -->
-<script src="js/roulette.js?v=4.4"></script>
+<script src="js/roulette.js?v=4.5"></script>
 <!-- ══════════════════════════════════════════════════════════════
      ❓ CÓMO JUGAR
      Botón de ayuda / instrucciones
