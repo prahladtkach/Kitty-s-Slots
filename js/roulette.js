@@ -12,7 +12,7 @@
   var N=ORDER.length, ANG=360/N;
   function colorOf(n){ return n===0?'green':(RED.has(n)?'red':'black'); }
 
-  var balance=1000, currentChip=25, bets={}, spinning=false, rotation=0, recents=[], lastBets=null, streak=0, allInArmed=false;
+  var balance=1000, currentChip=50, bets={}, spinning=false, rotation=0, recents=[], lastBets=null, streak=0, allInArmed=false;
   // ===== PUENTE DE BILLETERA COMPARTIDA CON KITTY'S CASINO (Slots) =====
   // Lee/escribe las fichas del estado global de Slots (window.__casino) para compartir la economía.
   function rlLoadCredits(){ try{ if(window.__casino && typeof window.__casino.getCredits==='function'){ balance = window.__casino.getCredits(); } }catch(_e){} }
@@ -30,17 +30,30 @@
   ];
   function newContractState(){ return {phase:'idle', index:0, progress:0, remaining:0, cooldown:0, note:''}; }
   var contract=newContractState(), contractHud=null, contractLabel=null, contractActions=null;
-  try {
-    var stored=JSON.parse(sessionStorage.getItem(contractKey)||'null');
-    if(stored && ['idle','offer','active','complete','failed'].indexOf(stored.phase)>=0 &&
-       Number.isInteger(stored.index) && stored.index>=0 && stored.index<contractTypes.length &&
-       Number.isInteger(stored.progress) && stored.progress>=0 && stored.progress<=3 &&
-       Number.isInteger(stored.remaining) && stored.remaining>=0 && stored.remaining<=25 &&
-       Number.isInteger(stored.cooldown) && stored.cooldown>=0 && stored.cooldown<=5){
-      contract={phase:stored.phase,index:stored.index,progress:stored.progress,remaining:stored.remaining,cooldown:stored.cooldown,note:''};
-    }
-  } catch(_e){}
-  function saveContract(){ try{ sessionStorage.setItem(contractKey,JSON.stringify(contract)); }catch(_e){} }
+  function loadContract(){
+    var api=window.__casino, stored;
+    if(!api || typeof api.getChallenge!=='function' || typeof api.setChallenge!=='function') return false;
+    try {
+      stored=api.getChallenge('rl');
+      if(stored===null){ contract=newContractState(); return true; }
+      if(stored && ['idle','offer','active','complete','failed'].indexOf(stored.phase)>=0 &&
+         Number.isInteger(stored.index) && stored.index>=0 && stored.index<contractTypes.length &&
+         Number.isInteger(stored.progress) && stored.progress>=0 && stored.progress<=3 &&
+         Number.isInteger(stored.remaining) && stored.remaining>=0 && stored.remaining<=25 &&
+         Number.isInteger(stored.cooldown) && stored.cooldown>=0 && stored.cooldown<=5){
+        contract={phase:stored.phase,index:stored.index,progress:stored.progress,remaining:stored.remaining,cooldown:stored.cooldown,note:''};
+        return true;
+      }
+    } catch(_e){}
+    return false;
+  }
+  function saveContract(){
+    try {
+      if(window.__casino && typeof window.__casino.setChallenge==='function' && window.__casino.setChallenge('rl',contract)) return true;
+    } catch(_e){}
+    contract.note='No se pudo guardar el desafío.';
+    return false;
+  }
   function contractNext(){
     contract.index=(contract.index+1)%contractTypes.length;
     contract.phase='idle'; contract.progress=0; contract.remaining=0; contract.cooldown=5; contract.note='';
@@ -61,19 +74,13 @@
     if(contract.phase==='complete') text+='¡Desafío cumplido! '+def.reward+' 👻 + '+contractBonus(def)+' 👻 de bonus por eficiencia.';
     if(contract.phase==='failed') text+='Se acabaron los giros válidos. ¡Podrás intentar otro desafío!';
     if(contract.note) text+=' '+contract.note;
-    contractLabel.textContent=text+' (Prueba por pestaña)';
+    contractLabel.textContent=text;
     contractActions.textContent='';
     if(contract.phase==='offer'){
       contractAction('Aceptar',function(){ if(spinning || contract.phase!=='offer') return; contract.phase='active'; contract.progress=0; contract.remaining=def.limit; contract.note=''; saveContract(); renderContract(); });
       contractAction('Rechazar',function(){ if(spinning || contract.phase!=='offer') return; contractNext(); });
     } else if(contract.phase==='complete'){
-      contractAction('Cobrar '+(def.reward+contractBonus(def))+' 👻',function(){
-        if(spinning || contract.phase!=='complete') return;
-        var api=window.__casino, bonus=contractBonus(def), total=def.reward+bonus;
-        if(!api || typeof api.awardEctos!=='function'){ contract.note='No se pudo cobrar: saldo de ectofichas no disponible.'; renderContract(); return; }
-        if(!api.awardEctos(total)){ contract.note='No se pudo cobrar el premio; intentá de nuevo.'; renderContract(); return; }
-        contractNext(); say('😼','¡Desafío cumplido! Cobraste '+def.reward+' 👻 + '+bonus+' 👻 de bonus por eficiencia.');
-      });
+      contractLabel.textContent+=' Cobro temporalmente desactivado: falta el guardado seguro entre pestañas.';
     } else if(contract.phase==='failed'){
       contractAction('Continuar',function(){ if(!spinning && contract.phase==='failed') contractNext(); });
     }
@@ -151,7 +158,7 @@
   }
 
   // ---------- fichas ----------
-  var CHIPS=[[25,'c25'],[100,'c100'],[500,'c500'],[1000,'c1000']];
+  var CHIPS=[[50,'c25'],[100,'c100'],[500,'c500']];
   function buildChips(){
     document.getElementById('chips').innerHTML=CHIPS.map(function(x){
       return '<button class="chip '+x[1]+(x[0]===currentChip?' sel':'')+'" data-val="'+x[0]+'">'+x[0]+'</button>';}).join('');
@@ -695,6 +702,8 @@
 
   // ===== abrir / cerrar la pantalla de ruleta (llamado desde el Casino) =====
   window.rlOpen = function(){
+    if(!loadContract()){ contract=newContractState(); contract.note='No se pudo cargar el desafío.'; }
+    renderContract();
     // devolver cualquier apuesta pendiente al saldo antes de recargar (por las dudas)
     if(totalBet()>0){ balance+=totalBet(); bets={}; document.querySelectorAll('.chipon').forEach(function(s){ s.style.display='none'; }); }
     setArmed(false);
