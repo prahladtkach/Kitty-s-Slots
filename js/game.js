@@ -1536,6 +1536,12 @@
       try{ updateUI(); }catch(_e){}
       try{ saveState(); }catch(_e){}
     },
+    // Tope de prueba: 50 deja margen sobre el premio actual máximo de 30; revisar si cambian los premios.
+    awardEctos: function(n){
+      if(!Number.isInteger(n) || n<1 || n>50 || !state || !state.meta) return false;
+      state.meta.spirits=(state.meta.spirits||0)+n;
+      saveState(); updateUI(); return true;
+    },
     isLoggedIn: function(){ return !!fbUser; },
 
     /* ---- temas, para el menu de inicio (contrato con menu.js) ----
@@ -1566,5 +1572,47 @@
         applyPalette(id);
         return true;
       }catch(_e){ return false; }
+    },
+
+    /* ---- mascotas, para que acompanen en los tres juegos ----
+       Los modificadores nacieron con nombre de slots pero significan cosas
+       que existen en cualquier juego de casino, asi que se traducen:
+
+         win     lo que ganas en una jugada normal
+         bigWin  tu premio mas raro: 3 gatos / pleno 35:1 / blackjack natural
+         streak  cuanto rinde ganar varias veces seguidas
+
+       Son MULTIPLICADORES: 1 es neutro, 1.35 paga 35% mas, 0.9 paga 10%
+       menos. Multiplicá tu premio por el que corresponda y listo.
+
+       pet() devuelve null si no hay mascota equipada (o si el jugador
+       todavia no compro el Refugio en el Limbo). Siempre chequear null.
+
+       En `mods` van los crudos, incluidos los que NO se traducen
+       (boneDmg, boneFreq, interest son del slots y del banco). */
+    pet: function(){
+      try{
+        var p = activePet();
+        if(!p) return null;
+        var m = p.mods || {};
+        var num = function(v){ return (typeof v === 'number') ? v : 1; };
+        return {
+          id: p.id,
+          name: p.name,
+          icon: p.icon,
+          img: petImgSrc(p),
+          desc: p.desc,
+          buff: p.buff || '',
+          contra: p.contra || '',
+          cosmetic: !!p.cosmetic,
+          win:    num(m.win),
+          bigWin: num(m.jpPay),
+          streak: num(m.comboCap),
+          mods: m
+        };
+      }catch(_e){ return null; }
+    },
+    petsUnlocked: function(){
+      try{ return !!petsUnlocked(); }catch(_e){ return false; }
     }
   };

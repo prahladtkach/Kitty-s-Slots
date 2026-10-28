@@ -20,6 +20,92 @@
   // estado de reposo de la bolita: dónde quedó y con qué rotación de rueda (para que gire junto al arrastrar)
   var ballRestDeg=null, ballRestRad=null, ballRestRotation=0;
 
+  // Desafíos de prueba: sesión de pestaña, no compartir ni publicar como economía definitiva.
+  var contractKey='kitty-roulette-challenges-v2';
+  var contractTypes=[
+    {id:'color12', type:'color', title:'3 colores seguidos', limit:12, reward:8},
+    {id:'color20', type:'color', title:'3 colores seguidos', limit:20, reward:5},
+    {id:'dozen25', type:'docena', title:'3 docenas seguidas', limit:25, reward:14},
+    {id:'dozen20', type:'docena', title:'3 docenas seguidas', limit:20, reward:20}
+  ];
+  function newContractState(){ return {phase:'idle', index:0, progress:0, remaining:0, cooldown:0, note:''}; }
+  var contract=newContractState(), contractHud=null, contractLabel=null, contractActions=null;
+  try {
+    var stored=JSON.parse(sessionStorage.getItem(contractKey)||'null');
+    if(stored && ['idle','offer','active','complete','failed'].indexOf(stored.phase)>=0 &&
+       Number.isInteger(stored.index) && stored.index>=0 && stored.index<contractTypes.length &&
+       Number.isInteger(stored.progress) && stored.progress>=0 && stored.progress<=3 &&
+       Number.isInteger(stored.remaining) && stored.remaining>=0 && stored.remaining<=25 &&
+       Number.isInteger(stored.cooldown) && stored.cooldown>=0 && stored.cooldown<=5){
+      contract={phase:stored.phase,index:stored.index,progress:stored.progress,remaining:stored.remaining,cooldown:stored.cooldown,note:''};
+    }
+  } catch(_e){}
+  function saveContract(){ try{ sessionStorage.setItem(contractKey,JSON.stringify(contract)); }catch(_e){} }
+  function contractNext(){
+    contract.index=(contract.index+1)%contractTypes.length;
+    contract.phase='idle'; contract.progress=0; contract.remaining=0; contract.cooldown=5; contract.note='';
+    saveContract(); renderContract();
+  }
+  function contractAction(text,handler){
+    var button=document.createElement('button'); button.type='button'; button.textContent=text;
+    button.style.cssText='margin:5px 4px 0;padding:6px 10px;cursor:pointer;background:var(--gold);color:var(--dark);border:0;font:inherit';
+    button.addEventListener('click',handler); contractActions.appendChild(button);
+  }
+  function contractBonus(def){ return Math.min(Math.floor(def.reward*0.5),Math.round(def.reward*0.5*contract.remaining/(def.limit-3))); }
+  function renderContract(){
+    if(!contractHud) return;
+    var def=contractTypes[contract.index], text='😼 KitBoss · ';
+    if(contract.phase==='idle') text+='Los desafíos aparecen tras una racha de 2 victorias.';
+    if(contract.phase==='offer') text+='¿Aceptás? '+def.title+' en '+def.limit+' giros válidos · Premio base: '+def.reward+' 👻 + bonus por eficiencia.';
+    if(contract.phase==='active') text+=def.title+' · '+contract.progress+'/3 · Giros válidos restantes: '+contract.remaining+' · Premio base: '+def.reward+' 👻 + bonus. Apostá a una sola '+def.type+'.';
+    if(contract.phase==='complete') text+='¡Desafío cumplido! '+def.reward+' 👻 + '+contractBonus(def)+' 👻 de bonus por eficiencia.';
+    if(contract.phase==='failed') text+='Se acabaron los giros válidos. ¡Podrás intentar otro desafío!';
+    if(contract.note) text+=' '+contract.note;
+    contractLabel.textContent=text+' (Prueba por pestaña)';
+    contractActions.textContent='';
+    if(contract.phase==='offer'){
+      contractAction('Aceptar',function(){ if(spinning || contract.phase!=='offer') return; contract.phase='active'; contract.progress=0; contract.remaining=def.limit; contract.note=''; saveContract(); renderContract(); });
+      contractAction('Rechazar',function(){ if(spinning || contract.phase!=='offer') return; contractNext(); });
+    } else if(contract.phase==='complete'){
+      contractAction('Cobrar '+(def.reward+contractBonus(def))+' 👻',function(){
+        if(spinning || contract.phase!=='complete') return;
+        var api=window.__casino, bonus=contractBonus(def), total=def.reward+bonus;
+        if(!api || typeof api.awardEctos!=='function'){ contract.note='No se pudo cobrar: saldo de ectofichas no disponible.'; renderContract(); return; }
+        if(!api.awardEctos(total)){ contract.note='No se pudo cobrar el premio; intentá de nuevo.'; renderContract(); return; }
+        contractNext(); say('😼','¡Desafío cumplido! Cobraste '+def.reward+' 👻 + '+bonus+' 👻 de bonus por eficiencia.');
+      });
+    } else if(contract.phase==='failed'){
+      contractAction('Continuar',function(){ if(!spinning && contract.phase==='failed') contractNext(); });
+    }
+  }
+  function initContract(){
+    var anchor=document.getElementById('bethint'); if(!anchor) return;
+    contractHud=document.createElement('div'); contractHud.setAttribute('role','status');
+    contractHud.style.cssText='margin:8px auto;padding:8px;text-align:center;background:var(--panel);color:var(--text);border:2px solid var(--gold);font:18px VT323,monospace;line-height:1.2';
+    contractLabel=document.createElement('span'); contractActions=document.createElement('div');
+    contractHud.appendChild(contractLabel); contractHud.appendChild(contractActions);
+    anchor.parentNode.insertBefore(contractHud,anchor); renderContract();
+  }
+  function advanceContract(w){
+    if(contract.phase!=='active') return;
+    var def=contractTypes[contract.index], keys=def.type==='color'?['red','black']:['d1','d2','d3'];
+    var selected=keys.filter(function(k){ return bets[k]>0; });
+    if(selected.length!==1){
+      contract.note=selected.length>1?'Este giro no cuenta: elegí una sola '+def.type+'.':'Este giro no cuenta: no apostaste a una '+def.type+'.';
+    } else {
+      contract.remaining--;
+      if(wins(selected[0],w)){ contract.progress++; contract.note='¡Acierto!'; }
+      else { contract.progress=0; contract.note='Fallaste: la racha vuelve a cero.'; }
+      if(contract.progress===3){ contract.phase='complete'; contract.note=''; }
+      else if(contract.remaining===0){ contract.phase='failed'; contract.note=''; }
+    }
+    saveContract(); renderContract();
+  }
+  function maybeOfferContract(stake){
+    if(contract.phase!=='idle' || stake<=0) return;
+    if(contract.cooldown>0){ contract.cooldown--; saveContract(); }
+    if(contract.cooldown===0 && streak>=2){ contract.phase='offer'; contract.note=''; saveContract(); renderContract(); }
+  }
   // ---------- construir rueda ----------
   function pt(cx,cy,r,deg){ var a=(deg-90)*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; }
   function buildWheel(){
@@ -503,6 +589,7 @@
     var col=colorOf(w), stake=totalBet(), win=0, gross=0, items=[];
     if(stake>0){ lastBets={}; for(var _b in bets) lastBets[_b]=bets[_b]; }
     for(var k in bets){ if(wins(k,w)){ var _m=payout(k); win += bets[k]*(_m+1); gross += bets[k]*_m; items.push({name:betName(k), mult:_m, prof:bets[k]*_m}); } }
+    advanceContract(w);
     items.sort(function(a,b){return b.prof-a.prof;});
     balance+=win;
     // resultado
@@ -539,6 +626,7 @@
       say('🙀','Salió el <b>'+w+'</b>. La casa se queda con esta...');
       reactSoon('kb-lose','😼');
     }
+    maybeOfferContract(stake);
     // limpiar sin devolver (ya se resolvió)
     bets={}; document.querySelectorAll('.chipon').forEach(function(s){ s.style.display='none'; });
     if(win>0){ flyWinToBalance(gross); } else { updateBal(); }
@@ -548,7 +636,7 @@
   }
 
   // init
-  buildWheel(); buildBoard(); buildChips(); updateBal();
+  buildWheel(); buildBoard(); buildChips(); updateBal(); initContract();
   document.getElementById('rl-spinBtn').addEventListener('click', function(){ landAndResolve(6); });
   document.getElementById('clearBtn').addEventListener('click', function(){ clearBets(true); });
   document.getElementById('musicBtn').addEventListener('click', musicToggle);
