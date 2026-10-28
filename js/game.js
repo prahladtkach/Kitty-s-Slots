@@ -124,7 +124,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION,daily:{last:0,day:0,streak:0},pets:{owned:{},active:null},chal:null};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION,daily:{last:0,day:0,streak:0},pets:{owned:{},active:null},chal:null,chalDone:[]};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'], _broke=false, _lifeUsed=false, _tripleStreak=0, _econReset=false, _rkRows=[], _hiddenRows=[];
   const pool=[];
@@ -176,6 +176,7 @@
     if(!d||typeof d!=='object') return;
     Object.assign(state,d);
     if(state.chal===undefined) state.chal=null;   // saves viejos no lo traen
+    if(!Array.isArray(state.chalDone)) state.chalDone=[];
     if(!state.upg) state.upg={win:0,combo:0,cat:0,bone:0};
     if(!state.abilities) state.abilities={hold:false,gamble:false};
     if(state.skillsUnlocked===undefined) state.skillsUnlocked = state.credits>=SKILL_UNLOCK || !!(state.abilities && (state.abilities.hold||state.abilities.gamble));
@@ -1648,6 +1649,52 @@
        o preguntar de una: if(window.__casino.isReady()) { ... } */
     ready: function(){ return _readyPromise; },
     isReady: function(){ return _saveLoaded; },
+
+    /* Cobra el premio de un desafio UNA SOLA VEZ.
+       Devuelve una promesa: {ok:true, amount:n} o {ok:false, reason:'...'}
+
+         await window.__casino.claimChallenge('rl', 'rl-dozen20-1730000000', 20)
+
+       `claimId` tiene que ser unico por desafio concreto (no por tipo):
+       si se repite, el cobro se rechaza. Conviene generarlo al ACEPTAR el
+       desafio y guardarlo en su estado.
+
+       Con sesion iniciada, el que decide es el servidor: se crea un
+       documento por premio y Firestore rechaza el segundo intento, asi que
+       dos pestañas no pueden cobrar lo mismo. Sin sesion queda el control
+       local, igual que la racha diaria. */
+    claimChallenge: function(game, claimId, amount){
+      var fail=function(r){ return Promise.resolve({ok:false, reason:r}); };
+      try{
+        if(!_saveLoaded) return fail('cargando');
+        if(typeof game!=='string' || !game || game.length>8) return fail('juego-invalido');
+        if(typeof claimId!=='string' || !claimId || claimId.length>60) return fail('id-invalido');
+        if(!Number.isInteger(amount) || amount<1 || amount>2000) return fail('monto-invalido');
+        if(!state || !state.meta) return fail('sin-partida');
+        if(!Array.isArray(state.chalDone)) state.chalDone=[];
+        if(state.chalDone.indexOf(claimId)>=0) return fail('ya-cobrado');
+
+        var acreditar=function(){
+          state.chalDone.push(claimId);
+          // la lista no crece para siempre: alcanza con los ultimos
+          if(state.chalDone.length>60) state.chalDone=state.chalDone.slice(-60);
+          state.meta.spirits=(state.meta.spirits||0)+amount;
+          saveState(); updateUI();
+          return {ok:true, amount:amount};
+        };
+
+        // Sin sesion no hay servidor que arbitre: queda el control local.
+        // Es el mismo limite que tiene la racha diaria.
+        if(!(fbReady && fbUser)) return Promise.resolve(acreditar());
+
+        var ref=_fbFsMod.doc(fbDB,'challengeClaims',fbUser.uid,'items',claimId);
+        // setDoc sobre un doc que YA existe es un update, y la regla lo
+        // prohibe: ahi es donde se corta el duplicado.
+        return _fbFsMod.setDoc(ref, {at:_fbFsMod.serverTimestamp(), game:game, amount:amount})
+          .then(function(){ return acreditar(); })
+          .catch(function(){ return {ok:false, reason:'ya-cobrado'}; });
+      }catch(_e){ return fail('error'); }
+    },
 
     getChallenge: function(game){
       try{

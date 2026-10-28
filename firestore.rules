@@ -61,6 +61,21 @@ service cloud.firestore {
           && d.day is number    && d.day >= 1    && d.day <= 30
           && d.streak is number && d.streak >= 1 && d.streak <= 100000;
     }
+    // ===== premios de desafios (KitBoss y los que vengan) =====
+    // Un documento por premio cobrado. La gracia esta en que `create` solo
+    // funciona si el documento NO existe: un segundo intento con el mismo
+    // id pasa a ser update, y update esta prohibido. Asi dos pestañas no
+    // pueden cobrar lo mismo dos veces, sin que el cliente coordine nada.
+    function claimSane(d){
+      return d.at == request.time                 // obliga a usar serverTimestamp()
+          && d.game is string && d.game.size() > 0 && d.game.size() <= 8
+          && d.amount is number && d.amount >= 1 && d.amount <= 2000;
+    }
+    match /challengeClaims/{uid}/items/{claimId} {
+      allow read:   if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid && claimSane(request.resource.data);
+      allow update, delete: if false;             // lo cobrado no se reescribe ni se borra
+    }
     match /dailyClaims/{uid} {
       allow read:   if signedIn() && request.auth.uid == uid;
       allow create: if signedIn() && request.auth.uid == uid && dailySane(request.resource.data);
