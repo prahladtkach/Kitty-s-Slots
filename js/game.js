@@ -124,7 +124,7 @@
     bone:{name:'Menos espinas',desc:'aparecen menos espinas 🦴',max:25,cost:curve(1000,1.16)}
   };
 
-  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION,daily:{last:0,day:0,streak:0},pets:{owned:{},active:null}};
+  let state={credits:START,jackpot:JP_BASE,bet:50,debt:0,palette:'synthwave',upg:{win:0,combo:0,cat:0,bone:0},abilities:{hold:false,gamble:false},holdLevel:0,superLevel:0,musicOn:true,sfxOn:true,musicTheme:'suave',skillsUnlocked:false,bankUnlocked:false,introSeen:false,kattoSeen:false,discount:null,bank:0,vault:false,creditLevel:0,interestLevel:0,intSpins:0,meta:{spirits:0,chest:0,credit:0,luck:0,cap:0,armor:0,jpboost:0,respin:0,banktope:0,ninevidas:0,ectoboost:0,bankopen:0,vaultopen:0,banker:0,premiumvault:0,regular:0},eq:{avatar:'calico',frame:'violet',title:'novato',nick:'Jugador'},badges:{},life:{asc:0,ecto:0,bestJP:0,bestWorth:0,runs:0,deaths:0,bestGamble:0,bestCombo:0,got777:false,holyJackpot:false,spins:0,gotJackpot:false,boneHits:0,maxBoneLoss:0,survivedBigBone:false,maxBank:0,bankFilled:false,firstDeposit:false,gotInterest:false,usedSpinBtn:false,usedLever:false,logros:{}},peak:START,runJackpots:0,helpSeen:[],limboUnlocked:false,runStart:Date.now(),runStartWorth:START,limboIntroV2:false,pibble:false,econVersion:ECON_VERSION,daily:{last:0,day:0,streak:0},pets:{owned:{},active:null},chal:null};
   let spinning=false, combo=0, audioCtx=null, musicTimer=null, mi=0, musicStarted=false;
   let held=[false,false,false], holdCD=0, gambleAmount=0, gambling=false, cur=['🍋','🍒','💎'], _broke=false, _lifeUsed=false, _tripleStreak=0, _econReset=false, _rkRows=[], _hiddenRows=[];
   const pool=[];
@@ -175,6 +175,7 @@
   function applySave(d){
     if(!d||typeof d!=='object') return;
     Object.assign(state,d);
+    if(state.chal===undefined) state.chal=null;   // saves viejos no lo traen
     if(!state.upg) state.upg={win:0,combo:0,cat:0,bone:0};
     if(!state.abilities) state.abilities={hold:false,gamble:false};
     if(state.skillsUnlocked===undefined) state.skillsUnlocked = state.credits>=SKILL_UNLOCK || !!(state.abilities && (state.abilities.hold||state.abilities.gamble));
@@ -1512,7 +1513,18 @@
   function forceUpdate(){ try{ sessionStorage.setItem('ks-upd','1'); }catch(_e){} location.href=location.pathname+'?u='+Date.now()+location.hash; }
   function showUpdatePrompt(newVer){ var m=document.getElementById('catModal'); if(!m||m.classList.contains('open')) return; try{ if(sessionStorage.getItem('ks-upd')) return; }catch(_e){} _catWho='kitty'; _introStep=-1; _catWaiting=false; _afterCat=function(){ forceUpdate(); }; setCatLogin(false); var ci=m.querySelector('.cat-img'); if(ci){ ci.onerror=function(){ this.onerror=null; this.src='assets/cat-mascot.png'; }; ci.src='assets/cat-mascot.png'; } m.classList.remove('katto'); m.classList.add('open'); if(state.musicOn){ catMode=true; if(!musicPlaying) startMusic(); } var cont=document.getElementById('catOk'); if(cont) cont.textContent='🔄 ACTUALIZAR'; typeCat('¡Actualicé el juego a la v'+newVer+'! 🎮✨|Tocá ACTUALIZAR acá abajo para refrescar y ver las novedades.|(Si en la compu no se actualiza, probá Ctrl+Shift+R)'); }
   function checkVersion(){ fetch('version.json?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d && d.version && verNum(d.version) > verNum(VERSION)) showUpdatePrompt(d.version); }).catch(function(){}); }
+  /* El puente (window.__casino) queda disponible apenas se ejecuta este
+     archivo, pero la partida se carga de forma asincrona. Entre esos dos
+     momentos, `state` todavia es el DEFAULT. Cualquier escritura ahi
+     llamaria a saveState() y le pisaria la partida al jugador con una
+     nueva, porque saveState() guarda el objeto entero.
+     Por eso las funciones del puente que escriben esperan esta bandera. */
+  var _saveLoaded=false, _readyGo=null;
+  var _readyPromise=new Promise(function(res){ _readyGo=res; });
+
   loadState().then(function(){
+    _saveLoaded=true;
+    if(_readyGo) _readyGo(true);
     refreshAfterLoad();
     initFirebase();
     setTimeout(checkVersion, 1500);
@@ -1530,6 +1542,7 @@
   window.__casino = {
     getCredits: function(){ return (state && typeof state.credits==='number') ? state.credits : 0; },
     setCredits: function(n){
+      if(!_saveLoaded) return false;   // la partida todavia no cargo: escribir la borraria
       if(!state) return;
       n = Math.max(0, Math.round(n||0));
       state.credits = n;
@@ -1538,6 +1551,7 @@
     },
     // Tope de prueba: 50 deja margen sobre el premio actual máximo de 30; revisar si cambian los premios.
     awardEctos: function(n){
+      if(!_saveLoaded) return false;   // ver nota de la carrera de carga
       if(!Number.isInteger(n) || n<1 || n>50 || !state || !state.meta) return false;
       state.meta.spirits=(state.meta.spirits||0)+n;
       saveState(); updateUI(); return true;
@@ -1568,6 +1582,7 @@
     },
     setTheme: function(id){
       try{
+        if(!_saveLoaded) return false;   // applyPalette guarda, ver nota de la carrera
         if(!PALETTES[id] || !temaUnlocked(id)) return false;
         applyPalette(id);
         return true;
@@ -1614,5 +1629,50 @@
     },
     petsUnlocked: function(){
       try{ return !!petsUnlocked(); }catch(_e){ return false; }
+    },
+
+    /* ---- desafios, guardados con la partida ----
+       Antes esto vivía en sessionStorage, que es POR PESTAÑA: abrir una
+       pestaña nueva reiniciaba el desafío y dejaba cobrarlo otra vez. Con
+       ectofichas de premio eso es una canilla sobre la moneda que compra
+       las mejoras permanentes, asi que vive acá y viaja con el save.
+
+       getChallenge(juego)      -> lo guardado, o null
+       setChallenge(juego, obj) -> guarda; null borra. Devuelve true/false.
+
+       `juego` es una etiqueta corta ('rl', 'bj'...) para que cada juego
+       tenga el suyo sin pisarse. El objeto es libre, pero se limita su
+       tamaño: esto es la ficha de un desafío, no un depósito. */
+    /* ¿Ya se puede escribir? Los otros juegos pueden esperar:
+         window.__casino.ready().then(function(){ ...ahora si... });
+       o preguntar de una: if(window.__casino.isReady()) { ... } */
+    ready: function(){ return _readyPromise; },
+    isReady: function(){ return _saveLoaded; },
+
+    getChallenge: function(game){
+      try{
+        if(typeof game!=='string' || !game) return null;
+        var c = state && state.chal;
+        return (c && typeof c==='object' && c[game]) ? c[game] : null;
+      }catch(_e){ return null; }
+    },
+    setChallenge: function(game, data){
+      try{
+        if(!_saveLoaded) return false;   // ver nota de la carrera de carga
+        if(typeof game!=='string' || !game || game.length>8) return false;
+        if(!state) return false;
+        if(!state.chal || typeof state.chal!=='object') state.chal={};
+        if(data===null || data===undefined){
+          delete state.chal[game];
+        } else {
+          if(typeof data!=='object') return false;
+          // tope de tamaño: evita que un bug convierta el save en un basurero
+          var txt=JSON.stringify(data);
+          if(txt.length>600) return false;
+          state.chal[game]=JSON.parse(txt);   // copia, no la referencia del otro juego
+        }
+        saveState();
+        return true;
+      }catch(_e){ return false; }
     }
   };
